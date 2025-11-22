@@ -1,0 +1,14 @@
+<div class="map-screen">
+  <div class="map-header">
+    <button class="back-btn" (click)="close()">←</button>
+    <div class="map-title"><h2>Food Stalls Near You</h2><p class="location-subtitle">{{location}}</p></div>
+    <button class="map-filter-btn">⚙️</button>
+  </div>
+
+  <div class="map-container">
+    <div class="interactive-map">
+      <!-- optional: integrate real Google/Mapbox map here. For demo use static pins -->
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

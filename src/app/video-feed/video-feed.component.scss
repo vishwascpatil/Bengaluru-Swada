@@ -1,0 +1,8 @@
+.video-feed {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    height: 100vh;
+}

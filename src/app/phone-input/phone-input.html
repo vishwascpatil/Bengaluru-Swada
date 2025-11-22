@@ -1,0 +1,33 @@
+<div class="phone-input-page">
+  <div class="mobile-input-section">
+    <div class="mobile-form">
+      <h2 class="welcome-text">Welcome to Bengaluru Swada!</h2>
+      <p class="subtitle light-grey">
+        Enter your mobile number to discover amazing street food near you
+      </p>
+
+      <div class="input-container">
+        <div class="country-code">+91</div>
+        <input type="tel" id="mobileNumber" placeholder="Enter your mobile number" maxlength="10" pattern="[0-9]{10}"
+          [(ngModel)]="mobile" (input)="onInput()" [disabled]="loading" />
+      </div>
+
+      <div class="error-message" *ngIf="error">
+        <span>⚠️ {{ error }}</span>
+      </div>
+
+      <div id="recaptcha-container"></div>
+
+      <button class="continue-btn" [class.active]="valid && !loading" [disabled]="!valid || loading"
+        (click)="continue()">
+        <span *ngIf="!loading">Continue</span>
+        <span *ngIf="loading" class="loading-spinner">Sending OTP...</span>
+      </button>
+
+      <p class="privacy-text light-grey">
+        We'll send you an OTP to verify your number. Your privacy is important to us.
+      </p>
+
+    </div>
+  </div>
+</div>

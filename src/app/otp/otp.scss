@@ -1,0 +1,101 @@
+/* OTP styling */
+.otp-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    background: #fff;
+    font-family: 'Poppins', sans-serif;
+}
+
+.otp-form {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.otp-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.otp-subtitle {
+    font-size: 1rem;
+    color: #7f8c8d;
+    margin-bottom: 2.5rem;
+}
+
+.phone-number {
+    color: #ff6b35;
+    font-weight: 600;
+}
+
+.otp-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.otp-input {
+    width: 60px;
+    height: 60px;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 1.5rem;
+    background: #fff;
+    color: #495057;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+
+    &:focus {
+        border-color: #ff6b35;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    }
+}
+
+.verify-btn {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    background: #dfe4ea;
+    color: #495057;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: not-allowed;
+    margin-bottom: 2rem;
+    transition: all 0.2s;
+
+    &:not([disabled]) {
+        background: #ff6b35;
+        /* Orange when active, or keep grey if design dictates until click? Design shows grey button "Verify OTP". Assuming it turns colored or stays grey until filled. Let's stick to design image which shows grey. */
+        /* Actually, usually buttons become active color when filled. The design image shows it grey, likely inactive state. I'll make it orange when active for better UX, or stick to grey if strictly following image. Let's use a darker grey/blue for active to match theme or orange. Let's go with Orange for active state as per other screens. */
+        background: #2c3e50;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(44, 62, 80, 0.2);
+    }
+}
+
+.resend-container {
+    margin-bottom: 2rem;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.resend-text {
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+
+    &:hover {
+        color: #495057;
+    }
+}

@@ -1,0 +1,66 @@
+<div class="location-section">
+  <div class="location-form">
+    <div class="location-icon">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="locationGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#ff8c5a;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+          fill="url(#locationGradient)" />
+      </svg>
+    </div>
+    <h2 class="location-title">Find Street Food Near You</h2>
+    <p class="location-subtitle">We need your location to show you the best street food options around you</p>
+
+    <div class="location-benefits">
+      <div class="benefit-item"><span class="benefit-icon">🎯</span><span class="benefit-text">Discover food stalls
+          nearby</span></div>
+      <div class="benefit-item"><span class="benefit-icon">💰</span><span class="benefit-text">See accurate prices &
+          distance</span></div>
+
+    </div>
+
+    <button class="allow-location-btn" (click)="allow()"> Allow Location Access</button>
+    <button class="manual-location-btn" (click)="manual()">Enter Location Manually</button>
+    <p class="location-privacy">Your location data is secure and only used to show nearby food options.</p>
+  </div>
+
+  <!-- Pincode Search Modal -->
+  <div class="pincode-modal" *ngIf="showPincodeModal" [@fadeIn]>
+    <div class="modal-overlay" (click)="closePincodeModal()"></div>
+    <div class="modal-content" [@slideUp]>
+      <button class="close-btn" (click)="closePincodeModal()">✕</button>
+      <div class="modal-header">
+        <div class="search-icon">🔍</div>
+        <h3 class="modal-title">Enter Your Pincode</h3>
+        <p class="modal-subtitle">We'll find the best street food in your area</p>
+      </div>
+
+      <div class="search-box">
+        <input type="text" class="pincode-input" [(ngModel)]="pincode" (input)="onPincodeInput()"
+          placeholder="Enter 6-digit pincode" maxlength="6" pattern="[0-9]*" inputmode="numeric" #pincodeInput />
+        <div class="input-underline" [class.active]="pincode.length > 0"></div>
+      </div>
+
+      <div class="pincode-suggestions" *ngIf="pincode.length >= 3">
+        <p class="suggestions-label">Popular areas:</p>
+        <div class="suggestion-item" *ngFor="let suggestion of filteredSuggestions" (click)="selectPincode(suggestion)">
+          <span class="suggestion-pin">📍</span>
+          <div class="suggestion-info">
+            <span class="suggestion-code">{{ suggestion.code }}</span>
+            <span class="suggestion-area">{{ suggestion.area }}</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="confirm-pincode-btn" [disabled]="!isValidPincode()" [class.disabled]="!isValidPincode()"
+        (click)="confirmPincode()">
+        Continue
+      </button>
+    </div>
+  </div>
+</div>

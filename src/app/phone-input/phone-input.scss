@@ -1,0 +1,125 @@
+/* key mobile styles */
+.mobile-input-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+.welcome-text {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.mobile-form {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.input-container {
+    display: flex;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 2rem 0;
+}
+
+.country-code {
+    padding: 1rem;
+    border-right: 1px solid #e9ecef;
+    font-weight: 600;
+}
+
+#mobileNumber {
+    flex: 1;
+    padding: 1rem;
+    border: none;
+    outline: none;
+    font-size: 1.1rem;
+    background: transparent;
+}
+
+#mobileNumber:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.error-message {
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    color: #c33;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+#recaptcha-container {
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem 0;
+    min-height: 78px;
+}
+
+.continue-btn {
+    width: 100%;
+    padding: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    background: #dee2e6;
+    color: #6c757d;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+}
+
+.continue-btn.active {
+    background: #ff6b35;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    transform: translateY(-1px);
+}
+
+.continue-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.loading-spinner {
+    display: inline-block;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.privacy-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.light-grey {
+    color: #6c757d;
+}

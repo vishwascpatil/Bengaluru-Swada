@@ -1,0 +1,22 @@
+<div class="otp-container">
+  <div class="otp-section">
+    <div class="otp-form">
+      <h2 class="otp-title">Verify Your Number</h2>
+      <p class="otp-subtitle">We've sent a 4-digit OTP to <span class="phone-number">{{phone}}</span></p>
+
+      <div class="otp-container">
+        <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
+          *ngFor="let n of [0,1,2,3]; let i = index" [(ngModel)]="otp[i]" (input)="onOtpInput(i)">
+      </div>
+
+      <button class="verify-btn" [disabled]="!complete" (click)="verify()">Verify OTP</button>
+
+      <div class="resend-container">
+        <p class="resend-text">Didn't receive OTP?</p>
+        <p class="timer" *ngIf="countdown > 0">Resend in <span class="countdown">{{countdown}}s</span></p>
+        <p class="resend-link" *ngIf="countdown === 0" (click)="resend()">Resend OTP</p>
+      </div>
+
+      <div (click)="change()">← Change Number</div>
+    </div>
+  </div>
