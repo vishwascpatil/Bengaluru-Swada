@@ -1,0 +1,24 @@
+<div class="video-feed" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading tasty bites...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && reels.length === 0">
+    <div class="empty-content">
+      <h2>No Reels Found</h2>
+      <p>Be the first to share a tasty bite!</p>
+      <div class="button-group">
+        <button class="seed-btn" (click)="seedData()">Seed Sample Data</button>
+        <a routerLink="/upload-reel" class="upload-btn">Upload Reel</a>
+      </div>
+    </div>
+  </div>
+
+  <app-video-card *ngFor="let reel of reels; let i = index" [reel]="reel" [active]="i === currentIndex"
+    (liked)="onLike(i)" (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
+  </app-video-card>
+</div>

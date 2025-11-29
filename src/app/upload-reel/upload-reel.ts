@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CloudflareStreamService } from '../services/cloudflare-stream.service';
 import { ReelsService } from '../services/reels.service';
 import { Auth } from '@angular/fire/auth';
 
@@ -33,7 +32,6 @@ export class UploadReelComponent implements OnInit {
     readonly acceptedFormats = ['video/mp4', 'video/quicktime', 'video/webm'];
 
     constructor(
-        private cloudflareService: CloudflareStreamService,
         private reelsService: ReelsService,
         private auth: Auth,
         private router: Router
@@ -130,47 +128,67 @@ export class UploadReelComponent implements OnInit {
         this.uploadProgress = 0;
 
         try {
-            // Step 1: Upload video to Cloudflare Stream (30% progress)
-            this.uploadProgress = 10;
-            const cloudflareVideoId = await this.cloudflareService.uploadVideo(
-                this.selectedFile,
-                { name: this.title }
+            // Import Firebase Storage dynamically
+            const { getStorage, ref, uploadBytesResumable, getDownloadURL } = await import('@angular/fire/storage');
+            const storage = getStorage();
+
+            // Create a unique filename
+            const timestamp = Date.now();
+            const filename = `videos/${currentUser.uid}/${timestamp}_${this.selectedFile.name}`;
+            const storageRef = ref(storage, filename);
+
+            // Upload file with progress tracking
+            const uploadTask = uploadBytesResumable(storageRef, this.selectedFile);
+
+            // Monitor upload progress
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    // Calculate progress percentage
+                    this.uploadProgress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                },
+                (error) => {
+                    // Handle upload error
+                    console.error('Upload error:', error);
+                    this.uploadError = 'Failed to upload video. Please try again.';
+                    this.isUploading = false;
+                },
+                async () => {
+                    // Upload completed successfully
+                    try {
+                        const videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+
+                        // Create reel document in Firestore
+                        await this.reelsService.createReel({
+                            cloudflareVideoId: '', // Not using Cloudflare
+                            videoUrl: videoUrl,
+                            thumbnailUrl: '', // Can be generated later or use a placeholder
+                            duration: 0, // Can be extracted from video metadata if needed
+                            title: this.title.trim(),
+                            vendor: this.vendor.trim(),
+                            price: this.price!,
+                            distance: this.distance.trim(),
+                            uploadedBy: currentUser.uid,
+                            createdAt: null as any, // Will be set by service
+                            viewCount: 0,
+                            likes: 0,
+                            likedBy: [],
+                            bookmarkedBy: []
+                        });
+
+                        this.uploadSuccess = true;
+
+                        // Navigate to main app after short delay
+                        setTimeout(() => {
+                            this.router.navigate(['/main-app']);
+                        }, 1500);
+
+                    } catch (error) {
+                        console.error('Error creating reel:', error);
+                        this.uploadError = 'Failed to save reel data. Please try again.';
+                        this.isUploading = false;
+                    }
+                }
             );
-
-            this.uploadProgress = 30;
-
-            // Step 2: Wait for video to be ready (60% progress)
-            const videoDetails = await this.cloudflareService.waitForVideoReady(cloudflareVideoId);
-            this.uploadProgress = 60;
-
-            // Step 3: Create reel document in Firestore (80% progress)
-            const videoUrl = this.cloudflareService.getStreamUrl(cloudflareVideoId);
-            const thumbnailUrl = this.cloudflareService.getThumbnailUrl(cloudflareVideoId);
-
-            await this.reelsService.createReel({
-                cloudflareVideoId,
-                videoUrl,
-                thumbnailUrl,
-                duration: videoDetails.duration || 0,
-                title: this.title.trim(),
-                vendor: this.vendor.trim(),
-                price: this.price!,
-                distance: this.distance.trim(),
-                uploadedBy: currentUser.uid,
-                createdAt: null as any, // Will be set by service
-                viewCount: 0,
-                likes: 0,
-                likedBy: [],
-                bookmarkedBy: []
-            });
-
-            this.uploadProgress = 100;
-            this.uploadSuccess = true;
-
-            // Navigate to video feed after short delay
-            setTimeout(() => {
-                this.router.navigate(['/video-feed']);
-            }, 1500);
 
         } catch (error) {
             console.error('Upload error:', error);
@@ -183,7 +201,7 @@ export class UploadReelComponent implements OnInit {
      * Cancel upload and go back
      */
     cancel(): void {
-        this.router.navigate(['/video-feed']);
+        this.router.navigate(['/main-app']);
     }
 
     /**

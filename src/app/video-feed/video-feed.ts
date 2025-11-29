@@ -1,16 +1,18 @@
 import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { VideoCardComponent } from '../video-card/video-card.component';
 import { ReelsService } from '../services/reels.service';
 import { Reel } from '../models/reel.model';
 import { Auth } from '@angular/fire/auth';
+import { Timestamp } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-video-feed',
   standalone: true,
-  imports: [CommonModule, VideoCardComponent],
-  templateUrl: './video-feed.component.html',
-  styleUrls: ['./video-feed.component.scss']
+  imports: [CommonModule, VideoCardComponent, RouterModule],
+  templateUrl: './video-feed.html',
+  styleUrls: ['./video-feed.scss']
 })
 export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
   reels: Reel[] = [];
@@ -213,6 +215,59 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
       navigator.clipboard.writeText(shareText)
         .then(() => alert('Link copied to clipboard!'))
         .catch(err => console.error('Error copying:', err));
+    }
+  }
+  /**
+   * Seed sample data for testing
+   */
+  async seedData() {
+    this.isLoading = true;
+    const sampleReels = [
+      {
+        title: 'Masala Dosa',
+        vendor: 'CTR',
+        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Masala_Dosa_with_Chutney_and_Sambar.jpg/1200px-Masala_Dosa_with_Chutney_and_Sambar.jpg',
+        price: 120,
+        distance: '2.5 km',
+        description: 'Crispy butter masala dosa',
+        uploadedBy: this.auth.currentUser?.uid || 'system',
+        cloudflareVideoId: 'sample-id-1',
+        duration: 60,
+        createdAt: Timestamp.now(),
+        viewCount: 0,
+        likes: 0,
+        likedBy: [],
+        bookmarkedBy: []
+      },
+      {
+        title: 'Idli Vada',
+        vendor: 'Brahmins Coffee Bar',
+        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Idli_Sambar.JPG/1200px-Idli_Sambar.JPG',
+        price: 80,
+        distance: '3.0 km',
+        description: 'Soft idlis and crispy vada',
+        uploadedBy: this.auth.currentUser?.uid || 'system',
+        cloudflareVideoId: 'sample-id-2',
+        duration: 60,
+        createdAt: Timestamp.now(),
+        viewCount: 0,
+        likes: 0,
+        likedBy: [],
+        bookmarkedBy: []
+      }
+    ];
+
+    try {
+      for (const reel of sampleReels) {
+        await this.reelsService.createReel(reel);
+      }
+      await this.loadReels();
+    } catch (error) {
+      console.error('Error seeding data:', error);
+    } finally {
+      this.isLoading = false;
     }
   }
 }

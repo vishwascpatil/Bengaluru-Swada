@@ -4,7 +4,7 @@ import { PhoneInputComponent } from './phone-input/phone-input';
 import { OtpComponent } from './otp/otp';
 import { LocationPermissionComponent } from './location-permission/location-permission.component';
 import { MainAppComponent } from './main-app/main-app.component';
-import { VideoFeedComponent } from './video-feed/video-feed.component';
+import { VideoFeedComponent } from './video-feed/video-feed';
 import { UploadReelComponent } from './upload-reel/upload-reel';
 
 export const routes: Routes = [

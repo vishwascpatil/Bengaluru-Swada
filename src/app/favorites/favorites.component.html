@@ -1,0 +1,62 @@
+<div class="favorites-container">
+    <div class="favorites-header">
+        <h1>Favorites</h1>
+        <p class="subtitle">Your bookmarked reels</p>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Loading favorites...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading && bookmarkedReels.length === 0">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                stroke="currentColor" stroke-width="2" fill="none" />
+        </svg>
+        <h2>No Favorites Yet</h2>
+        <p>Bookmark your favorite reels to see them here</p>
+    </div>
+
+    <!-- Grid of Bookmarked Reels -->
+    <div class="reels-grid" *ngIf="!isLoading && bookmarkedReels.length > 0">
+        <div class="reel-card" *ngFor="let reel of bookmarkedReels" (click)="playReel(reel)">
+            <div class="reel-thumbnail">
+                <img [src]="reel.thumbnailUrl || 'assets/placeholder-thumbnail.jpg'" [alt]="reel.title">
+                <div class="play-overlay">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                </div>
+                <div class="reel-stats">
+                    <span class="stat">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="white" stroke-width="2"
+                                fill="none" />
+                            <circle cx="12" cy="12" r="3" stroke="white" stroke-width="2" fill="none" />
+                        </svg>
+                        {{ reel.viewCount || 0 }}
+                    </span>
+                    <span class="stat">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                        {{ reel.likes || 0 }}
+                    </span>
+                </div>
+            </div>
+            <div class="reel-info">
+                <h3 class="reel-title">{{ reel.title }}</h3>
+                <p class="reel-vendor">{{ reel.vendor }}</p>
+                <div class="reel-meta">
+                    <span class="price">₹{{ reel.price }}</span>
+                    <span class="distance">{{ reel.distance }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
