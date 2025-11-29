@@ -6,13 +6,14 @@ import { LocationPermissionComponent } from './location-permission/location-perm
 import { MainAppComponent } from './main-app/main-app.component';
 import { VideoFeedComponent } from './video-feed/video-feed';
 import { UploadReelComponent } from './upload-reel/upload-reel';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
 	{ path: '', component: SplashComponent },
 	{ path: 'phone-input', component: PhoneInputComponent },
 	{ path: 'otp', component: OtpComponent },
-	{ path: 'location-permission', component: LocationPermissionComponent },
-	{ path: 'main-app', component: MainAppComponent },
-	{ path: 'video-feed', component: VideoFeedComponent },
-	{ path: 'upload-reel', component: UploadReelComponent }
+	{ path: 'location-permission', component: LocationPermissionComponent, canActivate: [authGuard] },
+	{ path: 'main-app', component: MainAppComponent, canActivate: [authGuard] },
+	{ path: 'video-feed', component: VideoFeedComponent, canActivate: [authGuard] },
+	{ path: 'upload-reel', component: UploadReelComponent, canActivate: [authGuard] }
 ];

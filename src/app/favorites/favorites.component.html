@@ -25,7 +25,8 @@
     <div class="reels-grid" *ngIf="!isLoading && bookmarkedReels.length > 0">
         <div class="reel-card" *ngFor="let reel of bookmarkedReels" (click)="playReel(reel)">
             <div class="reel-thumbnail">
-                <img [src]="reel.thumbnailUrl || 'assets/placeholder-thumbnail.jpg'" [alt]="reel.title">
+                <img *ngIf="reel.thumbnailUrl" [src]="reel.thumbnailUrl" [alt]="reel.title"
+                    (error)="$event.target.style.display='none'">
                 <div class="play-overlay">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
                         <path d="M8 5v14l11-7z" />

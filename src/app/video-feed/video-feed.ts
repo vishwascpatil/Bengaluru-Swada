@@ -55,12 +55,16 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
    * Load reels from Firestore
    */
   async loadReels() {
+    console.log('[VideoFeed] Starting to load reels...');
     this.isLoading = true;
     try {
       const fetchedReels = await this.reelsService.getReels(20);
+      console.log('[VideoFeed] Fetched reels:', fetchedReels.length);
 
       // Set client-side like/bookmark state based on current user
       const currentUser = this.auth.currentUser;
+      console.log('[VideoFeed] Current user:', currentUser?.uid || 'Not logged in');
+
       if (currentUser) {
         this.reels = fetchedReels.map(reel => ({
           ...reel,
@@ -70,10 +74,12 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
       } else {
         this.reels = fetchedReels;
       }
+      console.log('[VideoFeed] Final reels count:', this.reels.length);
     } catch (error) {
-      console.error('Error loading reels:', error);
+      console.error('[VideoFeed] Error loading reels:', error);
     } finally {
       this.isLoading = false;
+      console.log('[VideoFeed] Loading complete. isLoading:', this.isLoading);
     }
   }
 

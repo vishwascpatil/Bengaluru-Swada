@@ -14,8 +14,8 @@
     <div class="nav-right"></div>
   </div>
 
-  <app-video-feed *ngIf="activeTab === 'feed'"></app-video-feed>
-  <app-favorites *ngIf="activeTab === 'favorites'"></app-favorites>
+  <app-video-feed [class.hidden]="activeTab !== 'feed'"></app-video-feed>
+  <app-favorites [class.hidden]="activeTab !== 'favorites'"></app-favorites>
 
   <div class="bottom-nav">
     <button class="bottom-nav-btn" [class.active]="activeTab === 'feed'" (click)="select('feed')">
