@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
+import { LocationService } from '../services/location.service';
 import { Auth } from '@angular/fire/auth';
 
 @Component({
@@ -17,7 +18,8 @@ export class UploadReelComponent implements OnInit {
     title = '';
     vendor = '';
     price: number | null = null;
-    distance = '';
+    latitude: number | null = null;
+    longitude: number | null = null;
 
     // Upload state
     selectedFile: File | null = null;
@@ -34,7 +36,8 @@ export class UploadReelComponent implements OnInit {
     constructor(
         private reelsService: ReelsService,
         private auth: Auth,
-        private router: Router
+        private router: Router,
+        private locationService: LocationService
     ) { }
 
     ngOnInit(): void { }
@@ -104,8 +107,23 @@ export class UploadReelComponent implements OnInit {
             this.vendor.trim() &&
             this.price !== null &&
             this.price > 0 &&
-            this.distance.trim()
+            this.latitude !== null &&
+            this.longitude !== null
         );
+    }
+
+    /**
+     * Get user's current location
+     */
+    async getCurrentLocation(): Promise<void> {
+        try {
+            const location = await this.locationService.getUserLocation();
+            this.latitude = location.latitude;
+            this.longitude = location.longitude;
+        } catch (error) {
+            console.error('Error getting location:', error);
+            this.uploadError = 'Failed to get current location. Please enter coordinates manually.';
+        }
     }
 
     /**
@@ -166,7 +184,8 @@ export class UploadReelComponent implements OnInit {
                             title: this.title.trim(),
                             vendor: this.vendor.trim(),
                             price: this.price!,
-                            distance: this.distance.trim(),
+                            latitude: this.latitude!,
+                            longitude: this.longitude!,
                             uploadedBy: currentUser.uid,
                             createdAt: null as any, // Will be set by service
                             viewCount: 0,

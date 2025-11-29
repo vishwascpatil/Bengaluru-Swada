@@ -13,7 +13,11 @@ export interface Reel {
     title: string;
     vendor: string;
     price: number;
-    distance: string;
+
+    // Location data
+    latitude: number;                // Reel location latitude
+    longitude: number;               // Reel location longitude
+    distance?: string;               // Computed distance from user (client-side only)
 
     // User tracking
     uploadedBy: string;              // User ID who uploaded the reel

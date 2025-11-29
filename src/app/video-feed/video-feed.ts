@@ -1,8 +1,9 @@
-import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { VideoCardComponent } from '../video-card/video-card.component';
 import { ReelsService } from '../services/reels.service';
+import { LocationService } from '../services/location.service';
 import { Reel } from '../models/reel.model';
 import { Auth } from '@angular/fire/auth';
 import { Timestamp } from '@angular/fire/firestore';
@@ -28,7 +29,9 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private reelsService: ReelsService,
-    private auth: Auth
+    private auth: Auth,
+    private cdr: ChangeDetectorRef,
+    private locationService: LocationService
   ) { }
 
   async ngOnInit() {
@@ -65,21 +68,46 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
       const currentUser = this.auth.currentUser;
       console.log('[VideoFeed] Current user:', currentUser?.uid || 'Not logged in');
 
-      if (currentUser) {
-        this.reels = fetchedReels.map(reel => ({
-          ...reel,
-          isLiked: this.reelsService.isLikedByUser(reel, currentUser.uid),
-          isBookmarked: this.reelsService.isBookmarkedByUser(reel, currentUser.uid)
-        }));
-      } else {
-        this.reels = fetchedReels;
-      }
+      // Calculate distances for all reels
+      const reelsWithDistance = await Promise.all(
+        fetchedReels.map(async (reel) => {
+          let distance = '-- km';
+          if (reel.latitude && reel.longitude) {
+            try {
+              distance = await this.locationService.getDistanceFromUser(
+                reel.latitude,
+                reel.longitude
+              );
+            } catch (error) {
+              console.error('[VideoFeed] Error calculating distance:', error);
+            }
+          }
+
+          return {
+            ...reel,
+            distance,
+            isLiked: currentUser ? this.reelsService.isLikedByUser(reel, currentUser.uid) : false,
+            isBookmarked: currentUser ? this.reelsService.isBookmarkedByUser(reel, currentUser.uid) : false
+          };
+        })
+      );
+
+      this.reels = reelsWithDistance;
       console.log('[VideoFeed] Final reels count:', this.reels.length);
     } catch (error) {
       console.error('[VideoFeed] Error loading reels:', error);
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges(); // Force view update
       console.log('[VideoFeed] Loading complete. isLoading:', this.isLoading);
+
+      // Auto-play the first video after loading
+      if (this.reels.length > 0) {
+        setTimeout(() => {
+          this.playCurrent();
+          this.trackView();
+        }, 100);
+      }
     }
   }
 
@@ -235,8 +263,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
         videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Masala_Dosa_with_Chutney_and_Sambar.jpg/1200px-Masala_Dosa_with_Chutney_and_Sambar.jpg',
         price: 120,
-        distance: '2.5 km',
-        description: 'Crispy butter masala dosa',
+        latitude: 12.9352, // Koramangala, Bangalore
+        longitude: 77.6245,
         uploadedBy: this.auth.currentUser?.uid || 'system',
         cloudflareVideoId: 'sample-id-1',
         duration: 60,
@@ -252,8 +280,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
         videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Idli_Sambar.JPG/1200px-Idli_Sambar.JPG',
         price: 80,
-        distance: '3.0 km',
-        description: 'Soft idlis and crispy vada',
+        latitude: 12.9716, // Indiranagar, Bangalore
+        longitude: 77.6412,
         uploadedBy: this.auth.currentUser?.uid || 'system',
         cloudflareVideoId: 'sample-id-2',
         duration: 60,

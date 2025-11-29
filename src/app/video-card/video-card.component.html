@@ -1,8 +1,12 @@
 <div class="video-card" [class.active]="active">
-  <video #videoEl class="video-player" loop muted playsinline [poster]="displayPoster" (click)="onVideoTap($event)"
-    (touchend)="onVideoTap($event)">
-    <source [src]="displaySrc" type="video/mp4" />
+  <video #videoEl class="video-player" loop muted autoplay playsinline webkit-playsinline preload="auto"
+    [poster]="displayPoster" [src]="displaySrc" (click)="onVideoTap($event)" (touchend)="onVideoTap($event)">
   </video>
+
+  <!-- Loading Spinner -->
+  <div class="" *ngIf="isLoading">
+    <div class="spinner"></div>
+  </div>
 
   <!-- Double-tap Like Animation -->
   <div class="like-animation" *ngIf="showLikeAnimation">

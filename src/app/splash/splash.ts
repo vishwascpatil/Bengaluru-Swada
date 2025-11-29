@@ -29,7 +29,7 @@ export class SplashComponent implements OnInit {
           console.log('User is not logged in');
           this.router.navigate(['/phone-input']);
         }
-      }, 5000); // Keep splash screen visible for 1.5 seconds
+      }, 2000); // Keep splash screen visible for 1.5 seconds
     });
   }
 }
