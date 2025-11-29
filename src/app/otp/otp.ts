@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ConfirmationResult } from '@angular/fire/auth';
+import { PhoneAuthService } from '../services/phone-auth.service';
 
 @Component({
   selector: 'app-otp',
@@ -23,15 +24,9 @@ export class OtpComponent implements OnInit {
   error = '';
   confirmationResult: ConfirmationResult | null = null;
 
-  constructor(private router: Router, private cdr: ChangeDetectorRef) {
-    const nav = this.router.getCurrentNavigation();
-    if (nav?.extras?.state) {
-      this.phone = nav.extras.state['phone'] || '';
-      this.confirmationResult = nav.extras.state['confirmationResult'] || null;
-    } else if (history.state) {
-      this.phone = history.state['phone'] || '';
-      this.confirmationResult = history.state['confirmationResult'] || null;
-    }
+  constructor(private router: Router, private cdr: ChangeDetectorRef, private phoneAuthService: PhoneAuthService) {
+    this.phone = this.phoneAuthService.getPhoneNumber();
+    this.confirmationResult = this.phoneAuthService.getConfirmationResult();
 
     // If no confirmation result, redirect back to phone input
     if (!this.confirmationResult) {
@@ -116,4 +111,3 @@ export class OtpComponent implements OnInit {
     this.router.navigate(['/phone-input']);
   }
 }
-

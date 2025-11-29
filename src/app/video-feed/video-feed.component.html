@@ -1,6 +1,5 @@
 <div class="video-feed" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
-  <app-video-card *ngFor="let v of videos; let i = index" [src]="v.src" [poster]="v.poster" [title]="v.title"
-    [vendor]="v.vendor" [price]="v.price" [distance]="v.distance" [active]="i === currentIndex" (liked)="onLike(i)"
-    (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
+  <app-video-card *ngFor="let reel of reels; let i = index" [reel]="reel" [active]="i === currentIndex"
+    (liked)="onLike(i)" (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
   </app-video-card>
 </div>

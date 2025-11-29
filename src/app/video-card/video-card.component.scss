@@ -132,17 +132,73 @@
     transition: all 0.2s;
 }
 
-// Like button active state
-.like-btn.liked {
-    .action-icon path {
-        fill: #ff6b35;
-        stroke: #ff6b35;
+// Like button with counter
+.like-btn {
+    position: relative;
+
+    .like-count {
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 10px;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    &.liked {
+        background: rgba(255, 107, 53, 0.2);
+
+        .action-icon {
+            color: #ff6b35;
+        }
     }
 }
 
 // Bookmark button active state
-.bookmark-btn.bookmarked {
-    .action-icon path {
-        fill: #fff;
+.bookmark-btn {
+    &.bookmarked {
+        background: rgba(255, 255, 255, 0.3);
+
+        .action-icon {
+            color: #ffd700;
+        }
+    }
+}
+
+// Double-tap like animation
+.like-animation {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    pointer-events: none;
+    animation: likeAnimation 1s ease-out forwards;
+
+    svg {
+        filter: drop-shadow(0 0 10px rgba(255, 107, 53, 0.8));
+    }
+}
+
+@keyframes likeAnimation {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
     }
 }

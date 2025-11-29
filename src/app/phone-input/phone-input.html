@@ -16,7 +16,6 @@
         <span>⚠️ {{ error }}</span>
       </div>
 
-      <div id="recaptcha-container"></div>
 
       <button class="continue-btn" [class.active]="valid && !loading" [disabled]="!valid || loading"
         (click)="continue()">
@@ -28,6 +27,7 @@
         We'll send you an OTP to verify your number. Your privacy is important to us.
       </p>
 
+      <div id="recaptcha-container"></div>
     </div>
   </div>
 </div>

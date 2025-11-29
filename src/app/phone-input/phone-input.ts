@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { PhoneAuthService } from '../services/phone-auth.service';
 
 import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   ConfirmationResult,
-  getAuth
+  Auth
 } from '@angular/fire/auth';
 
 @Component({
@@ -29,20 +30,20 @@ export class PhoneInputComponent implements OnInit {
   recaptchaVerifier!: RecaptchaVerifier;
   confirmationResult!: ConfirmationResult;
 
-  constructor(private router: Router) { }
+  constructor(private router: Router, private auth: Auth, private phoneAuthService: PhoneAuthService) { }
 
   ngOnInit(): void {
     // Delay ensures DOM is fully ready
     setTimeout(() => {
-      // this.recaptchaVerifier = new RecaptchaVerifier(
-      //   this.auth,
-      //   'recaptcha-container',
-      //   {
-      //     size: 'invisible',
-      //     callback: () => console.log('reCAPTCHA success'),
-      //     'expired-callback': () => this.error = 'ReCAPTCHA expired. Try again.'
-      //   }
-      // );
+      this.recaptchaVerifier = new RecaptchaVerifier(
+        this.auth,
+        'recaptcha-container',
+        {
+          size: 'invisible',
+          callback: () => console.log('reCAPTCHA success'),
+          'expired-callback': () => this.error = 'ReCAPTCHA expired. Try again.'
+        }
+      );
 
       this.recaptchaVerifier.render();
     });
@@ -62,18 +63,16 @@ export class PhoneInputComponent implements OnInit {
     try {
       const phoneNumber = '+91' + this.mobile;
 
-      // this.confirmationResult = await signInWithPhoneNumber(
-      //   this.auth,
-      //   phoneNumber,
-      //   this.recaptchaVerifier
-      // );
+      this.confirmationResult = await signInWithPhoneNumber(
+        this.auth,
+        phoneNumber,
+        this.recaptchaVerifier
+      );
 
-      this.router.navigate(['/otp'], {
-        state: {
-          phone: this.mobile,
-          confirmationResult: this.confirmationResult,
-        }
-      });
+      this.phoneAuthService.setConfirmationResult(this.confirmationResult);
+      this.phoneAuthService.setPhoneNumber(this.mobile);
+
+      this.router.navigate(['/otp']);
 
     } catch (err: any) {
       console.error(err);
@@ -84,6 +83,8 @@ export class PhoneInputComponent implements OnInit {
         this.error = 'Too many attempts. Try again later.';
       else if (err.code === 'auth/quota-exceeded')
         this.error = 'SMS quota exceeded.';
+      else if (err.code === 'auth/billing-not-enabled')
+        this.error = 'Firebase billing is not enabled. Please enable it in the Firebase Console.';
       else
         this.error = 'Failed to send OTP. Try again.';
 

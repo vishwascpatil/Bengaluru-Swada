@@ -82,6 +82,38 @@
     span {
         margin-top: 2px;
     }
+
+    // Upload button special styling
+    &.upload-btn {
+        position: relative;
+        color: #fff;
+
+        .upload-fab {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            margin-bottom: -8px;
+
+            .nav-icon {
+                color: white;
+            }
+        }
+
+        &:hover .upload-fab {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        &:active .upload-fab {
+            transform: scale(0.95);
+        }
+    }
 }
 
 .nav-icon {

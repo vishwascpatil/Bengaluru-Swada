@@ -1,0 +1,109 @@
+<div class="upload-container">
+    <div class="upload-header">
+        <button class="back-btn" (click)="cancel()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+        </button>
+        <h1>Upload Reel</h1>
+        <div class="spacer"></div>
+    </div>
+
+    <div class="upload-content">
+        <!-- Video Preview Section -->
+        <div class="video-preview-section">
+            <div class="video-preview" *ngIf="videoPreviewUrl; else fileSelector">
+                <video [src]="videoPreviewUrl" controls playsinline class="preview-video"></video>
+                <button class="remove-video-btn" (click)="removeFile()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+
+            <ng-template #fileSelector>
+                <label class="file-selector">
+                    <input type="file" accept="video/mp4,video/quicktime,video/webm" (change)="onFileSelected($event)"
+                        hidden>
+                    <div class="file-selector-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                                stroke="currentColor" stroke-width="2" />
+                            <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                        <p class="selector-title">Select Video</p>
+                        <p class="selector-subtitle">MP4, MOV, or WebM (max 100MB)</p>
+                    </div>
+                </label>
+            </ng-template>
+        </div>
+
+        <!-- Form Section -->
+        <div class="form-section">
+            <div class="form-group">
+                <label for="title">Dish Name *</label>
+                <input type="text" id="title" [(ngModel)]="title" placeholder="e.g., Masala Dosa"
+                    [disabled]="isUploading">
+            </div>
+
+            <div class="form-group">
+                <label for="vendor">Vendor Name *</label>
+                <input type="text" id="vendor" [(ngModel)]="vendor" placeholder="e.g., Vidyarthi Bhavan"
+                    [disabled]="isUploading">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="price">Price (₹) *</label>
+                    <input type="number" id="price" [(ngModel)]="price" placeholder="50" min="0"
+                        [disabled]="isUploading">
+                </div>
+
+                <div class="form-group">
+                    <label for="distance">Distance *</label>
+                    <input type="text" id="distance" [(ngModel)]="distance" placeholder="e.g., 2.5 km"
+                        [disabled]="isUploading">
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" *ngIf="uploadError">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                    <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                {{ uploadError }}
+            </div>
+
+            <!-- Success Message -->
+            <div class="success-message" *ngIf="uploadSuccess">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" />
+                    <path d="M22 4L12 14.01l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                Upload successful! Redirecting...
+            </div>
+
+            <!-- Upload Progress -->
+            <div class="upload-progress" *ngIf="isUploading">
+                <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+                </div>
+                <p class="progress-text">Uploading... {{ uploadProgress }}%</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="cancel-btn" (click)="cancel()" [disabled]="isUploading">
+                    Cancel
+                </button>
+                <button class="upload-btn" (click)="uploadReel()" [disabled]="!isFormValid() || isUploading">
+                    <span *ngIf="!isUploading">Upload Reel</span>
+                    <span *ngIf="isUploading">Uploading...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -2,11 +2,11 @@
   <div class="otp-section">
     <div class="otp-form">
       <h2 class="otp-title">Verify Your Number</h2>
-      <p class="otp-subtitle">We've sent a 4-digit OTP to <span class="phone-number">{{phone}}</span></p>
+      <p class="otp-subtitle">We've sent a 6-digit OTP to <span class="phone-number">{{phone}}</span></p>
 
       <div class="otp-container">
         <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
-          *ngFor="let n of [0,1,2,3]; let i = index" [(ngModel)]="otp[i]" (input)="onOtpInput(i)">
+          *ngFor="let n of [0,1,2,3,4,5]; let i = index" [(ngModel)]="otp[i]" (input)="onOtpInput(i)">
       </div>
 
       <button class="verify-btn" [disabled]="!complete" (click)="verify()">Verify OTP</button>
