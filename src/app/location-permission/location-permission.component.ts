@@ -151,6 +151,7 @@ export class LocationPermissionComponent implements AfterViewInit {
 
         // Navigate to main app with location data
         this.router.navigate(['/main-app'], {
+          replaceUrl: true,
           state: {
             location: areaName,
             latitude: latitude,
@@ -184,6 +185,7 @@ export class LocationPermissionComponent implements AfterViewInit {
 
     // Navigate to main app with location data
     this.router.navigate(['/main-app'], {
+      replaceUrl: true,
       state: {
         location: loc.name,
         latitude: loc.lat,

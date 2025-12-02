@@ -4,85 +4,24 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
-    font-family: 'Poppins', sans-serif;
-}
-
-.splash-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    animation: fadeInUp 0.8s ease-out;
+    background-color: #fff;
 }
 
 .splash-logo {
-    max-width: 200px;
-    max-height: 200px;
+    max-width: 80%;
+    max-height: 50vh;
     object-fit: contain;
-    border-radius: 24px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    margin-bottom: 24px;
-    animation: bounceIn 1s ease-out;
+    animation: fadeIn 1.5s ease-out;
 }
 
-.app-name {
-    font-size: 32px;
-    font-weight: 700;
-    color: white;
-    margin: 0 0 32px 0;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    letter-spacing: -0.5px;
-}
-
-.loading-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes fadeInUp {
+@keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(30px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes bounceIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.3);
-    }
-
-    50% {
-        opacity: 1;
-        transform: scale(1.05);
-    }
-
-    70% {
         transform: scale(0.9);
     }
 
-    100% {
-        transform: scale(1);
-    }
-}
-
-@keyframes spin {
     to {
-        transform: rotate(360deg);
+        opacity: 1;
+        transform: scale(1);
     }
 }

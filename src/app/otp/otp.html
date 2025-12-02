@@ -5,7 +5,7 @@
       <p class="otp-subtitle">We've sent a 6-digit OTP to <span class="phone-number">{{phone}}</span></p>
 
       <div class="otp-container">
-        <input class="otp-input" type="text" inputmode="numeric" maxlength="1"
+        <input class="otp-input" [class.error-border]="hasError" type="text" inputmode="numeric" maxlength="1"
           *ngFor="let n of [0,1,2,3,4,5]; let i = index" [(ngModel)]="otp[i]" (input)="onOtpInput(i)">
       </div>
 
@@ -20,3 +20,15 @@
       <div (click)="change()">← Change Number</div>
     </div>
   </div>
+
+  <!-- Success Overlay -->
+  <div class="success-overlay" *ngIf="isVerified">
+    <div class="success-content">
+      <div class="checkmark-circle">
+        <div class="checkmark draw"></div>
+      </div>
+      <h2>Verified!</h2>
+      <p>Redirecting...</p>
+    </div>
+  </div>
+</div>

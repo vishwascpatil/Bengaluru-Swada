@@ -12,7 +12,7 @@ import { AppInitService } from '../guards/splash.guard';
   styleUrl: './splash.scss',
 })
 export class SplashComponent implements OnInit, OnDestroy {
-  private minSplashDuration = 2000; // Minimum 2 seconds
+  private minSplashDuration = 3000; // Minimum 2 seconds
   private splashStartTime: number = 0;
   private authUnsubscribe?: () => void;
 

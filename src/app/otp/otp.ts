@@ -25,6 +25,9 @@ export class OtpComponent implements OnInit {
   error = '';
   confirmationResult: ConfirmationResult | null = null;
 
+  hasError = false;
+  isVerified = false;
+
   constructor(private router: Router, private cdr: ChangeDetectorRef, private phoneAuthService: PhoneAuthService) {
     this.phone = this.phoneAuthService.getPhoneNumber();
     this.confirmationResult = this.phoneAuthService.getConfirmationResult();
@@ -55,16 +58,12 @@ export class OtpComponent implements OnInit {
   onOtpInput(i: number) {
     this.complete = this.otp.join('').length === 6 && /^\d{6}$/.test(this.otp.join(''));
     this.error = '';
+    this.hasError = false;
 
     // Auto-focus next input
     if (this.otp[i] && i < 5) {
       const nextInput = document.querySelectorAll('.otp-input')[i + 1] as HTMLElement;
       if (nextInput) nextInput.focus();
-    }
-
-    // Auto-verify when all 6 digits are entered
-    if (this.complete) {
-      this.verify();
     }
   }
 
@@ -73,6 +72,7 @@ export class OtpComponent implements OnInit {
 
     this.loading = true;
     this.error = '';
+    this.hasError = false;
 
     try {
       const otpCode = this.otp.join('');
@@ -82,8 +82,15 @@ export class OtpComponent implements OnInit {
 
       console.log('User signed in successfully:', result.user);
 
-      // Navigate to location permission on success
-      this.router.navigate(['/location-permission']);
+      // Show success state
+      this.isVerified = true;
+      this.loading = false;
+
+      // Navigate to location permission after delay
+      setTimeout(() => {
+        this.router.navigate(['/location-permission'], { replaceUrl: true });
+      }, 2000);
+
     } catch (error: any) {
       console.error('Error verifying OTP:', error);
 
@@ -97,6 +104,7 @@ export class OtpComponent implements OnInit {
       }
 
       this.loading = false;
+      this.hasError = true;
       // Clear OTP inputs on error
       this.otp = ['', '', '', '', '', ''];
       this.complete = false;
