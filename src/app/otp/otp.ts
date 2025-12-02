@@ -9,6 +9,7 @@ import { PhoneAuthService } from '../services/phone-auth.service';
   selector: 'app-otp',
   templateUrl: './otp.html',
   imports: [FormsModule, CommonModule],
+  standalone: true,
   styleUrls: ['./otp.scss']
 })
 export class OtpComponent implements OnInit {

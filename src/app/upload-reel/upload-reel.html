@@ -108,9 +108,9 @@
 
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <button class="cancel-btn" (click)="cancel()" [disabled]="isUploading">
+                <!-- <button class="cancel-btn" (click)="cancel()" [disabled]="isUploading">
                     Cancel
-                </button>
+                </button> -->
                 <button class="upload-btn" (click)="uploadReel()" [disabled]="!isFormValid() || isUploading">
                     <span *ngIf="!isUploading">Upload Reel</span>
                     <span *ngIf="isUploading">Uploading...</span>

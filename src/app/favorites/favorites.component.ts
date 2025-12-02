@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
 import { Auth } from '@angular/fire/auth';
 import { Reel } from '../models/reel.model';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
     selector: 'app-favorites',
@@ -20,7 +21,8 @@ export class FavoritesComponent implements OnInit {
         private reelsService: ReelsService,
         private auth: Auth,
         private router: Router,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        private navigationService: NavigationService
     ) { }
 
     async ngOnInit() {
@@ -63,8 +65,10 @@ export class FavoritesComponent implements OnInit {
     }
 
     playReel(reel: Reel) {
-        // Navigate to video feed with this reel
-        // For now, just navigate to main feed
+        console.log('[Favorites] Playing reel:', reel.id, reel.title);
+        // Set the selected reel in the navigation service
+        this.navigationService.selectReel(reel.id!);
+        // Navigate to main-app (it will switch to feed tab automatically)
         this.router.navigate(['/main-app']);
     }
 }

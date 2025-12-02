@@ -19,6 +19,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   @Input() price: number | string = '';
   @Input() distance = '';
   @Input() active = false;
+  @Input() relativeIndex = 0;
 
   // Social features
   @Input() likes = 0;
@@ -78,6 +79,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   }
 
   isLoading = true;
+  progress = 0;
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['reel'] || changes['src']) {
@@ -99,40 +101,18 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
 
     events.forEach(event => {
       video.addEventListener(event, () => {
-        console.log(`[VideoCard] Event: ${event}, ReadyState: ${video.readyState}, Paused: ${video.paused}, Src: ${this.displaySrc}`);
+        // console.log(`[VideoCard] Event: ${event}, ReadyState: ${video.readyState}, Paused: ${video.paused}`);
+        if (event === 'playing' || event === 'canplay' || event === 'loadeddata') {
+          this.isLoading = false;
+        }
+        if (event === 'waiting') {
+          this.isLoading = true;
+        }
       });
     });
 
-    video.addEventListener('waiting', () => {
-      console.log('[VideoCard] Waiting...');
-      this.isLoading = true;
-    });
-
-    video.addEventListener('playing', () => {
-      console.log('[VideoCard] Playing!');
-      this.isLoading = false;
-    });
-
-    video.addEventListener('canplay', () => {
-      console.log('[VideoCard] Can play!');
-      this.isLoading = false;
-    });
-
-    video.addEventListener('loadeddata', () => {
-      console.log('[VideoCard] Loaded data!');
-      this.isLoading = false;
-    });
-
-    video.addEventListener('error', (e) => {
-      console.error('[VideoCard] Error:', video.error);
-      this.isLoading = false;
-    });
-
     // Initial check
-    console.log(`[VideoCard] Initial check - ReadyState: ${video.readyState}`);
-    if (video.readyState >= 3) {
-      this.isLoading = false;
-    }
+    this.checkVideoReady();
 
     // Safety timeout: if video doesn't load in 5 seconds, hide spinner
     setTimeout(() => {
@@ -141,6 +121,22 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
         this.isLoading = false;
       }
     }, 5000);
+
+    // Track video progress
+    video.addEventListener('timeupdate', () => {
+      if (video.duration) {
+        this.progress = (video.currentTime / video.duration) * 100;
+      }
+    });
+  }
+
+  private checkVideoReady() {
+    if (this.videoEl && this.videoEl.nativeElement) {
+      const video = this.videoEl.nativeElement;
+      if (video.readyState >= 3) {
+        this.isLoading = false;
+      }
+    }
   }
 
   play() {
@@ -165,6 +161,14 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
     }
   }
 
+  preload() {
+    const video = this.videoEl?.nativeElement;
+    if (video) {
+      video.preload = 'auto';
+      video.load();
+    }
+  }
+
   pause() {
     this.videoEl?.nativeElement.pause();
   }
@@ -184,6 +188,28 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   /**
    * Handle double-tap to like
    */
+  isMuted = true;
+  showMuteIcon = false;
+
+  toggleMute() {
+    const video = this.videoEl?.nativeElement;
+    if (video) {
+      video.muted = !video.muted;
+      this.isMuted = video.muted;
+      this.showMuteAnimation();
+    }
+  }
+
+  private showMuteAnimation() {
+    this.showMuteIcon = true;
+    setTimeout(() => {
+      this.showMuteIcon = false;
+    }, 1000);
+  }
+
+  /**
+   * Handle double-tap to like, single tap to mute/unmute
+   */
   onVideoTap(event: MouseEvent | TouchEvent): void {
     const currentTime = new Date().getTime();
     const tapLength = currentTime - this.lastTapTime;
@@ -194,6 +220,11 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
         this.toggleLike();
         this.showLikeAnimationEffect();
       }
+    } else {
+      // Single tap detected (wait briefly to ensure it's not a double tap)
+      // For instant response, we can toggle mute immediately, but double tap might trigger it twice.
+      // However, Instagram toggles mute on single tap immediately.
+      this.toggleMute();
     }
 
     this.lastTapTime = currentTime;
@@ -221,4 +252,3 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
     return count.toString();
   }
 }
-

@@ -21,46 +21,57 @@
           nearby</span></div>
       <div class="benefit-item"><span class="benefit-icon">💰</span><span class="benefit-text">See accurate prices &
           distance</span></div>
-
     </div>
 
-    <button class="allow-location-btn" (click)="allow()"> Allow Location Access</button>
-    <button class="manual-location-btn" (click)="manual()">Enter Location Manually</button>
+    <button class="allow-location-btn" (click)="allow()">Allow Location Access</button>
+    <button class="manual-location-btn" (click)="manual()">Select Location Manually</button>
     <p class="location-privacy">Your location data is secure and only used to show nearby food options.</p>
   </div>
 
-  <!-- Pincode Search Modal -->
-  <div class="pincode-modal" *ngIf="showPincodeModal" [@fadeIn]>
-    <div class="modal-overlay" (click)="closePincodeModal()"></div>
+  <!-- Location Selector Modal -->
+  <div class="pincode-modal" *ngIf="showLocationModal" [@fadeIn]>
+    <div class="modal-overlay" (click)="closeLocationModal()"></div>
     <div class="modal-content" [@slideUp]>
-      <button class="close-btn" (click)="closePincodeModal()">✕</button>
+      <button class="close-btn" (click)="closeLocationModal()">✕</button>
       <div class="modal-header">
-        <div class="search-icon">🔍</div>
-        <h3 class="modal-title">Enter Your Pincode</h3>
-        <p class="modal-subtitle">We'll find the best street food in your area</p>
+        <div class="search-icon">📍</div>
+        <h3 class="modal-title">Select Your Location</h3>
+        <p class="modal-subtitle">Choose your area from the list below</p>
       </div>
 
       <div class="search-box">
-        <input type="text" class="pincode-input" [(ngModel)]="pincode" (input)="onPincodeInput()"
-          placeholder="Enter 6-digit pincode" maxlength="6" pattern="[0-9]*" inputmode="numeric" #pincodeInput />
-        <div class="input-underline" [class.active]="pincode.length > 0"></div>
+        <input type="text" class="pincode-input" [(ngModel)]="searchQuery"
+          placeholder="Search by area name or pincode..." #searchInput />
+        <div class="input-underline" [class.active]="searchQuery.length > 0"></div>
       </div>
 
-      <div class="pincode-suggestions" *ngIf="pincode.length >= 3">
-        <p class="suggestions-label">Popular areas:</p>
-        <div class="suggestion-item" *ngFor="let suggestion of filteredSuggestions" (click)="selectPincode(suggestion)">
-          <span class="suggestion-pin">📍</span>
-          <div class="suggestion-info">
-            <span class="suggestion-code">{{ suggestion.code }}</span>
-            <span class="suggestion-area">{{ suggestion.area }}</span>
+      <div class="locations-list">
+        <div class="location-item" *ngFor="let loc of filteredLocations" (click)="selectLocation(loc)">
+          <div class="location-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                fill="currentColor" />
+            </svg>
           </div>
+          <div class="location-info">
+            <div class="location-name">{{loc.name}}</div>
+            <div class="location-area">Pincode: {{loc.pincode}}</div>
+          </div>
+          <svg class="chevron-right" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+
+        <div class="no-results" *ngIf="filteredLocations.length === 0">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <p>No locations found</p>
+          <span>Try searching for a different area or pincode</span>
         </div>
       </div>
-
-      <button class="confirm-pincode-btn" [disabled]="!isValidPincode()" [class.disabled]="!isValidPincode()"
-        (click)="confirmPincode()">
-        Continue
-      </button>
     </div>
   </div>
 </div>

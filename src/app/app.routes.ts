@@ -7,13 +7,14 @@ import { MainAppComponent } from './main-app/main-app.component';
 import { VideoFeedComponent } from './video-feed/video-feed';
 import { UploadReelComponent } from './upload-reel/upload-reel';
 import { authGuard } from './guards/auth.guard';
+import { splashGuard } from './guards/splash.guard';
 
 export const routes: Routes = [
 	{ path: '', component: SplashComponent },
-	{ path: 'phone-input', component: PhoneInputComponent },
-	{ path: 'otp', component: OtpComponent },
-	{ path: 'location-permission', component: LocationPermissionComponent, canActivate: [authGuard] },
-	{ path: 'main-app', component: MainAppComponent, canActivate: [authGuard] },
-	{ path: 'video-feed', component: VideoFeedComponent, canActivate: [authGuard] },
-	{ path: 'upload-reel', component: UploadReelComponent, canActivate: [authGuard] }
+	{ path: 'phone-input', component: PhoneInputComponent, canActivate: [splashGuard] },
+	{ path: 'otp', component: OtpComponent, canActivate: [splashGuard] },
+	{ path: 'location-permission', component: LocationPermissionComponent, canActivate: [authGuard, splashGuard] },
+	{ path: 'main-app', component: MainAppComponent, canActivate: [authGuard, splashGuard] },
+	{ path: 'video-feed', component: VideoFeedComponent, canActivate: [authGuard, splashGuard] },
+	{ path: 'upload-reel', component: UploadReelComponent, canActivate: [authGuard, splashGuard] }
 ];

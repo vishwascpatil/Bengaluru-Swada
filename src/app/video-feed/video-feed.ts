@@ -148,8 +148,14 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
 
   playCurrent() {
     this.cards.forEach((c, idx) => {
-      if (idx === this.currentIndex) c.play();
-      else c.pause();
+      if (idx === this.currentIndex) {
+        c.play();
+      } else if (Math.abs(idx - this.currentIndex) <= 1) {
+        // Preload adjacent videos
+        c.preload();
+      } else {
+        c.pause();
+      }
     });
   }
 
@@ -302,6 +308,34 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
       console.error('Error seeding data:', error);
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  /**
+   * Navigate to a specific reel by ID
+   * @param reelId The ID of the reel to navigate to
+   */
+  navigateToReel(reelId: string) {
+    console.log(`[VideoFeed] Attempting to navigate to reel: ${reelId}`);
+    console.log(`[VideoFeed] Total reels loaded: ${this.reels.length}`);
+
+    if (this.reels.length === 0) {
+      console.warn(`[VideoFeed] No reels loaded yet, cannot navigate to ${reelId}`);
+      return;
+    }
+
+    const index = this.reels.findIndex(r => r.id === reelId);
+    if (index !== -1) {
+      console.log(`[VideoFeed] Found reel at index ${index}, navigating...`);
+      this.currentIndex = index;
+      setTimeout(() => {
+        this.playCurrent();
+        this.trackView();
+      }, 100);
+      console.log(`[VideoFeed] Successfully navigated to reel: ${reelId}`);
+    } else {
+      console.warn(`[VideoFeed] Reel not found in loaded reels: ${reelId}`);
+      console.log('[VideoFeed] Available reel IDs:', this.reels.map(r => r.id));
     }
   }
 }
