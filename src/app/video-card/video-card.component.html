@@ -1,6 +1,6 @@
 <div class="video-card" [class.active]="active" [class.prev]="relativeIndex < 0" [class.next]="relativeIndex > 0">
-  <video #videoEl class="video-player" loop muted autoplay playsinline webkit-playsinline preload="auto"
-    [poster]="displayPoster" [src]="displaySrc" (click)="onVideoTap($event)" (touchend)="onVideoTap($event)">
+  <video #videoEl class="video-player" loop [muted]="isMuted" autoplay playsinline webkit-playsinline preload="auto"
+    [poster]="displayPoster" [src]="displaySrc" (click)="onVideoTap($event)" (touchend)="onVideoTap($event)" (dblclick)="toggleMute()">
   </video>
 
   <!-- Loading Spinner -->
@@ -79,11 +79,26 @@
             stroke-linejoin="round" />
         </svg>
       </button>
+
+      <button class="action-btn map-btn" (click)="openGoogleMaps()">
+        <svg class="action-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span class="action-text">Map</span>
+      </button>
     </div>
   </div>
 
   <!-- Video Progress Bar -->
-  <div class="progress-container">
+  <div class="progress-container" 
+       [class.visible]="isProgressBarVisible"
+       (click)="onProgressBarClick($event)" 
+       (touchstart)="onProgressBarTouchStart($event)"
+       (touchmove)="onProgressBarTouchMove($event)"
+       (touchend)="onProgressBarTouchEnd()"
+       (mouseenter)="isProgressBarVisible = true"
+       (mouseleave)="isProgressBarVisible = false">
     <div class="progress-bar" [style.width.%]="progress"></div>
   </div>
 </div>

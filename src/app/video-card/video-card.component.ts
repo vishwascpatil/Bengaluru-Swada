@@ -33,9 +33,11 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
 
   @ViewChild('videoEl') videoEl!: ElementRef<HTMLVideoElement>;
 
-  // Double-tap to like
+  // Double-tap to mute/unmute
   private lastTapTime = 0;
   showLikeAnimation = false;
+  isProgressBarVisible = false;
+  private progressBarHideTimeout: any;
 
   // Get display values from reel or fallback to individual inputs
   get displaySrc(): string {
@@ -80,6 +82,10 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
 
   isLoading = true;
   progress = 0;
+  isSeeking = false;
+  isMuted = true;
+  showMuteIcon = false;
+  private progressInterval: any;
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['reel'] || changes['src']) {
@@ -101,12 +107,16 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
 
     events.forEach(event => {
       video.addEventListener(event, () => {
-        // console.log(`[VideoCard] Event: ${event}, ReadyState: ${video.readyState}, Paused: ${video.paused}`);
         if (event === 'playing' || event === 'canplay' || event === 'loadeddata') {
           this.isLoading = false;
+          this.startProgressTracking();
         }
         if (event === 'waiting') {
           this.isLoading = true;
+        }
+        if (event === 'ended') {
+          // Reset progress when video ends
+          this.progress = 0;
         }
       });
     });
@@ -121,13 +131,30 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
         this.isLoading = false;
       }
     }, 5000);
+  }
 
-    // Track video progress
-    video.addEventListener('timeupdate', () => {
-      if (video.duration) {
+  private startProgressTracking() {
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
+
+    const video = this.videoEl?.nativeElement;
+    if (!video) return;
+
+    this.progressInterval = setInterval(() => {
+      if (!this.isSeeking && video.duration) {
         this.progress = (video.currentTime / video.duration) * 100;
       }
-    });
+    }, 50); // Update progress more frequently for smoother animation
+  }
+
+  ngOnDestroy() {
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
+    if (this.progressBarHideTimeout) {
+      clearTimeout(this.progressBarHideTimeout);
+    }
   }
 
   private checkVideoReady() {
@@ -173,30 +200,56 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
     this.videoEl?.nativeElement.pause();
   }
 
-  toggleLike() {
-    this.liked.emit();
+  // Toggle bookmark status
+  bookmark(): void {
+    this.isBookmarked = !this.isBookmarked;
+    this.bookmarked.emit();
   }
 
-  bookmark() {
-    this.bookmarked.emit();
+  // Open Google Maps with the reel's location
+  openGoogleMaps(): void {
+    if (this.reel?.latitude && this.reel?.longitude) {
+      const { latitude, longitude } = this.reel;
+      const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
+      window.open(url, '_blank');
+    } else {
+      console.warn('No location data available for this reel');
+      // Optional: Show a toast or alert to the user
+    }
   }
 
   share() {
     this.shared.emit();
   }
 
+  toggleLike() {
+    this.isLiked = !this.isLiked;
+    this.liked.emit();
+    if (this.isLiked) {
+      this.showLikeAnimationEffect();
+    }
+  }
+
   /**
    * Handle double-tap to like
    */
-  isMuted = true;
-  showMuteIcon = false;
-
   toggleMute() {
     const video = this.videoEl?.nativeElement;
     if (video) {
       video.muted = !video.muted;
       this.isMuted = video.muted;
       this.showMuteAnimation();
+
+      // Show the progress bar when muting/unmuting
+      this.isProgressBarVisible = true;
+
+      // Auto-hide after 2 seconds
+      if (this.progressBarHideTimeout) {
+        clearTimeout(this.progressBarHideTimeout);
+      }
+      this.progressBarHideTimeout = setTimeout(() => {
+        this.isProgressBarVisible = false;
+      }, 2000);
     }
   }
 
@@ -208,26 +261,42 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   }
 
   /**
-   * Handle double-tap to like, single tap to mute/unmute
+   * Handle video tap - single tap toggles progress bar, double tap toggles mute
    */
   onVideoTap(event: MouseEvent | TouchEvent): void {
+    event.preventDefault();
     const currentTime = new Date().getTime();
     const tapLength = currentTime - this.lastTapTime;
 
     if (tapLength < 300 && tapLength > 0) {
-      // Double tap detected
-      if (!this.displayIsLiked) {
-        this.toggleLike();
-        this.showLikeAnimationEffect();
-      }
-    } else {
-      // Single tap detected (wait briefly to ensure it's not a double tap)
-      // For instant response, we can toggle mute immediately, but double tap might trigger it twice.
-      // However, Instagram toggles mute on single tap immediately.
+      // Double tap detected - toggle mute
       this.toggleMute();
+      this.lastTapTime = 0;
+    } else {
+      // Single tap - toggle progress bar visibility
+      this.toggleProgressBar();
+      this.lastTapTime = currentTime;
+    }
+  }
+
+  /**
+   * Toggle progress bar visibility with auto-hide
+   */
+  private toggleProgressBar(): void {
+    // Clear any existing timeout
+    if (this.progressBarHideTimeout) {
+      clearTimeout(this.progressBarHideTimeout);
     }
 
-    this.lastTapTime = currentTime;
+    // Toggle visibility
+    this.isProgressBarVisible = !this.isProgressBarVisible;
+
+    // Auto-hide after 3 seconds if shown
+    if (this.isProgressBarVisible) {
+      this.progressBarHideTimeout = setTimeout(() => {
+        this.isProgressBarVisible = false;
+      }, 3000);
+    }
   }
 
   /**
@@ -250,5 +319,54 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
       return (count / 1000).toFixed(1) + 'K';
     }
     return count.toString();
+  }
+
+  /**
+   * Handle progress bar interaction for seeking
+   */
+  onProgressBarClick(event: MouseEvent | TouchEvent): void {
+    event.stopPropagation();
+    this.seekToPosition(event);
+  }
+
+  onProgressBarTouchStart(event: TouchEvent): void {
+    this.isSeeking = true;
+    this.seekToPosition(event);
+  }
+
+  onProgressBarTouchMove(event: TouchEvent): void {
+    if (this.isSeeking) {
+      this.seekToPosition(event);
+    }
+  }
+
+  onProgressBarTouchEnd(): void {
+    this.isSeeking = false;
+  }
+
+  private seekToPosition(event: MouseEvent | TouchEvent): void {
+    const progressContainer = (event.currentTarget as HTMLElement);
+    const rect = progressContainer.getBoundingClientRect();
+
+    let clientX: number;
+    if (event instanceof MouseEvent) {
+      clientX = event.clientX;
+    } else {
+      // For touch events, use the first touch point
+      const touch = event.touches[0] || event.changedTouches[0];
+      if (!touch) return;
+      clientX = touch.clientX;
+    }
+
+    // Calculate the position within the progress bar
+    const clickPosition = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const percentage = clickPosition / rect.width;
+
+    // Update the video's current time
+    const video = this.videoEl?.nativeElement;
+    if (video && video.readyState > 0) {
+      video.currentTime = percentage * video.duration;
+      this.progress = percentage * 100; // Update progress immediately
+    }
   }
 }

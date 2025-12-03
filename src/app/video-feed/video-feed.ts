@@ -57,6 +57,46 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Load reels from Firestore
    */
+  /**
+   * Reload reels when location changes
+   */
+  async reloadReelsForNewLocation() {
+    console.log('[VideoFeed] Reloading reels for new location...');
+    const currentReels = [...this.reels];
+    
+    // Recalculate distances for current reels
+    const reelsWithUpdatedDistances = await Promise.all(
+      currentReels.map(async (reel) => {
+        let distance = '-- km';
+        if (reel.latitude && reel.longitude) {
+          try {
+            distance = await this.locationService.getDistanceFromUser(
+              reel.latitude,
+              reel.longitude
+            );
+          } catch (error) {
+            console.error('[VideoFeed] Error calculating distance:', error);
+          }
+        }
+        return {
+          ...reel,
+          distance
+        };
+      })
+    );
+    
+    // Sort reels by distance (closest first)
+    reelsWithUpdatedDistances.sort((a, b) => {
+      const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
+      const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
+      return distA - distB;
+    });
+    
+    this.reels = reelsWithUpdatedDistances;
+    this.currentIndex = 0; // Reset to first reel
+    this.playCurrent();
+  }
+
   async loadReels() {
     console.log('[VideoFeed] Starting to load reels...');
     this.isLoading = true;
@@ -92,6 +132,13 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
         })
       );
 
+      // Sort reels by distance (closest first)
+      reelsWithDistance.sort((a, b) => {
+        const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
+        const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
+        return distA - distB;
+      });
+      
       this.reels = reelsWithDistance;
       console.log('[VideoFeed] Final reels count:', this.reels.length);
     } catch (error) {

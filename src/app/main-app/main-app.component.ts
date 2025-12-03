@@ -217,11 +217,15 @@ export class MainAppComponent implements OnInit {
     this.searchQuery = '';
   }
 
-  selectLocation(loc: { name: string; pincode: string; lat: number; lng: number }) {
+  async selectLocation(loc: { name: string; pincode: string; lat: number; lng: number }) {
     this.location = `${loc.name}, Bangalore`;
     this.locationService.setUserLocation(loc.lat, loc.lng);
     this.closeLocationModal();
-    // Location updated in LocationService - reels will use new location for distance calculation
+    
+    // Refresh video feed with new location data
+    if (this.videoFeedComponent) {
+      await this.videoFeedComponent.reloadReelsForNewLocation();
+    }
   }
 
   get filteredLocations() {
