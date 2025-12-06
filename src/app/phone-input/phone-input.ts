@@ -86,7 +86,7 @@ export class PhoneInputComponent implements OnInit {
       else if (err.code === 'auth/billing-not-enabled')
         this.error = 'Firebase billing is not enabled. Please enable it in the Firebase Console.';
       else
-        this.error = 'Failed to send OTP. Try again.';
+        this.error = `Failed to send OTP: ${err.message} (${err.code})`;
 
       this.loading = false;
     }

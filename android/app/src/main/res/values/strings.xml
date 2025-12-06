@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BengaluruSwada</string>
+    <string name="title_activity_main">BengaluruSwada</string>
+    <string name="package_name">com.bengaluruswada.app</string>
+    <string name="custom_url_scheme">com.bengaluruswada.app</string>
+</resources>

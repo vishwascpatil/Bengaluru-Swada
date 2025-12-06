@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "831575973864",
+    "project_id": "bengaluru-swada-1ecca",
+    "storage_bucket": "bengaluru-swada-1ecca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:831575973864:android:1177454846aa5f716bce5d",
+        "android_client_info": {
+          "package_name": "com.bengaluruswada.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOKIDFzEz9ZOcFqKN_BWWkAafJWunE5eY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

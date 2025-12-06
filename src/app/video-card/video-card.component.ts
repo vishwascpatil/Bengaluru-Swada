@@ -31,6 +31,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   @Output() bookmarked = new EventEmitter<void>();
   @Output() shared = new EventEmitter<void>();
 
+
   @ViewChild('videoEl') videoEl!: ElementRef<HTMLVideoElement>;
 
   // Double-tap to mute/unmute
@@ -38,6 +39,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   showLikeAnimation = false;
   isProgressBarVisible = false;
   private progressBarHideTimeout: any;
+  private singleTapTimeout?: number;
 
   // Get display values from reel or fallback to individual inputs
   get displaySrc(): string {
@@ -114,6 +116,10 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
         if (event === 'waiting') {
           this.isLoading = true;
         }
+        if (event === 'error') {
+          console.error('[VideoCard] Video error:', video.error);
+          this.isLoading = false; // Hide spinner on error
+        }
         if (event === 'ended') {
           // Reset progress when video ends
           this.progress = 0;
@@ -124,13 +130,13 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
     // Initial check
     this.checkVideoReady();
 
-    // Safety timeout: if video doesn't load in 5 seconds, hide spinner
+    // Safety timeout: if video doesn't load in 2 seconds, hide spinner
     setTimeout(() => {
       if (this.isLoading) {
         console.warn('[VideoCard] Loading timed out, hiding spinner');
         this.isLoading = false;
       }
-    }, 5000);
+    }, 2000); // Reduced from 5000ms for faster perceived loading
   }
 
   private startProgressTracking() {
@@ -236,6 +242,10 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   toggleMute() {
     const video = this.videoEl?.nativeElement;
     if (video) {
+      if (video.paused) {
+        video.play().catch(err => console.error('[VideoCard] Error playing on tap:', err));
+      }
+
       video.muted = !video.muted;
       this.isMuted = video.muted;
       this.showMuteAnimation();
@@ -261,7 +271,18 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   }
 
   /**
-   * Handle video tap - single tap toggles progress bar, double tap toggles mute
+   * Handle double-tap to like (only like, never unlike)
+   */
+  doubleTapLike() {
+    if (!this.isLiked) {
+      this.toggleLike();
+    } else {
+      this.showLikeAnimationEffect();
+    }
+  }
+
+  /**
+   * Handle video tap - single tap mutes/unmutes, double tap likes
    */
   onVideoTap(event: MouseEvent | TouchEvent): void {
     event.preventDefault();
@@ -269,13 +290,21 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
     const tapLength = currentTime - this.lastTapTime;
 
     if (tapLength < 300 && tapLength > 0) {
-      // Double tap detected - toggle mute
-      this.toggleMute();
+      // Double tap detected - like the video
+      // Clear any pending single tap action
+      if (this.singleTapTimeout) {
+        clearTimeout(this.singleTapTimeout);
+        this.singleTapTimeout = undefined;
+      }
+      this.doubleTapLike();
       this.lastTapTime = 0;
     } else {
-      // Single tap - toggle progress bar visibility
-      this.toggleProgressBar();
+      // Potential single tap - wait to see if double tap follows
       this.lastTapTime = currentTime;
+      this.singleTapTimeout = window.setTimeout(() => {
+        this.toggleMute();
+        this.singleTapTimeout = undefined;
+      }, 300); // Wait 300ms to see if double tap comes
     }
   }
 

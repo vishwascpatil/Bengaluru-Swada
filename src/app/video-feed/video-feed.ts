@@ -39,13 +39,13 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    // Wait for data to load before playing
+    // Minimal delay for DOM to be ready
     setTimeout(() => {
       if (this.reels.length > 0) {
         this.playCurrent();
         this.trackView();
       }
-    }, 1000);
+    }, 50); // Reduced from 1000ms for faster initial load
   }
 
   ngOnDestroy() {
@@ -55,15 +55,12 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Load reels from Firestore
-   */
-  /**
    * Reload reels when location changes
    */
   async reloadReelsForNewLocation() {
     console.log('[VideoFeed] Reloading reels for new location...');
     const currentReels = [...this.reels];
-    
+
     // Recalculate distances for current reels
     const reelsWithUpdatedDistances = await Promise.all(
       currentReels.map(async (reel) => {
@@ -84,14 +81,14 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
         };
       })
     );
-    
+
     // Sort reels by distance (closest first)
     reelsWithUpdatedDistances.sort((a, b) => {
       const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
       const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
       return distA - distB;
     });
-    
+
     this.reels = reelsWithUpdatedDistances;
     this.currentIndex = 0; // Reset to first reel
     this.playCurrent();
@@ -138,7 +135,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
         const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
         return distA - distB;
       });
-      
+
       this.reels = reelsWithDistance;
       console.log('[VideoFeed] Final reels count:', this.reels.length);
     } catch (error) {
@@ -148,12 +145,10 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
       this.cdr.detectChanges(); // Force view update
       console.log('[VideoFeed] Loading complete. isLoading:', this.isLoading);
 
-      // Auto-play the first video after loading
+      // Auto-play the first video immediately after loading
       if (this.reels.length > 0) {
-        setTimeout(() => {
-          this.playCurrent();
-          this.trackView();
-        }, 100);
+        this.playCurrent();
+        this.trackView();
       }
     }
   }
@@ -197,13 +192,19 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cards.forEach((c, idx) => {
       if (idx === this.currentIndex) {
         c.play();
-      } else if (Math.abs(idx - this.currentIndex) <= 1) {
-        // Preload adjacent videos
-        c.preload();
       } else {
         c.pause();
       }
     });
+
+    // Preload the next video for smoother scrolling
+    const nextIndex = this.currentIndex + 1;
+    if (nextIndex < this.reels.length) {
+      const nextCard = this.cards.get(nextIndex);
+      if (nextCard) {
+        nextCard.preload();
+      }
+    }
   }
 
   pauseCurrent() {
