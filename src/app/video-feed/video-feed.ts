@@ -197,15 +197,77 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
   }
 
+  // Pull to refresh
+  pullStartY = 0;
+  pullMoveY = 0;
+  isRefreshing = false;
+  readonly pullThreshold = 150; // Pixels to pull to trigger refresh
+
   onTouchStart(e: TouchEvent) {
     this.touchStartY = e.touches[0].clientY;
+
+    // Only enable pull-to-refresh if we are at the top and not already refreshing
+    if (this.currentIndex === 0 && !this.isRefreshing) {
+      this.pullStartY = e.touches[0].clientY;
+    }
   }
 
-  onTouchEnd(e: TouchEvent) {
+  onTouchMove(e: TouchEvent) {
+    if (this.currentIndex === 0 && !this.isRefreshing && this.pullStartY > 0) {
+      const currentY = e.touches[0].clientY;
+      const diff = currentY - this.pullStartY;
+
+      // Only track pull down
+      if (diff > 0) {
+        // Add resistance
+        this.pullMoveY = diff * 0.5;
+        // Prevent default only if we are pulling down significantly to avoid interfering with normal scroll
+        if (diff > 10) {
+          e.preventDefault();
+        }
+      }
+    }
+  }
+
+  async onTouchEnd(e: TouchEvent) {
     const delta = this.touchStartY - e.changedTouches[0].clientY;
     const threshold = 80;
-    if (delta > threshold) this.next();
-    else if (delta < -threshold) this.prev();
+
+    // Handle swipe navigation
+    if (delta > threshold) {
+      this.next();
+    } else if (delta < -threshold) {
+      // Only go to previous if we haven't triggered a refresh
+      if (this.pullMoveY < this.pullThreshold) {
+        this.prev();
+      }
+    }
+
+    // Handle pull-to-refresh
+    if (this.pullMoveY >= this.pullThreshold && !this.isRefreshing) {
+      await this.refresh();
+    }
+
+    // Reset pull state
+    this.pullStartY = 0;
+    this.pullMoveY = 0;
+  }
+
+  async refresh() {
+    this.isRefreshing = true;
+    // Haptic feedback if available
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
+    try {
+      await this.loadReels();
+    } finally {
+      // Small delay to show completion state
+      setTimeout(() => {
+        this.isRefreshing = false;
+      }, 500);
+    }
   }
 
   playCurrent() {

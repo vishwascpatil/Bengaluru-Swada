@@ -42,7 +42,7 @@
 /* Progress bar container */
 .progress-container {
     position: absolute;
-    bottom: 60px;
+    bottom: 53px;
     /* Position above the bottom navigation */
     left: 0;
     width: 100%;
@@ -121,6 +121,7 @@
     padding-right: 20px;
     pointer-events: auto;
     /* Re-enable clicks for info */
+    margin-bottom: 50px;
 }
 
 .dish-name {
@@ -147,8 +148,8 @@
 
 .price {
     font-weight: 600;
-    color: #ff6b35;
-    background: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.9);
+    background: #ff6b35;
     padding: 2px 8px;
     border-radius: 4px;
 }

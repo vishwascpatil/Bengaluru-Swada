@@ -32,7 +32,7 @@ export class UploadReelComponent implements OnInit {
     uploadSuccess = false;
 
     // Validation
-    readonly maxFileSize = 100 * 1024 * 1024; // 100MB
+    readonly maxFileSize = 200 * 1024 * 1024; // 100MB
     readonly acceptedFormats = ['video/mp4', 'video/quicktime', 'video/webm'];
 
     constructor(

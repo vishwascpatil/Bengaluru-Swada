@@ -93,3 +93,33 @@
         transform: translateY(-2px);
     }
 }
+
+.refresh-indicator {
+    position: absolute;
+    top: -50px;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    pointer-events: none;
+    transition: transform 0.1s linear;
+
+    &.refreshing {
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        svg {
+            animation: spin 1s linear infinite;
+        }
+    }
+
+    svg {
+        color: #ff6b35;
+        background: white;
+        border-radius: 50%;
+        padding: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+}
