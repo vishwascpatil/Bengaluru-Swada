@@ -278,15 +278,6 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         c.pause();
       }
     });
-
-    // Preload the next video for smoother scrolling
-    const nextIndex = this.currentIndex + 1;
-    if (nextIndex < this.reels.length) {
-      const nextCard = this.cards.get(nextIndex);
-      if (nextCard) {
-        nextCard.preload();
-      }
-    }
   }
 
   pauseCurrent() {

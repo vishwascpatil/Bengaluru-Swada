@@ -1,12 +1,19 @@
 <div class="video-card" [class.active]="active" [class.prev]="relativeIndex < 0" [class.next]="relativeIndex > 0">
-  <video #videoEl class="video-player" loop [muted]="isMuted" autoplay playsinline webkit-playsinline preload="auto"
-    x-webkit-airplay="allow" disablePictureInPicture [poster]="displayPoster" [src]="displaySrc"
-    (click)="onVideoTap($event)" (touchend)="onVideoTap($event)">
+  <video #videoEl class="video-player" loop [muted]="isMuted" playsinline webkit-playsinline
+    [preload]="priority === 'high' ? 'auto' : 'none'" x-webkit-airplay="allow" disablePictureInPicture
+    [poster]="displayPoster" [src]="displaySrc" (click)="onVideoTap($event)" (touchend)="onVideoTap($event)">
   </video>
 
   <!-- Loading Spinner -->
   <div class="loading-spinner" *ngIf="isLoading">
-    <div class="spinner"></div>
+    <div class="spinner" *ngIf="!showRetry"></div>
+    <button class="retry-btn" *ngIf="showRetry" (click)="retryLoad($event)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 4v6h-6M1 20v-6h6" />
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 1 20.49 15" />
+      </svg>
+      <span>Retry</span>
+    </button>
   </div>
 
   <!-- Double-tap Like Animation -->

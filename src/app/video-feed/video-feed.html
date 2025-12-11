@@ -32,6 +32,7 @@
 
   <app-video-card *ngFor="let reel of reels; let i = index" [reel]="reel" [active]="i === currentIndex"
     [relativeIndex]="i - currentIndex" [isMuted]="isGlobalMuted" (muteChanged)="onMuteChanged($event)"
-    (liked)="onLike(i)" (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
+    [priority]="i === currentIndex || i === currentIndex + 1 ? 'high' : 'low'" (liked)="onLike(i)"
+    (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
   </app-video-card>
 </div>

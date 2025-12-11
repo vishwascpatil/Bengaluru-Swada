@@ -20,6 +20,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   @Input() distance = '';
   @Input() active = false;
   @Input() relativeIndex = 0;
+  @Input() priority: 'high' | 'low' = 'low';
 
   // Social features
   @Input() likes = 0;
@@ -91,16 +92,29 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   private progressInterval: any;
 
   ngOnChanges(changes: SimpleChanges) {
+    // Only reload if the source actually changes
     if (changes['reel'] || changes['src']) {
-      this.isLoading = true;
-      if (this.videoEl && this.videoEl.nativeElement) {
-        this.videoEl.nativeElement.load();
+      const currentSrc = this.displaySrc;
+      const prevSrc = changes['reel']?.previousValue?.videoUrl || changes['src']?.previousValue;
+
+      if (currentSrc !== prevSrc) {
+        this.isLoading = true;
+        if (this.videoEl && this.videoEl.nativeElement) {
+          this.videoEl.nativeElement.load();
+        }
       }
     }
 
     // Handle external mute changes
     if (changes['isMuted'] && this.videoEl?.nativeElement) {
       this.videoEl.nativeElement.muted = this.isMuted;
+    }
+
+    // Handle priority changes
+    if (changes['priority']) {
+      if (this.priority === 'high' && this.videoEl?.nativeElement) {
+        this.videoEl.nativeElement.load();
+      }
     }
   }
 
@@ -135,6 +149,11 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
 
     // Initial check
     this.checkVideoReady();
+
+    // Force load if priority is high
+    if (this.priority === 'high') {
+      video.load();
+    }
 
     // Safety timeout: if video doesn't load in 2 seconds, hide spinner
     setTimeout(() => {
@@ -178,6 +197,9 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
     }
   }
 
+  showRetry = false;
+  private playWatchdogTimeout: any;
+
   play() {
     const video = this.videoEl?.nativeElement;
     if (video) {
@@ -190,6 +212,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
       // Reset loading state if we're trying to play
       if (video.readyState < 3) {
         this.isLoading = true;
+        this.showRetry = false;
       }
 
       const playPromise = video.play();
@@ -200,6 +223,27 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
           this.isLoading = false;
         });
       }
+
+      // Watchdog: if video doesn't start playing in 3s, show retry
+      if (this.playWatchdogTimeout) clearTimeout(this.playWatchdogTimeout);
+      this.playWatchdogTimeout = setTimeout(() => {
+        if (video.paused || video.readyState < 3) {
+          console.warn('[VideoCard] Playback stalled, showing retry');
+          this.isLoading = true;
+          this.showRetry = true;
+        }
+      }, 3000);
+    }
+  }
+
+  retryLoad(event: Event) {
+    event.stopPropagation();
+    this.showRetry = false;
+    this.isLoading = true;
+    const video = this.videoEl?.nativeElement;
+    if (video) {
+      video.load();
+      video.play().catch(console.error);
     }
   }
 
@@ -212,6 +256,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   }
 
   pause() {
+    if (this.playWatchdogTimeout) clearTimeout(this.playWatchdogTimeout);
     this.videoEl?.nativeElement.pause();
   }
 
