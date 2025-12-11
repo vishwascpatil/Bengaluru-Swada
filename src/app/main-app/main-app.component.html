@@ -67,15 +67,15 @@
     </div>
   </div>
 
-  <app-video-feed [class.hidden]="activeTab !== 'feed'"></app-video-feed>
+  <app-video-feed [class.hidden]="activeTab !== 'feed'" [isActive]="activeTab === 'feed'"></app-video-feed>
   <app-favorites [class.hidden]="activeTab !== 'favorites'"></app-favorites>
   <app-upload-reel [class.hidden]="activeTab !== 'upload'"></app-upload-reel>
 
   <div class="bottom-nav">
     <button class="bottom-nav-btn" [class.active]="activeTab === 'feed'" (click)="select('feed')">
       <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" />
-        <path d="M9 3v18M15 3v18M3 9h18M3 15h18" stroke="currentColor" stroke-width="2" />
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" stroke-width="2" />
+        <path d="M10 8L16 12L10 16V8Z" fill="currentColor" stroke="none" />
       </svg>
       <!-- <span>Reels</span> -->
     </button>

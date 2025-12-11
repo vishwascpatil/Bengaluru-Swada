@@ -85,7 +85,8 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   isLoading = true;
   progress = 0;
   isSeeking = false;
-  isMuted = true;
+  @Input() isMuted = true;
+  @Output() muteChanged = new EventEmitter<boolean>();
   showMuteIcon = false;
   private progressInterval: any;
 
@@ -95,6 +96,11 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
       if (this.videoEl && this.videoEl.nativeElement) {
         this.videoEl.nativeElement.load();
       }
+    }
+
+    // Handle external mute changes
+    if (changes['isMuted'] && this.videoEl?.nativeElement) {
+      this.videoEl.nativeElement.muted = this.isMuted;
     }
   }
 
@@ -175,8 +181,11 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   play() {
     const video = this.videoEl?.nativeElement;
     if (video) {
-      // Ensure muted is set for autoplay
-      video.muted = true;
+      // Respect the current mute state
+      video.muted = this.isMuted;
+
+      // Restart video from beginning
+      video.currentTime = 0;
 
       // Reset loading state if we're trying to play
       if (video.readyState < 3) {
@@ -246,8 +255,12 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
         video.play().catch(err => console.error('[VideoCard] Error playing on tap:', err));
       }
 
-      video.muted = !video.muted;
-      this.isMuted = video.muted;
+      // Toggle mute state
+      const newMutedState = !this.isMuted;
+      video.muted = newMutedState;
+      this.isMuted = newMutedState;
+      this.muteChanged.emit(newMutedState);
+
       this.showMuteAnimation();
 
       // Show the progress bar when muting/unmuting

@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy, ChangeDetectorRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { VideoCardComponent } from '../video-card/video-card.component';
@@ -15,7 +15,9 @@ import { Timestamp } from '@angular/fire/firestore';
   templateUrl: './video-feed.html',
   styleUrls: ['./video-feed.scss']
 })
-export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
+export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+  @Input() isActive: boolean = true;
+  isGlobalMuted = true;
   reels: Reel[] = [];
   currentIndex = 0;
   touchStartY = 0;
@@ -46,6 +48,24 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy {
         this.trackView();
       }
     }, 50); // Reduced from 1000ms for faster initial load
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['isActive']) {
+      if (this.isActive) {
+        // Resume playing if we have reels
+        if (this.reels.length > 0) {
+          this.playCurrent();
+        }
+      } else {
+        // Pause when inactive
+        this.pauseCurrent();
+      }
+    }
+  }
+
+  onMuteChanged(muted: boolean) {
+    this.isGlobalMuted = muted;
   }
 
   ngOnDestroy() {

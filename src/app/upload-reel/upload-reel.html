@@ -63,6 +63,10 @@
                 <button type="button" class="location-btn" (click)="getCurrentLocation()" [disabled]="isUploading">
                     📍 Use Current Location
                 </button>
+                <button type="button" class="location-btn map-btn" (click)="openLocationPicker()"
+                    [disabled]="isUploading" style="margin-top: 10px;">
+                    🗺️ Pick on Map
+                </button>
             </div>
 
             <div class="form-row">
@@ -118,4 +122,8 @@
             </div>
         </div>
     </div>
+
+    <app-location-picker *ngIf="showLocationPicker" (locationSelected)="onLocationSelected($event)"
+        (cancel)="closeLocationPicker()">
+    </app-location-picker>
 </div>

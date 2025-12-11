@@ -1,0 +1,41 @@
+<div class="picker-overlay">
+    <div class="picker-container">
+        <div class="picker-header">
+            <h3>Pick Location</h3>
+            <button class="close-btn" (click)="onCancel()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="searchLocation()"
+                placeholder="Search for a place...">
+            <button class="search-btn" (click)="searchLocation()" [disabled]="isSearching">
+                <span *ngIf="!isSearching">Search</span>
+                <span *ngIf="isSearching">...</span>
+            </button>
+        </div>
+
+        <div class="search-results" *ngIf="searchResults.length > 0">
+            <div class="result-item" *ngFor="let result of searchResults" (click)="selectSearchResult(result)">
+                {{ result.display_name }}
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="picker-footer">
+            <div class="coords">
+                <small>{{ selectedLat | number:'1.4-4' }}, {{ selectedLng | number:'1.4-4' }}</small>
+            </div>
+            <div class="actions">
+                <button class="cancel-btn" (click)="onCancel()">Cancel</button>
+                <button class="confirm-btn" (click)="confirmSelection()">Confirm Location</button>
+            </div>
+        </div>
+    </div>
+</div>

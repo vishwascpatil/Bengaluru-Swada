@@ -6,10 +6,12 @@ import { ReelsService } from '../services/reels.service';
 import { LocationService } from '../services/location.service';
 import { Auth } from '@angular/fire/auth';
 
+import { LocationPickerComponent } from '../location-picker/location-picker.component';
+
 @Component({
     selector: 'app-upload-reel',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, LocationPickerComponent],
     templateUrl: './upload-reel.html',
     styleUrls: ['./upload-reel.scss']
 })
@@ -112,6 +114,8 @@ export class UploadReelComponent implements OnInit {
         );
     }
 
+    showLocationPicker = false;
+
     /**
      * Get user's current location
      */
@@ -124,6 +128,20 @@ export class UploadReelComponent implements OnInit {
             console.error('Error getting location:', error);
             this.uploadError = 'Failed to get current location. Please enter coordinates manually.';
         }
+    }
+
+    openLocationPicker(): void {
+        this.showLocationPicker = true;
+    }
+
+    onLocationSelected(coords: { lat: number, lng: number }): void {
+        this.latitude = coords.lat;
+        this.longitude = coords.lng;
+        this.showLocationPicker = false;
+    }
+
+    closeLocationPicker(): void {
+        this.showLocationPicker = false;
     }
 
     /**
