@@ -9,7 +9,9 @@
           *ngFor="let n of [0,1,2,3,4,5]; let i = index" [(ngModel)]="otp[i]" (input)="onOtpInput(i)">
       </div>
 
-      <button class="verify-btn" [disabled]="!complete" (click)="verify()">Verify OTP</button>
+      <button class="verify-btn" [disabled]="!complete || loading" (click)="verify()">
+        {{ loading ? 'Verifying OTP...' : 'Verify OTP' }}
+      </button>
 
       <div class="resend-container">
         <p class="resend-text">Didn't receive OTP?</p>
@@ -18,6 +20,7 @@
       </div>
 
       <div (click)="change()">← Change Number</div>
+      <div id="recaptcha-container-otp"></div>
     </div>
   </div>
 

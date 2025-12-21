@@ -91,10 +91,10 @@
     transition: all 0.2s;
 
     &:not([disabled]) {
-        background: #2c3e50;
+        background: #ff6b35;
         color: #fff;
         cursor: pointer;
-        box-shadow: 0 4px 10px rgba(44, 62, 80, 0.2);
+        box-shadow: 0 4px 10px rgba(255, 107, 53, 0.3);
     }
 }
 

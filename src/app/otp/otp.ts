@@ -2,7 +2,7 @@ import { Component, EventEmitter, Output, ChangeDetectorRef, OnInit } from '@ang
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { ConfirmationResult } from '@angular/fire/auth';
+import { ConfirmationResult, Auth, RecaptchaVerifier } from '@angular/fire/auth';
 import { PhoneAuthService } from '../services/phone-auth.service';
 
 @Component({
@@ -27,8 +27,9 @@ export class OtpComponent implements OnInit {
 
   hasError = false;
   isVerified = false;
+  recaptchaVerifier!: RecaptchaVerifier;
 
-  constructor(private router: Router, private cdr: ChangeDetectorRef, private phoneAuthService: PhoneAuthService) {
+  constructor(private router: Router, private cdr: ChangeDetectorRef, private phoneAuthService: PhoneAuthService, private auth: Auth) {
     this.phone = this.phoneAuthService.getPhoneNumber();
     this.confirmationResult = this.phoneAuthService.getConfirmationResult();
 
@@ -40,6 +41,20 @@ export class OtpComponent implements OnInit {
 
   ngOnInit() {
     this.startTimer();
+
+    // Init invisible recaptcha for resend
+    setTimeout(() => {
+      if (!this.recaptchaVerifier) {
+        this.recaptchaVerifier = new RecaptchaVerifier(
+          this.auth,
+          'recaptcha-container-otp',
+          {
+            size: 'invisible',
+            callback: () => { /* reCAPTCHA solved */ }
+          }
+        );
+      }
+    });
   }
 
   startTimer() {
@@ -111,9 +126,31 @@ export class OtpComponent implements OnInit {
     }
   }
 
-  resend() {
-    // Navigate back to phone input to resend
-    this.router.navigate(['/phone-input']);
+  async resend() {
+    if (this.loading) return;
+
+    this.loading = true;
+    this.error = '';
+
+    try {
+      const fullPhone = '+91' + this.phone;
+      const result = await this.phoneAuthService.sendOtp(fullPhone, this.recaptchaVerifier);
+
+      // Update confirmation result
+      this.confirmationResult = result;
+      this.phoneAuthService.setConfirmationResult(result);
+
+      // Reset state
+      this.startTimer();
+      this.otp = ['', '', '', '', '', ''];
+      this.complete = false;
+      this.loading = false;
+
+    } catch (error: any) {
+      console.error('Resend error:', error);
+      this.error = 'Failed to resend OTP. Try again later.';
+      this.loading = false;
+    }
   }
 
   change() {

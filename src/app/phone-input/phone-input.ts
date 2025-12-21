@@ -63,14 +63,7 @@ export class PhoneInputComponent implements OnInit {
     try {
       const phoneNumber = '+91' + this.mobile;
 
-      this.confirmationResult = await signInWithPhoneNumber(
-        this.auth,
-        phoneNumber,
-        this.recaptchaVerifier
-      );
-
-      this.phoneAuthService.setConfirmationResult(this.confirmationResult);
-      this.phoneAuthService.setPhoneNumber(this.mobile);
+      this.confirmationResult = await this.phoneAuthService.sendOtp(phoneNumber, this.recaptchaVerifier);
 
       this.router.navigate(['/otp']);
 
