@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
 import { LocationService } from '../services/location.service';
 import { Auth } from '@angular/fire/auth';
-import { HttpEventType } from '@angular/common/http';
+import { HttpEventType, HttpResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment.development';
 
 import { LocationPickerComponent } from '../location-picker/location-picker.component';
@@ -24,6 +24,9 @@ export class UploadReelComponent implements OnInit {
     price: number | null = null;
     latitude: number | null = null;
     longitude: number | null = null;
+
+    @Output() uploadComplete = new EventEmitter<void>();
+    @Output() canceled = new EventEmitter<void>();
 
     // Upload state
     selectedFile: File | null = null;
@@ -101,6 +104,16 @@ export class UploadReelComponent implements OnInit {
         this.uploadError = null;
     }
 
+    resetForm(): void {
+        this.removeFile();
+        this.title = '';
+        this.vendor = '';
+        this.price = null;
+        this.uploadProgress = 0;
+        this.uploadSuccess = false;
+        this.isUploading = false;
+    }
+
     /**
      * Check if form is valid
      */
@@ -167,6 +180,7 @@ export class UploadReelComponent implements OnInit {
         this.isUploading = true;
         this.uploadError = null;
         this.uploadProgress = 0;
+        this.uploadSuccess = false; // Reset success state on new attempt
 
         try {
             // Generate unique filename: videos/uid/timestamp_filename
@@ -191,11 +205,11 @@ export class UploadReelComponent implements OnInit {
                             // but better to rely on imported enum. Alternatively assuming event numbers: 
                             // 1 = UploadProgress, 4 = Response
 
-                            if (event.type === 1) { // HttpEventType.UploadProgress
+                            if (event.type === HttpEventType.UploadProgress) {
                                 if (event.total) {
                                     this.uploadProgress = Math.round(100 * event.loaded / event.total);
                                 }
-                            } else if (event.type === 4) { // HttpEventType.Response
+                            } else if (event.type === HttpEventType.Response) {
                                 // Upload complete
                                 try {
                                     // 3. Create Firestore specific Record
@@ -223,8 +237,14 @@ export class UploadReelComponent implements OnInit {
                                     });
 
                                     this.uploadSuccess = true;
+                                    this.isUploading = false; // CRITICAL: Reset state so UI becomes interactive
+                                    this.uploadComplete.emit(); // Notify parent
+
                                     setTimeout(() => {
-                                        this.router.navigate(['/main-app']);
+                                        this.router.navigate(['/main-app']).catch(err => {
+                                            console.error('Navigation failed:', err);
+                                            this.uploadError = 'Auto-redirect failed. Please click "Done".';
+                                        });
                                     }, 1500);
 
                                 } catch (error) {
@@ -259,6 +279,8 @@ export class UploadReelComponent implements OnInit {
      * Cancel upload and go back
      */
     cancel(): void {
+        this.canceled.emit();
+        this.resetForm();
         this.router.navigate(['/main-app']);
     }
 

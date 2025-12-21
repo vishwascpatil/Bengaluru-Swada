@@ -11,7 +11,8 @@
   <app-trending [class.hidden]="activeTab !== 'trending'"></app-trending>
   <app-profile [class.hidden]="activeTab !== 'profile'"></app-profile>
   <app-favorites [class.hidden]="activeTab !== 'favorites'"></app-favorites>
-  <app-upload-reel [class.hidden]="activeTab !== 'upload'"></app-upload-reel>
+  <app-upload-reel [class.hidden]="activeTab !== 'upload'" (uploadComplete)="select('feed')"
+    (canceled)="select('feed')"></app-upload-reel>
 
   <div class="bottom-nav">
     <button class="bottom-nav-btn" [class.active]="activeTab === 'feed'" (click)="select('feed')">

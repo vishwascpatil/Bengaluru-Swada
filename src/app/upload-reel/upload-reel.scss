@@ -230,9 +230,39 @@
     background: rgba(52, 199, 89, 0.1);
     color: #34c759;
     border: 1px solid rgba(52, 199, 89, 0.3);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+
+    .success-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
     svg {
         flex-shrink: 0;
+    }
+
+    .done-btn-fallback {
+        background: #34c759;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: #2fb34f;
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: scale(0.98);
+        }
     }
 }
 
