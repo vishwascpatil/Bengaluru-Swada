@@ -1,0 +1,12 @@
+name = "r2-video-uploader"
+main = "src/index.ts"
+compatibility_date = "2023-12-01"
+
+[vars]
+# Add allowed origins for CORS
+ALLOWED_ORIGIN = "*" 
+
+[[r2_buckets]]
+binding = "VIDEO_BUCKET"
+bucket_name = "bengaluru-swada-videos"
+preview_bucket_name = "bengauru-swada-videos-preview"

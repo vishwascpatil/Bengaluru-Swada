@@ -19,6 +19,11 @@ export class SearchComponent implements OnInit {
     filteredReels: any[] = [];
     isLoading = false;
 
+    // Location selection
+    locationName = 'Koramangala, Bangalore';
+    showLocationModal = false;
+    locationSearchQuery = '';
+
     // Filters
     categories = ['All', 'South Indian', 'North Indian', 'Street Food', 'Desserts', 'Beverages'];
     selectedCategory = 'All';
@@ -51,6 +56,22 @@ export class SearchComponent implements OnInit {
     ) { }
 
     async ngOnInit() {
+        // Subscribe to global location changes
+        this.locationService.currentLocation$.subscribe(loc => {
+            if (loc) {
+                this.locationName = `${loc.name}, Bangalore`;
+                this.loadReels(); // Reload reels when location changes
+            }
+        });
+
+        // Initialize location name if not set
+        try {
+            const userLoc = await this.locationService.getUserLocation();
+            this.locationName = this.locationService.getAreaName(userLoc.latitude, userLoc.longitude) + ', Bangalore';
+        } catch (e) {
+            console.warn('Could not get initial location name', e);
+        }
+
         await this.loadReels();
     }
 
@@ -180,5 +201,31 @@ export class SearchComponent implements OnInit {
                 reelId: reel.id
             }
         });
+    }
+
+    // Location Modal methods
+    openLocationModal() {
+        this.showLocationModal = true;
+        this.locationSearchQuery = '';
+    }
+
+    closeLocationModal() {
+        this.showLocationModal = false;
+        this.locationSearchQuery = '';
+    }
+
+    selectLocation(loc: any) {
+        this.locationService.updateLocation(loc.name, loc.lat, loc.lng);
+        this.closeLocationModal();
+    }
+
+    get filteredLocations() {
+        const query = this.locationSearchQuery.toLowerCase().trim();
+        if (!query) return this.locationService.AREAS;
+
+        return this.locationService.AREAS.filter(loc =>
+            loc.name.toLowerCase().includes(query) ||
+            loc.pincode.includes(query)
+        );
     }
 }

@@ -31,6 +31,9 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   @Output() liked = new EventEmitter<void>();
   @Output() bookmarked = new EventEmitter<void>();
   @Output() shared = new EventEmitter<void>();
+  @Output() deleted = new EventEmitter<void>();
+
+  @Input() canDelete = false;
 
 
   @ViewChild('videoEl') videoEl!: ElementRef<HTMLVideoElement>;
@@ -44,7 +47,13 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
 
   // Get display values from reel or fallback to individual inputs
   get displaySrc(): string {
-    return this.reel?.videoUrl || this.src;
+    let url = this.reel?.videoUrl || this.src;
+
+    // STRICT FIX: Force replacement of old invalid domain
+    if (url && url.includes('videos.bengaluru-swada.com')) {
+      url = url.replace('https://videos.bengaluru-swada.com', 'https://r2-video-uploader.bengaluru-swada.workers.dev');
+    }
+    return url;
   }
 
   get displayPoster(): string {
@@ -92,7 +101,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   private progressInterval: any;
 
   ngOnChanges(changes: SimpleChanges) {
-    // Only reload if the source actually changes
+    // 1. Handle Source Changes
     if (changes['reel'] || changes['src']) {
       const currentSrc = this.displaySrc;
       const prevSrc = changes['reel']?.previousValue?.videoUrl || changes['src']?.previousValue;
@@ -105,16 +114,34 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
       }
     }
 
-    // Handle external mute changes
-    if (changes['isMuted'] && this.videoEl?.nativeElement) {
-      this.videoEl.nativeElement.muted = this.isMuted;
+    // 2. Handle Active State (Play/Pause)
+    // This strictly controls playback to avoid race conditions
+    if (changes['active']) {
+      if (this.active) {
+        // If becoming active, play.
+        // We do NOT call load() here; play() handles it.
+        this.play();
+      } else {
+        // If becoming inactive, pause and reset.
+        this.pause();
+        this.resetVideo();
+      }
     }
 
-    // Handle priority changes
-    if (changes['priority']) {
+    // 3. Handle Priority (Preloading)
+    // Only preload if NOT active (active one is handled above)
+    if (changes['priority'] && !this.active) {
       if (this.priority === 'high' && this.videoEl?.nativeElement) {
-        this.videoEl.nativeElement.load();
+        // Smart preload: only load if we have no data
+        if (this.videoEl.nativeElement.readyState === 0) {
+          this.videoEl.nativeElement.load();
+        }
       }
+    }
+
+    // 4. Handle External Mute
+    if (changes['isMuted'] && this.videoEl?.nativeElement) {
+      this.videoEl.nativeElement.muted = this.isMuted;
     }
   }
 
@@ -138,11 +165,12 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
         }
         if (event === 'error') {
           console.error('[VideoCard] Video error:', video.error);
-          this.isLoading = false; // Hide spinner on error
+          this.isLoading = false;
         }
         if (event === 'ended') {
-          // Reset progress when video ends
           this.progress = 0;
+          // Loop is handled by attribute, but just in case
+          this.play();
         }
       });
     });
@@ -150,18 +178,42 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
     // Initial check
     this.checkVideoReady();
 
-    // Force load if priority is high
-    if (this.priority === 'high') {
+    // Auto-play if initialized as active
+    if (this.active) {
+      this.play();
+    } else if (this.priority === 'high') {
+      // Preload if high priority but not active
       video.load();
     }
 
-    // Safety timeout: if video doesn't load in 2 seconds, hide spinner
+    // Safety timeout
     setTimeout(() => {
-      if (this.isLoading) {
-        console.warn('[VideoCard] Loading timed out, hiding spinner');
+      if (this.isLoading && !this.active) {
+        // If not active, we don't care about spinner as much
         this.isLoading = false;
       }
-    }, 2000); // Reduced from 5000ms for faster perceived loading
+    }, 2000);
+  }
+
+  resetVideo() {
+    const video = this.videoEl?.nativeElement;
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+      this.progress = 0;
+    }
+  }
+
+  showRetry = false;
+  private playWatchdogTimeout: any;
+
+  private checkVideoReady() {
+    if (this.videoEl && this.videoEl.nativeElement) {
+      const video = this.videoEl.nativeElement;
+      if (video.readyState >= 3) {
+        this.isLoading = false;
+      }
+    }
   }
 
   private startProgressTracking() {
@@ -176,29 +228,8 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
       if (!this.isSeeking && video.duration) {
         this.progress = (video.currentTime / video.duration) * 100;
       }
-    }, 50); // Update progress more frequently for smoother animation
+    }, 50);
   }
-
-  ngOnDestroy() {
-    if (this.progressInterval) {
-      clearInterval(this.progressInterval);
-    }
-    if (this.progressBarHideTimeout) {
-      clearTimeout(this.progressBarHideTimeout);
-    }
-  }
-
-  private checkVideoReady() {
-    if (this.videoEl && this.videoEl.nativeElement) {
-      const video = this.videoEl.nativeElement;
-      if (video.readyState >= 3) {
-        this.isLoading = false;
-      }
-    }
-  }
-
-  showRetry = false;
-  private playWatchdogTimeout: any;
 
   play() {
     const video = this.videoEl?.nativeElement;
@@ -266,6 +297,13 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
       this.isBookmarked = !this.isBookmarked;
     }
     this.bookmarked.emit();
+  }
+
+  onDelete(event: Event) {
+    event.stopPropagation();
+    // Confirm? Parent can handle confirm dialog or we can do it here. 
+    // Emitting immediately for parent to handle flow.
+    this.deleted.emit();
   }
 
   // Open Google Maps with the reel's location

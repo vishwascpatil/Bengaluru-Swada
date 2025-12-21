@@ -158,10 +158,23 @@
 .grid-content {
     ::ng-deep app-favorites {
         .favorites-container {
+            position: relative;
+            inset: auto;
+            padding: 4px;
             padding-top: 0;
+            overflow: visible;
+            height: auto;
+            background: transparent;
+            padding-bottom: 20px;
         }
 
-        // We want the original full cards, so we don't override the grid layout
-        // The original FavoritesComponent handles its own grid responsiveness
+        .reels-grid {
+            padding: 0;
+        }
+
+        .loading-state,
+        .empty-state {
+            min-height: 300px;
+        }
     }
 }

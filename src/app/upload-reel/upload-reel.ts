@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
 import { LocationService } from '../services/location.service';
 import { Auth } from '@angular/fire/auth';
+import { HttpEventType } from '@angular/common/http';
+import { environment } from '../../environments/environment.development';
 
 import { LocationPickerComponent } from '../location-picker/location-picker.component';
 
@@ -147,6 +149,9 @@ export class UploadReelComponent implements OnInit {
     /**
      * Upload video and create reel
      */
+    /**
+     * Upload video and create reel via Cloudflare R2
+     */
     async uploadReel(): Promise<void> {
         if (!this.isFormValid() || !this.selectedFile) {
             this.uploadError = 'Please fill in all fields and select a video';
@@ -164,72 +169,88 @@ export class UploadReelComponent implements OnInit {
         this.uploadProgress = 0;
 
         try {
-            // Import Firebase Storage dynamically
-            const { getStorage, ref, uploadBytesResumable, getDownloadURL } = await import('@angular/fire/storage');
-            const storage = getStorage();
-
-            // Create a unique filename
+            // Generate unique filename: videos/uid/timestamp_filename
             const timestamp = Date.now();
-            const filename = `videos/${currentUser.uid}/${timestamp}_${this.selectedFile.name}`;
-            const storageRef = ref(storage, filename);
+            // Sanitize filename
+            const safeName = this.selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
+            const key = `videos/${currentUser.uid}/${timestamp}_${safeName}`;
 
-            // Upload file with progress tracking
-            const uploadTask = uploadBytesResumable(storageRef, this.selectedFile);
+            // 1. Get Signed URL
+            this.reelsService.getUploadUrl(key, this.selectedFile.type).subscribe({
+                next: (response) => {
+                    const { uploadUrl, key: finalKey } = response;
 
-            // Monitor upload progress
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    // Calculate progress percentage
-                    this.uploadProgress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                    // 2. Upload to R2
+                    if (!this.selectedFile) return;
+
+                    this.reelsService.uploadToR2(uploadUrl, this.selectedFile).subscribe({
+                        next: async (event: any) => {
+                            // Import HttpEventType to check progress
+                            // We can't easily import HttpEventType inside this method without adding it to imports
+                            // So we cheat a bit or check for 'type' property if we don't want to change imports globally yet,
+                            // but better to rely on imported enum. Alternatively assuming event numbers: 
+                            // 1 = UploadProgress, 4 = Response
+
+                            if (event.type === 1) { // HttpEventType.UploadProgress
+                                if (event.total) {
+                                    this.uploadProgress = Math.round(100 * event.loaded / event.total);
+                                }
+                            } else if (event.type === 4) { // HttpEventType.Response
+                                // Upload complete
+                                try {
+                                    // 3. Create Firestore specific Record
+                                    // Construct CDN URL (Use Worker URL for playback)
+                                    // Direct replacement to ensure no environment mismatch
+                                    const cdnUrl = `https://r2-video-uploader.bengaluru-swada.workers.dev/${finalKey}`;
+
+                                    await this.reelsService.createReel({
+                                        cloudflareVideoId: '',
+                                        videoUrl: cdnUrl,
+                                        thumbnailUrl: '', // Cloudflare Stream would give this, R2 doesn't auto-generate thumb. 
+                                        // For now leave empty or use a default.
+                                        duration: 0,
+                                        title: this.title.trim(),
+                                        vendor: this.vendor.trim(),
+                                        price: this.price!,
+                                        latitude: this.latitude!,
+                                        longitude: this.longitude!,
+                                        uploadedBy: currentUser.uid,
+                                        createdAt: null as any,
+                                        viewCount: 0,
+                                        likes: 0,
+                                        likedBy: [],
+                                        bookmarkedBy: []
+                                    });
+
+                                    this.uploadSuccess = true;
+                                    setTimeout(() => {
+                                        this.router.navigate(['/main-app']);
+                                    }, 1500);
+
+                                } catch (error) {
+                                    console.error('Error creating reel record:', error);
+                                    this.uploadError = 'Video uploaded but failed to save metadata.';
+                                    this.isUploading = false;
+                                }
+                            }
+                        },
+                        error: (err) => {
+                            console.error('R2 Upload error:', err);
+                            this.uploadError = 'Failed to upload video to server.';
+                            this.isUploading = false;
+                        }
+                    });
                 },
-                (error) => {
-                    // Handle upload error
-                    console.error('Upload error:', error);
-                    this.uploadError = 'Failed to upload video. Please try again.';
+                error: (err) => {
+                    console.error('Signed URL error:', err);
+                    this.uploadError = 'Failed to initialize upload.';
                     this.isUploading = false;
-                },
-                async () => {
-                    // Upload completed successfully
-                    try {
-                        const videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
-
-                        // Create reel document in Firestore
-                        await this.reelsService.createReel({
-                            cloudflareVideoId: '', // Not using Cloudflare
-                            videoUrl: videoUrl,
-                            thumbnailUrl: '', // Can be generated later or use a placeholder
-                            duration: 0, // Can be extracted from video metadata if needed
-                            title: this.title.trim(),
-                            vendor: this.vendor.trim(),
-                            price: this.price!,
-                            latitude: this.latitude!,
-                            longitude: this.longitude!,
-                            uploadedBy: currentUser.uid,
-                            createdAt: null as any, // Will be set by service
-                            viewCount: 0,
-                            likes: 0,
-                            likedBy: [],
-                            bookmarkedBy: []
-                        });
-
-                        this.uploadSuccess = true;
-
-                        // Navigate to main app after short delay
-                        setTimeout(() => {
-                            this.router.navigate(['/main-app']);
-                        }, 1500);
-
-                    } catch (error) {
-                        console.error('Error creating reel:', error);
-                        this.uploadError = 'Failed to save reel data. Please try again.';
-                        this.isUploading = false;
-                    }
                 }
-            );
+            });
 
         } catch (error) {
-            console.error('Upload error:', error);
-            this.uploadError = error instanceof Error ? error.message : 'Failed to upload video. Please try again.';
+            console.error('Upload flow error:', error);
+            this.uploadError = error instanceof Error ? error.message : 'Unknown error occurred';
             this.isUploading = false;
         }
     }

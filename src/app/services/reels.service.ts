@@ -21,7 +21,10 @@ import {
     onSnapshot
 } from '@angular/fire/firestore';
 import { Reel } from '../models/reel.model';
-import { Observable } from 'rxjs';
+import { Observable, lastValueFrom } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment.development';
 
 @Injectable({
     providedIn: 'root'
@@ -29,7 +32,82 @@ import { Observable } from 'rxjs';
 export class ReelsService {
     private readonly collectionName = 'reels';
 
-    constructor(private firestore: Firestore) { }
+    constructor(private firestore: Firestore, private http: HttpClient) { }
+
+    /**
+     * Get Trending Reels based on weighted score + time decay
+     * Score = (Views * 1) + (Likes * 3) + (Saves * 5)
+     * Decay = Score / (HoursSinceUpload + 2)^1.5
+     */
+    async getTrendingReels(limitCount: number = 20): Promise<Reel[]> {
+        try {
+            // Fetch a larger pool to sort effectively
+            const reelsRef = collection(this.firestore, this.collectionName);
+            const q = query(
+                reelsRef,
+                orderBy('createdAt', 'desc'),
+                limit(limitCount * 3) // Fetch 3x required to find gems
+            );
+
+            const snapshot = await getDocs(q);
+            const reels = snapshot.docs.map(doc => {
+                const data = doc.data() as Reel;
+                // SANITIZE: Rewrite old domain at source
+                if (data.videoUrl && data.videoUrl.includes('videos.bengaluru-swada.com')) {
+                    data.videoUrl = data.videoUrl.replace('https://videos.bengaluru-swada.com', 'https://r2-video-uploader.bengaluru-swada.workers.dev');
+                }
+                return { id: doc.id, ...data };
+            });
+
+            // Calculate score for each reel
+            const now = Date.now();
+            const scoredReels = reels.map(reel => {
+                const views = reel.viewCount || 0;
+                const likes = reel.likes || 0;
+                // Assuming bookmarkedBy length is proxy for 'Saves' for now
+                const saves = reel.bookmarkedBy?.length || 0;
+
+                const rawScore = (views * 1) + (likes * 3) + (saves * 5);
+
+                // Time Decay
+                const createdAt = (reel.createdAt as Timestamp).toDate().getTime();
+                const hoursSinceUpload = Math.max(0, (now - createdAt) / (1000 * 60 * 60));
+
+                // Gravity factor: 1.5 ensures newer processing-hot content rises, older content needs massive engagement to stay
+                const finalScore = rawScore / Math.pow(hoursSinceUpload + 2, 1.5);
+
+                return { ...reel, _score: finalScore };
+            });
+
+            // Sort by Score Descending
+            scoredReels.sort((a, b) => b._score - a._score);
+
+            // Pseudo-random reshuffle of top items to keep feed "alive"
+            // We take top X and shuffle them slightly so it's not IDENTICAL every refresh
+            const topReels = scoredReels.slice(0, limitCount);
+            return this.shuffleArray(topReels);
+
+        } catch (error) {
+            console.error('Error fetching trending:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get New Arrivals (Strict Chronological + Freshness Window)
+     */
+    async getNewArrivals(limitCount: number = 20): Promise<Reel[]> {
+        const reels = await this.getReels(limitCount); // Reuse basic fetch which is already time-sorted
+        return reels;
+    }
+
+    private shuffleArray(array: any[]): any[] {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
 
     /**
      * Get paginated reels ordered by creation date
@@ -149,13 +227,53 @@ export class ReelsService {
     }
 
     /**
-     * Delete a reel
+     * Delete a reel (Hard Delete: R2 + Firestore)
      * @param reelId Reel document ID
      */
     async deleteReel(reelId: string): Promise<void> {
         try {
+            // 1. Get reel data to find video URL
+            const reel = await this.getReelById(reelId);
+            if (!reel) {
+                console.warn('Reel not found, cannot delete');
+                return;
+            }
+
+            // 2. Extract object key from URL
+            // URL formats:
+            // "https://r2-video-uploader.bengaluru-swada.workers.dev/videos/uid/filename.mp4"
+            // "https://videos.bengaluru-swada.com/filename.mp4" (Old)
+            let objectKey = '';
+            if (reel.videoUrl) {
+                // If it's a worker/cdn URL, we want the path after the domain
+                if (reel.videoUrl.includes('bengaluru-swada.workers.dev')) {
+                    const domain = 'bengaluru-swada.workers.dev/';
+                    const index = reel.videoUrl.indexOf(domain);
+                    if (index !== -1) {
+                        objectKey = reel.videoUrl.substring(index + domain.length);
+                    }
+                } else {
+                    // Fallback to last part for legacy URLs
+                    const urlParts = reel.videoUrl.split('/');
+                    objectKey = urlParts[urlParts.length - 1];
+                }
+            }
+
+            // 3. Delete from R2 (Cloudflare) via Worker
+            if (objectKey) {
+                try {
+                    await lastValueFrom(this.deleteFromR2(objectKey));
+                    console.log(`Deleted ${objectKey} from R2`);
+                } catch (r2Error) {
+                    console.error('Failed to delete from R2, proceeding with DB delete:', r2Error);
+                }
+            }
+
+            // 4. Delete from Firestore
             const reelDoc = doc(this.firestore, this.collectionName, reelId);
             await deleteDoc(reelDoc);
+            console.log('Deleted reel metadata from Firestore');
+
         } catch (error) {
             console.error('Error deleting reel:', error);
             throw error;
@@ -264,6 +382,40 @@ export class ReelsService {
 
             return () => unsubscribe();
         });
+    }
+
+    /**
+     * Get a signed upload URL from Cloudflare Worker
+     * @param fileName Unique filename
+     * @param contentType MIME type of the file
+     */
+    getUploadUrl(fileName: string, contentType: string): Observable<{ uploadUrl: string, key: string }> {
+        return this.http.post<{ uploadUrl: string, key: string }>(
+            environment.cloudflare.workerUrl,
+            { fileName, contentType }
+        );
+    }
+
+    /**
+     * Upload file directly to R2 using signed URL
+     * @param uploadUrl Pre-signed URL
+     * @param file File to upload
+     */
+    uploadToR2(uploadUrl: string, file: File): Observable<any> {
+        return this.http.put(uploadUrl, file, {
+            headers: { 'Content-Type': file.type },
+            reportProgress: true,
+            observe: 'events'
+        });
+    }
+
+    /**
+     * Delete file from R2 via Cloudflare Worker
+     * @param objectKey Filename/Key to delete
+     */
+    deleteFromR2(objectKey: string): Observable<any> {
+        // Worker expects DELETE /<key>
+        return this.http.delete(`${environment.cloudflare.workerUrl}/${objectKey}`);
     }
 
     /**

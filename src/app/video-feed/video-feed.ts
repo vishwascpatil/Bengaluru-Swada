@@ -17,11 +17,22 @@ import { Timestamp } from '@angular/fire/firestore';
 })
 export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @Input() isActive: boolean = true;
+  activeTab: 'all' | 'trending' | 'new' = 'all';
+
   isGlobalMuted = true;
   reels: Reel[] = [];
   currentIndex = 0;
+
+  // Touch Handling
   touchStartY = 0;
-  isLoading = false;
+  touchStartX = 0;
+  pullStartY = 0;
+  pullMoveY = 0;
+  isRefreshing = false;
+  readonly pullThreshold = 150;
+  readonly swipeThresholdX = 50; // Horizontal swipe threshold
+
+  isLoading = true; // Start true for skeleton
 
   // Track which videos have been viewed
   private viewedReels = new Set<string>();
@@ -44,7 +55,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     // Minimal delay for DOM to be ready
     setTimeout(() => {
       if (this.reels.length > 0) {
-        this.playCurrent();
+        // Playback driven by [active]="true" on first item
         this.trackView();
       }
     }, 50); // Reduced from 1000ms for faster initial load
@@ -52,15 +63,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['isActive']) {
-      if (this.isActive) {
-        // Resume playing if we have reels
-        if (this.reels.length > 0) {
-          this.playCurrent();
-        }
-      } else {
-        // Pause when inactive
-        this.pauseCurrent();
-      }
+      // Logic handled by [active] input propagation to children
     }
   }
 
@@ -102,23 +105,68 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       })
     );
 
-    // Sort reels by distance (closest first)
-    reelsWithUpdatedDistances.sort((a, b) => {
-      const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
-      const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
-      return distA - distB;
-    });
+    // Sort reels if on 'all' tab, otherwise just update distances
+    if (this.activeTab === 'all') {
+      reelsWithUpdatedDistances.sort((a, b) => {
+        const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
+        const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
+        return distA - distB;
+      });
+    }
 
     this.reels = reelsWithUpdatedDistances;
-    this.currentIndex = 0; // Reset to first reel
-    this.playCurrent();
+    this.currentIndex = 0;
+    this.cdr.detectChanges();
+  }
+
+  isOwner(reel: Reel): boolean {
+    return this.auth.currentUser?.uid === reel.uploadedBy;
+  }
+
+  async onReelDeleted(reel: Reel) {
+    if (!confirm('Are you sure you want to delete this reel permanently?')) return;
+
+    try {
+      await this.reelsService.deleteReel(reel.id!);
+      // Remove from local list
+      this.reels = this.reels.filter(r => r.id !== reel.id);
+
+      // Adjust index if needed
+      if (this.currentIndex >= this.reels.length) {
+        this.currentIndex = Math.max(0, this.reels.length - 1);
+      }
+    } catch (error) {
+      console.error('Failed to delete reel:', error);
+      alert('Failed to delete reel. Please try again.');
+    }
+  }
+
+  async switchTab(tab: 'all' | 'trending' | 'new') {
+    if (this.activeTab === tab) return;
+
+    this.activeTab = tab;
+    this.reels = []; // Clear current list to triggers skeleton
+    this.currentIndex = 0;
+    this.isLoading = true;
+
+    await this.loadReels();
   }
 
   async loadReels() {
-    console.log('[VideoFeed] Starting to load reels...');
+    console.log(`[VideoFeed] Loading ${this.activeTab} reels...`);
     this.isLoading = true;
     try {
-      const fetchedReels = await this.reelsService.getReels(20);
+      let fetchedReels: Reel[] = [];
+
+      if (this.activeTab === 'trending') {
+        fetchedReels = await this.reelsService.getTrendingReels(20);
+      } else if (this.activeTab === 'new') {
+        fetchedReels = await this.reelsService.getNewArrivals(20);
+      } else {
+        // 'all' tab - fetch more to ensure good proximity variety
+        fetchedReels = await this.reelsService.getReels(50);
+      }
+
       console.log('[VideoFeed] Fetched reels:', fetchedReels.length);
 
       // Set client-side like/bookmark state based on current user
@@ -149,27 +197,29 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         })
       );
 
-      // Sort reels by distance (closest first)
-      reelsWithDistance.sort((a, b) => {
-        const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
-        const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
-        return distA - distB;
-      });
+      // If it's the 'all' tab, sort strictly by proximity
+      if (this.activeTab === 'all') {
+        reelsWithDistance.sort((a, b) => {
+          const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
+          const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
+          return distA - distB;
+        });
+      }
 
       this.reels = reelsWithDistance;
       console.log('[VideoFeed] Final reels count:', this.reels.length);
     } catch (error) {
       console.error('[VideoFeed] Error loading reels:', error);
     } finally {
-      this.isLoading = false;
-      this.cdr.detectChanges(); // Force view update
-      console.log('[VideoFeed] Loading complete. isLoading:', this.isLoading);
+      // Delay slightly for smooth transition perception
+      setTimeout(() => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
 
-      // Auto-play the first video immediately after loading
-      if (this.reels.length > 0) {
-        this.playCurrent();
-        this.trackView();
-      }
+        if (this.reels.length > 0) {
+          this.trackView();
+        }
+      }, 500);
     }
   }
 
@@ -197,47 +247,58 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
   }
 
-  // Pull to refresh
-  pullStartY = 0;
-  pullMoveY = 0;
-  isRefreshing = false;
-  readonly pullThreshold = 150; // Pixels to pull to trigger refresh
+  // Pull to refresh variables are already defined above
 
   onTouchStart(e: TouchEvent) {
     this.touchStartY = e.touches[0].clientY;
+    this.touchStartX = e.touches[0].clientX;
 
-    // Only enable pull-to-refresh if we are at the top and not already refreshing
+    // Pull to refresh logic (vertical)
     if (this.currentIndex === 0 && !this.isRefreshing) {
       this.pullStartY = e.touches[0].clientY;
     }
   }
 
   onTouchMove(e: TouchEvent) {
+    // Vertical / Pull Logic
     if (this.currentIndex === 0 && !this.isRefreshing && this.pullStartY > 0) {
       const currentY = e.touches[0].clientY;
       const diff = currentY - this.pullStartY;
-
-      // Only track pull down
       if (diff > 0) {
-        // Add resistance
         this.pullMoveY = diff * 0.5;
-        // Prevent default only if we are pulling down significantly to avoid interfering with normal scroll
-        if (diff > 10) {
-          e.preventDefault();
-        }
+        if (diff > 10) e.preventDefault(); // Lock scroll for PTR
       }
     }
   }
 
   async onTouchEnd(e: TouchEvent) {
-    const delta = this.touchStartY - e.changedTouches[0].clientY;
-    const threshold = 80;
+    const endY = e.changedTouches[0].clientY;
+    const endX = e.changedTouches[0].clientX;
 
-    // Handle swipe navigation
-    if (delta > threshold) {
+    const deltaY = this.touchStartY - endY;
+    const deltaX = this.touchStartX - endX; // Positive = Swipe Left, Negative = Swipe Right
+
+    // Horizontal Swipe (Tab Switch)
+    // Ensure it's mostly horizontal swipe
+    if (Math.abs(deltaX) > this.swipeThresholdX && Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX > 0) {
+        // Swipe Left -> Go Right
+        if (this.activeTab === 'all') this.switchTab('trending');
+        else if (this.activeTab === 'trending') this.switchTab('new');
+      } else {
+        // Swipe Right -> Go Left
+        if (this.activeTab === 'new') this.switchTab('trending');
+        else if (this.activeTab === 'trending') this.switchTab('all');
+      }
+      return; // Exit if handled as swipe
+    }
+
+    // Vertical Swipe (Video Navigation)
+    const thresholdY = 80;
+    if (deltaY > thresholdY) {
       this.next();
-    } else if (delta < -threshold) {
-      // Only go to previous if we haven't triggered a refresh
+    } else if (deltaY < -thresholdY) {
+      // Only prev if not PTR
       if (this.pullMoveY < this.pullThreshold) {
         this.prev();
       }
@@ -270,34 +331,21 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
   }
 
-  playCurrent() {
-    this.cards.forEach((c, idx) => {
-      if (idx === this.currentIndex) {
-        c.play();
-      } else {
-        c.pause();
-      }
-    });
-  }
-
-  pauseCurrent() {
-    this.cards.forEach(c => c.pause());
-  }
+  // Removed playCurrent/pauseCurrent/next/prev calls that manually triggered playback
+  // Playback is now driven by [active] input binding in the template
 
   next() {
     if (this.currentIndex < this.reels.length - 1) {
-      this.isGlobalMuted = true; // Reset to muted default
+      this.isGlobalMuted = true;
       this.currentIndex++;
-      this.playCurrent();
       this.trackView();
     }
   }
 
   prev() {
     if (this.currentIndex > 0) {
-      this.isGlobalMuted = true; // Reset to muted default
+      this.isGlobalMuted = true;
       this.currentIndex--;
-      this.playCurrent();
       this.trackView();
     }
   }
@@ -453,7 +501,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       this.currentIndex = index;
       this.isGlobalMuted = true; // Reset to muted default
       setTimeout(() => {
-        this.playCurrent();
+        // Playback driven by [active]
         this.trackView();
       }, 100);
       console.log(`[VideoFeed] Successfully navigated to reel: ${reelId}`);
@@ -461,5 +509,15 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       console.warn(`[VideoFeed] Reel not found in loaded reels: ${reelId}`);
       console.log('[VideoFeed] Available reel IDs:', this.reels.map(r => r.id));
     }
+  }
+  /**
+   * Get priority for video loading/preloading
+   * @param index Index of the reel
+   */
+  getPriority(index: number): 'high' | 'auto' | 'low' {
+    const diff = Math.abs(index - this.currentIndex);
+    if (diff === 0) return 'high';
+    if (diff === 1) return 'auto';
+    return 'low';
   }
 }

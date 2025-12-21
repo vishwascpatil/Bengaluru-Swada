@@ -1,6 +1,18 @@
 <div class="search-container">
     <!-- Search Header -->
     <div class="search-header">
+        <div class="location-context" (click)="openLocationModal()">
+            <svg class="location-pin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path
+                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                    fill="currentColor" />
+            </svg>
+            <span class="location-text">{{locationName}}</span>
+            <svg class="chevron-down" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        </div>
+
         <div class="search-bar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 class="search-icon">
@@ -9,6 +21,57 @@
             </svg>
             <input type="text" placeholder="Search dosa, vada pav, biryani..." [(ngModel)]="searchQuery"
                 (ngModelChange)="applyFilters()">
+        </div>
+    </div>
+
+    <!-- Location Selector Modal -->
+    <div class="modal-overlay" *ngIf="showLocationModal" (click)="closeLocationModal()">
+        <div class="location-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Select Location</h2>
+                <button class="close-btn" (click)="closeLocationModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-search-box">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+                    <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <input type="text" [(ngModel)]="locationSearchQuery" placeholder="Search for a location..."
+                    class="search-input" />
+            </div>
+
+            <div class="locations-list">
+                <div class="location-item" *ngFor="let loc of filteredLocations" (click)="selectLocation(loc)">
+                    <div class="location-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                                fill="currentColor" />
+                        </svg>
+                    </div>
+                    <div class="location-info">
+                        <div class="location-name">{{loc.name}}</div>
+                        <div class="location-area">Pincode: {{loc.pincode}}</div>
+                    </div>
+                    <svg class="chevron-right" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+
+                <div class="no-results" *ngIf="filteredLocations.length === 0">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+                        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <p>No locations found</p>
+                    <span>Try searching for a different area</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -69,9 +132,9 @@
             <div class="card-details">
                 <div class="header-row">
                     <h3 class="dish-name">{{reel.title}}</h3>
-                    <span class="rating">
+                    <!-- <span class="rating">
                         {{reel.rating}} <span class="star">★</span>
-                    </span>
+                    </span> -->
                 </div>
                 <p class="vendor-name">{{reel.vendor}}</p>
                 <div class="price-row">

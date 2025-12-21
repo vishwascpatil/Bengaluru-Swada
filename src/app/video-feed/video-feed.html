@@ -1,6 +1,24 @@
 <div class="video-feed" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)"
   (touchend)="onTouchEnd($event)">
 
+  <!-- Tab Header -->
+  <div class="feed-tabs">
+    <div class="tab-item" [class.active]="activeTab === 'all'" (click)="switchTab('all')">
+      <span>All</span>
+    </div>
+    <div class="tab-separator">|</div>
+    <div class="tab-item" [class.active]="activeTab === 'trending'" (click)="switchTab('trending')">
+      <span>Trending</span>
+    </div>
+    <div class="tab-separator">|</div>
+    <div class="tab-item" [class.active]="activeTab === 'new'" (click)="switchTab('new')">
+      <span>New Arrivals</span>
+    </div>
+    <!-- Moving Underline Indicator -->
+    <div class="tab-indicator" [class.trending-active]="activeTab === 'trending'"
+      [class.new-active]="activeTab === 'new'"></div>
+  </div>
+
   <!-- Pull to Refresh Spinner -->
   <div class="refresh-indicator" [style.transform]="'translateY(' + (isRefreshing ? 60 : pullMoveY) + 'px)'"
     [class.refreshing]="isRefreshing">
@@ -12,10 +30,9 @@
     </svg>
   </div>
 
-  <!-- Loading State -->
-  <div class="loading-state" *ngIf="isLoading && !isRefreshing">
-    <div class="spinner"></div>
-    <p>Loading tasty bites...</p>
+  <!-- Loading / Skeleton State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <app-video-feed-skeleton></app-video-feed-skeleton>
   </div>
 
   <!-- Empty State -->
@@ -30,9 +47,12 @@
     </div>
   </div>
 
-  <app-video-card *ngFor="let reel of reels; let i = index" [reel]="reel" [active]="i === currentIndex"
-    [relativeIndex]="i - currentIndex" [isMuted]="isGlobalMuted" (muteChanged)="onMuteChanged($event)"
-    [priority]="i === currentIndex || i === currentIndex + 1 ? 'high' : 'low'" (liked)="onLike(i)"
-    (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
-  </app-video-card>
+  <!-- Video Reel Grid -->
+  <div class="reels-container" *ngIf="!isLoading && reels.length > 0">
+    <app-video-card *ngFor="let reel of reels; let i = index" [reel]="reel" [active]="i === currentIndex && isActive"
+      [relativeIndex]="i - currentIndex" [priority]="getPriority(i)" [isMuted]="isGlobalMuted"
+      [canDelete]="isOwner(reel)" (muteChanged)="onMuteChanged($event)" (deleted)="onReelDeleted(reel)"
+      (liked)="onLike(i)" (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
+    </app-video-card>
+  </div>
 </div>
