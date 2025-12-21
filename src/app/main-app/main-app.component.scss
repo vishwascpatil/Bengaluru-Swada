@@ -100,7 +100,7 @@
 
         // Heart icon (now in profile, but if used elsewhere) - fill the heart
         &:has(path[d*="19 21l-7-5"]) path {
-            fill: currentColor;
+            stroke: currentColor;
         }
 
 

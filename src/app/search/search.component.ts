@@ -60,7 +60,10 @@ export class SearchComponent implements OnInit {
         this.locationService.currentLocation$.subscribe(loc => {
             if (loc) {
                 this.locationName = `${loc.name}, Bangalore`;
-                this.loadReels(); // Reload reels when location changes
+                // Don't auto-reload here, wait for user action
+                if (this.reels.length > 0) {
+                    this.loadReels();
+                }
             }
         });
 
@@ -71,8 +74,6 @@ export class SearchComponent implements OnInit {
         } catch (e) {
             console.warn('Could not get initial location name', e);
         }
-
-        await this.loadReels();
     }
 
     async loadReels() {
@@ -109,7 +110,6 @@ export class SearchComponent implements OnInit {
                 };
             }));
 
-            this.applyFilters();
         } catch (error) {
             console.error('Error loading reels for search:', error);
         } finally {
@@ -117,7 +117,23 @@ export class SearchComponent implements OnInit {
         }
     }
 
-    applyFilters() {
+    async applyFilters() {
+        // Only load if we haven't loaded yet and there's some active interaction
+        if (this.reels.length === 0 && !this.isLoading) {
+            // Check if any filter is non-default or search query is present
+            const hasActiveSearch = this.searchQuery.trim().length > 0;
+            const hasActiveFilters = this.selectedCategory !== 'All' ||
+                this.selectedPriceRange.label !== 'All' ||
+                this.selectedDistance.label !== 'All';
+
+            if (hasActiveSearch || hasActiveFilters) {
+                await this.loadReels();
+            } else {
+                this.filteredReels = [];
+                return;
+            }
+        }
+
         let result = this.reels;
 
         // 1. Text Search

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Reel } from '../models/reel.model';
 
@@ -9,7 +9,7 @@ import { Reel } from '../models/reel.model';
   templateUrl: './video-card.component.html',
   styleUrls: ['./video-card.component.scss']
 })
-export class VideoCardComponent implements AfterViewInit, OnChanges {
+export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   // Accept full Reel object or individual properties for backward compatibility
   @Input() reel?: Reel;
   @Input() src = '';
@@ -139,9 +139,24 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
       }
     }
 
-    // 4. Handle External Mute
-    if (changes['isMuted'] && this.videoEl?.nativeElement) {
-      this.videoEl.nativeElement.muted = this.isMuted;
+    // 4. Handle External Mute & Strict Active Enforcement
+    // We lean on the template [muted] binding for the definitive state,
+    // but we can also set it here for immediate effect.
+    if (this.videoEl?.nativeElement) {
+      this.videoEl.nativeElement.muted = !this.active || this.isMuted;
+    }
+  }
+
+  ngOnDestroy() {
+    this.pause();
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
+    if (this.progressBarHideTimeout) {
+      clearTimeout(this.progressBarHideTimeout);
+    }
+    if (this.playWatchdogTimeout) {
+      clearTimeout(this.playWatchdogTimeout);
     }
   }
 
@@ -234,8 +249,8 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   play() {
     const video = this.videoEl?.nativeElement;
     if (video) {
-      // Respect the current mute state
-      video.muted = this.isMuted;
+      // Ensure it's correctly muted before play starts
+      video.muted = !this.active || this.isMuted;
 
       // Restart video from beginning
       video.currentTime = 0;
@@ -344,7 +359,10 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
 
       // Toggle mute state
       const newMutedState = !this.isMuted;
-      video.muted = newMutedState;
+
+      // Safety: If not active, keep muted anyway
+      video.muted = !this.active || newMutedState;
+
       this.isMuted = newMutedState;
       this.muteChanged.emit(newMutedState);
 

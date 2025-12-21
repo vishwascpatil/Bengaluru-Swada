@@ -119,7 +119,12 @@
         </div>
 
         <div class="empty-state" *ngIf="!isLoading && filteredReels.length === 0">
-            <p>No tasty bites found matching your search.</p>
+            <div *ngIf="reels.length === 0; else noResults">
+                <p>Search for your favorite food or browse categories!</p>
+            </div>
+            <ng-template #noResults>
+                <p>No tasty bites found matching your search.</p>
+            </ng-template>
         </div>
 
         <div class="food-card" *ngFor="let reel of filteredReels" (click)="openReel(reel)">
