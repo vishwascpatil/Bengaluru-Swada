@@ -24,6 +24,16 @@
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
 }
 
+/* Bottom Profile Menu */
+.profile-container-bottom {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
 .location-badge {
     display: flex;
     align-items: center;
@@ -327,9 +337,26 @@
             stroke: currentColor;
         }
 
-        // Heart icon - fill the heart
-        &:has(path[d*="12 21.35"]) path {
+        // Heart icon (now in profile, but if used elsewhere) - fill the heart
+        &:has(path[d*="19 21l-7-5"]) path {
             fill: currentColor;
+        }
+
+
+        // Trending icon - Rising Graph
+        &:has(polyline[points*="23 6"]) polyline {
+            // Keep fill none, maybe increase stroke width?
+            fill: none;
+            stroke-width: 3px;
+        }
+
+        // Profile icon
+        &:has(path[d*="M20 21C20"]) {
+
+            path,
+            circle {
+                stroke: currentColor;
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 <div class="main-app">
   <div class="top-nav">
     <div class="nav-left">
-      <div class="location-badge" (click)="openLocationModal()">
+      <div class="location-badge" *ngIf="activeTab === 'feed'" (click)="openLocationModal()">
         <svg class="location-pin" width="16" height="16" viewBox="0 0 24 24" fill="none"
           xmlns="http://www.w3.org/2000/svg">
           <path
@@ -68,6 +68,9 @@
   </div>
 
   <app-video-feed [class.hidden]="activeTab !== 'feed'" [isActive]="activeTab === 'feed'"></app-video-feed>
+  <app-search [class.hidden]="activeTab !== 'search'"></app-search>
+  <app-trending [class.hidden]="activeTab !== 'trending'"></app-trending>
+  <app-profile [class.hidden]="activeTab !== 'profile'"></app-profile>
   <app-favorites [class.hidden]="activeTab !== 'favorites'"></app-favorites>
   <app-upload-reel [class.hidden]="activeTab !== 'upload'"></app-upload-reel>
 
@@ -80,21 +83,45 @@
       <!-- <span>Reels</span> -->
     </button>
 
-    <!-- Upload Button -->
-    <button class="bottom-nav-btn upload-btn" (click)="goToUpload()">
+    <!-- Search Button -->
+    <button class="bottom-nav-btn" [class.active]="activeTab === 'search'" (click)="select('search')">
       <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+    </button>
+
+
+
+    <!-- Upload Button -->
+    <button class="bottom-nav-btn upload-btn" [class.active]="activeTab === 'upload'" (click)="goToUpload()">
+      <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" stroke-width="2" />
+        <path d="M12 7v10M7 12h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round" />
       </svg>
       <!-- <span>Upload</span> -->
     </button>
 
-    <button class="bottom-nav-btn" [class.active]="activeTab === 'favorites'" (click)="select('favorites')">
+    <button class="bottom-nav-btn" [class.active]="activeTab === 'trending'" (click)="select('trending')">
       <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" />
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <polyline points="17 6 23 6 23 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
       </svg>
-      <!-- <span>Favorites</span> -->
+      <!-- <span>Trending</span> -->
     </button>
+
+    <div class="profile-container-bottom">
+      <button class="bottom-nav-btn" [class.active]="activeTab === 'profile'" (click)="select('profile')">
+        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 21C20 18.2386 17.7614 16 15 16H9C6.23858 16 4 18.2386 4 21" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
   </div>
 </div>

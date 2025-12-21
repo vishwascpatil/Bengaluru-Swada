@@ -1,17 +1,21 @@
 import { Component, Output, EventEmitter, ViewChild, OnInit } from '@angular/core';
+import { Auth } from '@angular/fire/auth';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VideoFeedComponent } from '../video-feed/video-feed';
 import { FavoritesComponent } from '../favorites/favorites.component';
 import { UploadReelComponent } from '../upload-reel/upload-reel';
+import { SearchComponent } from '../search/search.component';
+import { TrendingComponent } from '../trending/trending.component';
+import { ProfileComponent } from '../profile/profile.component';
 import { LocationService } from '../services/location.service';
 import { NavigationService } from '../services/navigation.service';
 
 @Component({
   selector: 'app-main-app',
   standalone: true,
-  imports: [CommonModule, VideoFeedComponent, FavoritesComponent, UploadReelComponent, FormsModule],
+  imports: [CommonModule, VideoFeedComponent, FavoritesComponent, UploadReelComponent, SearchComponent, TrendingComponent, ProfileComponent, FormsModule],
   templateUrl: './main-app.component.html',
   styleUrls: ['./main-app.component.scss']
 })
@@ -21,6 +25,7 @@ export class MainAppComponent implements OnInit {
 
   activeTab = 'feed';
   showLocationModal = false;
+  showProfileMenu = false;
   searchQuery = '';
 
   // Comprehensive Bangalore locations with coordinates and pincodes
@@ -114,12 +119,14 @@ export class MainAppComponent implements OnInit {
   ];
 
   @ViewChild(FavoritesComponent) favoritesComponent!: FavoritesComponent;
+  @ViewChild(ProfileComponent) profileComponent!: ProfileComponent;
   @ViewChild(VideoFeedComponent) videoFeedComponent!: VideoFeedComponent;
 
   constructor(
     private router: Router,
     private locationService: LocationService,
-    private navigationService: NavigationService
+    private navigationService: NavigationService,
+    private auth: Auth
   ) {
     // Check if location was passed via navigation state
     const navigation = this.router.getCurrentNavigation();
@@ -197,9 +204,9 @@ export class MainAppComponent implements OnInit {
     this.activeTab = tab;
     this.navigate.emit(tab);
 
-    // Reload favorites data when favorites tab is clicked
-    if (tab === 'favorites' && this.favoritesComponent) {
-      this.favoritesComponent.loadBookmarkedReels();
+    // Reload favorites data when profile tab is clicked
+    if (tab === 'profile' && this.profileComponent) {
+      this.profileComponent.reloadFavorites();
     }
   }
 
@@ -221,7 +228,7 @@ export class MainAppComponent implements OnInit {
     this.location = `${loc.name}, Bangalore`;
     this.locationService.setUserLocation(loc.lat, loc.lng);
     this.closeLocationModal();
-    
+
     // Refresh video feed with new location data
     if (this.videoFeedComponent) {
       await this.videoFeedComponent.reloadReelsForNewLocation();
@@ -237,5 +244,17 @@ export class MainAppComponent implements OnInit {
       loc.name.toLowerCase().includes(query) ||
       loc.pincode.includes(query)
     );
+  }
+  async logout() {
+    try {
+      await this.auth.signOut();
+      this.router.navigate(['/']);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  }
+
+  toggleProfileMenu() {
+    this.showProfileMenu = !this.showProfileMenu;
   }
 }

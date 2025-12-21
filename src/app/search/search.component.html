@@ -1,0 +1,84 @@
+<div class="search-container">
+    <!-- Search Header -->
+    <div class="search-header">
+        <div class="search-bar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                class="search-icon">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" placeholder="Search dosa, vada pav, biryani..." [(ngModel)]="searchQuery"
+                (ngModelChange)="applyFilters()">
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-scroll">
+        <!-- Categories (Optional, kept simpler for now or mapped) -->
+        <!-- <div class="filter-group">
+      <button *ngFor="let cat of categories" 
+              class="chip" 
+              [class.active]="selectedCategory === cat"
+              (click)="selectCategory(cat)">
+        {{cat}}
+      </button>
+    </div> -->
+
+        <div class="filter-section-title">Price Range</div>
+        <div class="filter-group">
+            <button *ngFor="let range of priceRanges" class="chip" [class.active]="selectedPriceRange === range"
+                (click)="selectPrice(range)">
+                {{range.label}}
+            </button>
+        </div>
+
+        <div class="filter-section-title">Distance</div>
+        <div class="filter-group">
+            <button *ngFor="let dist of distances" class="chip" [class.active]="selectedDistance === dist"
+                (click)="selectDistance(dist)">
+                {{dist.label}}
+            </button>
+        </div>
+
+        <div class="filter-section-title">Sort By</div>
+        <div class="filter-group">
+            <button *ngFor="let sort of sortOptions" class="chip" [class.active]="selectedSort === sort"
+                (click)="selectSort(sort)">
+                {{sort}}
+            </button>
+        </div>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="results-grid">
+        <div class="loading-spinner" *ngIf="isLoading">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="empty-state" *ngIf="!isLoading && filteredReels.length === 0">
+            <p>No tasty bites found matching your search.</p>
+        </div>
+
+        <div class="food-card" *ngFor="let reel of filteredReels" (click)="openReel(reel)">
+            <div class="card-image">
+                <video [src]="reel.videoUrl" muted playsinline preload="metadata" #videoThumb
+                    (loadedmetadata)="videoThumb.currentTime=0.1"></video>
+                <!-- <img [src]="reel.thumbnailUrl" alt="Food"> -->
+                <div class="distance-badge">{{reel.distanceStr}}</div>
+            </div>
+            <div class="card-details">
+                <div class="header-row">
+                    <h3 class="dish-name">{{reel.title}}</h3>
+                    <span class="rating">
+                        {{reel.rating}} <span class="star">★</span>
+                    </span>
+                </div>
+                <p class="vendor-name">{{reel.vendor}}</p>
+                <div class="price-row">
+                    <span class="price">₹{{reel.price}}</span>
+                    <!-- <span class="offer">20% OFF</span> -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

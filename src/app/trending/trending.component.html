@@ -1,0 +1,66 @@
+<div class="trending-page">
+    <div class="tabs-header">
+        <div class="tab" [class.active]="activeTab === 'trending'" (click)="switchTab('trending')">
+            <span>Trending 🔥</span>
+        </div>
+        <div class="tab" [class.active]="activeTab === 'new'" (click)="switchTab('new')">
+            <span>New Arrivals ✨</span>
+        </div>
+        <div class="slider" [class.right]="activeTab === 'new'"></div>
+    </div>
+
+    <!-- Swipe Container -->
+    <div class="content-container" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
+
+        <div class="loading-spinner" *ngIf="isLoading">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Trending List -->
+        <div class="reels-list" *ngIf="!isLoading && activeTab === 'trending'">
+            <div class="ranking-item" *ngFor="let reel of trendingReels; let i = index">
+                <div class="rank">#{{i + 1}}</div>
+                <div class="reel-card">
+                    <div class="thumbnail">
+                        <video [src]="reel.videoUrl" muted loop playsinline></video>
+                    </div>
+                    <div class="info">
+                        <h3>{{reel.title}}</h3>
+                        <p class="vendor">{{reel.vendor}}</p>
+                        <div class="stats">
+                            <span>👁️ {{reel.viewCount || 0}}</span>
+                            <span>❤️ {{reel.likes || 0}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoading && trendingReels.length === 0">
+                <p>No trending reels yet!</p>
+            </div>
+        </div>
+
+        <!-- New Arrivals List -->
+        <div class="reels-list" *ngIf="!isLoading && activeTab === 'new'">
+            <div class="ranking-item" *ngFor="let reel of newArrivalsReels; let i = index">
+                <div class="rank new">🆕</div>
+                <div class="reel-card">
+                    <div class="thumbnail">
+                        <video [src]="reel.videoUrl" muted loop playsinline></video>
+                    </div>
+                    <div class="info">
+                        <h3>{{reel.title}}</h3>
+                        <p class="vendor">{{reel.vendor}}</p>
+                        <div class="stats">
+                            <span>📅 {{reel.createdAt?.toDate() | date:'shortDate'}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoading && newArrivalsReels.length === 0">
+                <p>No new arrivals yet!</p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -133,7 +133,12 @@ export class OtpComponent implements OnInit {
     this.error = '';
 
     try {
-      const fullPhone = '+91' + this.phone;
+      console.log('Current stored phone:', this.phone);
+      let fullPhone = this.phone;
+      if (!fullPhone.startsWith('+')) {
+        fullPhone = '+91' + fullPhone;
+      }
+      console.log('Sending OTP to:', fullPhone);
       const result = await this.phoneAuthService.sendOtp(fullPhone, this.recaptchaVerifier);
 
       // Update confirmation result

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
@@ -14,6 +14,7 @@ import { NavigationService } from '../services/navigation.service';
     styleUrls: ['./favorites.component.scss']
 })
 export class FavoritesComponent implements OnInit {
+    @Input() showHeader = true;
     bookmarkedReels: Reel[] = [];
     isLoading = true;
 

@@ -76,11 +76,11 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   }
 
   get displayIsLiked(): boolean {
-    return this.reel?.isLiked || this.isLiked;
+    return this.reel ? (this.reel.isLiked || false) : this.isLiked;
   }
 
   get displayIsBookmarked(): boolean {
-    return this.reel?.isBookmarked || this.isBookmarked;
+    return this.reel ? (this.reel.isBookmarked || false) : this.isBookmarked;
   }
 
   isLoading = true;
@@ -262,7 +262,9 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
 
   // Toggle bookmark status
   bookmark(): void {
-    this.isBookmarked = !this.isBookmarked;
+    if (!this.reel) {
+      this.isBookmarked = !this.isBookmarked;
+    }
     this.bookmarked.emit();
   }
 
@@ -283,7 +285,9 @@ export class VideoCardComponent implements AfterViewInit, OnChanges {
   }
 
   toggleLike() {
-    this.isLiked = !this.isLiked;
+    if (!this.reel) {
+      this.isLiked = !this.isLiked;
+    }
     this.liked.emit();
     if (this.isLiked) {
       this.showLikeAnimationEffect();

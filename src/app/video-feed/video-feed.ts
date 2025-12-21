@@ -286,6 +286,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   next() {
     if (this.currentIndex < this.reels.length - 1) {
+      this.isGlobalMuted = true; // Reset to muted default
       this.currentIndex++;
       this.playCurrent();
       this.trackView();
@@ -294,6 +295,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   prev() {
     if (this.currentIndex > 0) {
+      this.isGlobalMuted = true; // Reset to muted default
       this.currentIndex--;
       this.playCurrent();
       this.trackView();
@@ -449,6 +451,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     if (index !== -1) {
       console.log(`[VideoFeed] Found reel at index ${index}, navigating...`);
       this.currentIndex = index;
+      this.isGlobalMuted = true; // Reset to muted default
       setTimeout(() => {
         this.playCurrent();
         this.trackView();

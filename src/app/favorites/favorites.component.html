@@ -1,5 +1,5 @@
 <div class="favorites-container">
-    <div class="favorites-header">
+    <div class="favorites-header" *ngIf="showHeader">
         <h1>Favorites</h1>
         <p class="subtitle">Your bookmarked reels</p>
     </div>
@@ -25,8 +25,8 @@
     <div class="reels-grid" *ngIf="!isLoading && bookmarkedReels.length > 0">
         <div class="reel-card" *ngFor="let reel of bookmarkedReels" (click)="playReel(reel)">
             <div class="reel-thumbnail">
-                <img *ngIf="reel.thumbnailUrl" [src]="reel.thumbnailUrl" [alt]="reel.title"
-                    (error)="$event.target.style.display='none'">
+                <video #videoThumb *ngIf="reel.videoUrl" [src]="reel.videoUrl" muted playsinline preload="metadata"
+                    (loadedmetadata)="videoThumb.currentTime = 0.1"></video>
                 <div class="play-overlay">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
                         <path d="M8 5v14l11-7z" />

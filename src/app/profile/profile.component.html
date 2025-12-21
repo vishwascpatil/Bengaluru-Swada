@@ -1,0 +1,85 @@
+<div class="profile-page">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <h1 class="username">{{userName}} <span class="verified-badge"></span></h1>
+        <div class="top-actions">
+            <button class="icon-btn" (click)="logout()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="scroll-content">
+        <!-- Header: Avatar + Stats -->
+        <div class="profile-header-row">
+            <div class="avatar-container">
+                <div class="story-ring">
+                    <img src="assets/avatar-placeholder.png" alt="Avatar"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Foodie+Explorer&background=ff6b35&color=fff'">
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-item">
+                    <span class="count">{{stats.posts}}</span>
+                    <span class="label">Posts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="count">{{stats.followers}}</span>
+                    <span class="label">Followers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="count">{{stats.following}}</span>
+                    <span class="label">Following</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bio Section -->
+        <div class="bio-section">
+            <h2 class="fullname">{{fullName}}</h2>
+            <p class="bio-text">📍 Exploring Namma Bengaluru<br>🍛 South Indian Food Lover<br>✨ Digital Creator</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="edit-profile-btn">Edit Profile</button>
+            <button class="share-profile-btn">Share Profile</button>
+        </div>
+
+        <!-- Content Tabs -->
+        <div class="content-tabs">
+            <div class="tab active">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+            </div>
+            <div class="tab">
+                <div class="reel-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M10 8L16 12L10 16V8Z" fill="currentColor" stroke="none"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="tab">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Grid Content -->
+        <div class="grid-content">
+            <app-favorites [showHeader]="false"></app-favorites>
+        </div>
+    </div>
+</div>
