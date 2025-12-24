@@ -74,15 +74,39 @@
                 <input type="number" id="price" [(ngModel)]="price" placeholder="50" min="0" [disabled]="isUploading">
             </div>
 
-            <div class="form-group">
-                <label>Location *</label>
-                <button type="button" class="location-btn" (click)="getCurrentLocation()" [disabled]="isUploading">
-                    📍 Use Current Location
-                </button>
-                <button type="button" class="location-btn map-btn" (click)="openLocationPicker()"
-                    [disabled]="isUploading" style="margin-top: 10px;">
-                    🗺️ Pick on Map
-                </button>
+            <div class="form-group location-group">
+                <label>Store Location *</label>
+                <div class="location-actions">
+                    <button type="button" class="location-card" (click)="getCurrentLocation()" [disabled]="isUploading">
+                        <div class="card-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <circle cx="12" cy="9" r="2.5" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-title">Current Location</span>
+                            <span class="card-subtitle">Use GPS coordinates</span>
+                        </div>
+                    </button>
+
+                    <button type="button" class="location-card map-card" (click)="openLocationPicker()"
+                        [disabled]="isUploading">
+                        <div class="card-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 11V21H21V11M3 11L12 3L21 11M3 11H21" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="12" cy="14" r="3" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-title">Pick on Map</span>
+                            <span class="card-subtitle">Select manually</span>
+                        </div>
+                    </button>
+                </div>
             </div>
 
             <div class="form-row">
