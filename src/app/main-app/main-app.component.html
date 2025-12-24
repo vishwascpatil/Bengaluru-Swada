@@ -62,4 +62,8 @@
       </button>
     </div>
   </div>
+
+  <app-confirmation-modal *ngIf="showConfirmModal" message="By going outside all your changes will be lost."
+    confirmText="Discard Changes" secondText="Stay Here" (confirm)="onConfirmLeave()" (cancel)="onCancelLeave()">
+  </app-confirmation-modal>
 </div>

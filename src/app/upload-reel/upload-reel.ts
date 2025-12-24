@@ -112,6 +112,18 @@ export class UploadReelComponent implements OnInit {
         this.uploadProgress = 0;
         this.uploadSuccess = false;
         this.isUploading = false;
+        this.latitude = null;
+        this.longitude = null;
+    }
+
+    /**
+     * Check if form has any unsaved changes
+     */
+    hasChanges(): boolean {
+        // If we are currently uploading, don't consider it "stale" changes to lost
+        // as the upload process handles its own state. 
+        // But for this requirement, we check if any field is filled.
+        return !!(this.selectedFile || this.title || this.vendor || this.price || this.latitude || this.longitude) && !this.uploadSuccess;
     }
 
     /**

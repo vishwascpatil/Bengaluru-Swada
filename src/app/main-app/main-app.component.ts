@@ -11,11 +11,22 @@ import { TrendingComponent } from '../trending/trending.component';
 import { ProfileComponent } from '../profile/profile.component';
 import { LocationService } from '../services/location.service';
 import { NavigationService } from '../services/navigation.service';
+import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal';
 
 @Component({
   selector: 'app-main-app',
   standalone: true,
-  imports: [CommonModule, VideoFeedComponent, FavoritesComponent, UploadReelComponent, SearchComponent, TrendingComponent, ProfileComponent, FormsModule],
+  imports: [
+    CommonModule,
+    VideoFeedComponent,
+    FavoritesComponent,
+    UploadReelComponent,
+    SearchComponent,
+    TrendingComponent,
+    ProfileComponent,
+    ConfirmationModalComponent,
+    FormsModule
+  ],
   templateUrl: './main-app.component.html',
   styleUrls: ['./main-app.component.scss']
 })
@@ -26,10 +37,15 @@ export class MainAppComponent implements OnInit {
   activeTab = 'feed';
   showProfileMenu = false;
 
+  // Modal State
+  showConfirmModal = false;
+  pendingTab: string | null = null;
+
 
   @ViewChild(FavoritesComponent) favoritesComponent!: FavoritesComponent;
   @ViewChild(ProfileComponent) profileComponent!: ProfileComponent;
   @ViewChild(VideoFeedComponent) videoFeedComponent!: VideoFeedComponent;
+  @ViewChild(UploadReelComponent) uploadReelComponent!: UploadReelComponent;
 
   constructor(
     private router: Router,
@@ -121,6 +137,17 @@ export class MainAppComponent implements OnInit {
   }
 
   select(tab: string) {
+    // If leaving upload tab with unsaved changes, prompt user
+    if (this.activeTab === 'upload' && tab !== 'upload' && this.uploadReelComponent?.hasChanges()) {
+      this.pendingTab = tab;
+      this.showConfirmModal = true;
+      return; // Stop here, wait for modal
+    }
+
+    this.executeTabChange(tab);
+  }
+
+  private executeTabChange(tab: string) {
     this.activeTab = tab;
     this.navigate.emit(tab);
 
@@ -134,6 +161,21 @@ export class MainAppComponent implements OnInit {
       this.favoritesComponent.loadBookmarkedReels();
     }
   }
+
+  onConfirmLeave() {
+    this.showConfirmModal = false;
+    if (this.pendingTab) {
+      this.uploadReelComponent.resetForm();
+      this.executeTabChange(this.pendingTab);
+      this.pendingTab = null;
+    }
+  }
+
+  onCancelLeave() {
+    this.showConfirmModal = false;
+    this.pendingTab = null;
+  }
+
 
   goToUpload() {
     this.select('upload');
