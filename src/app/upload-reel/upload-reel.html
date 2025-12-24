@@ -59,8 +59,15 @@
         <div class="form-section">
             <div class="form-group">
                 <label for="title">Dish Name *</label>
-                <input type="text" id="title" [(ngModel)]="title" placeholder="e.g., Masala Dosa"
+                <input type="text" id="title" [(ngModel)]="title" (input)="autoCategorize()"
+                    placeholder="e.g., Masala Dosa" [disabled]="isUploading">
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category *</label>
+                <input type="text" id="category" [(ngModel)]="category" placeholder="e.g., South Indian"
                     [disabled]="isUploading">
+                <small class="helper-text">Auto-detected based on dish name</small>
             </div>
 
             <div class="form-group">

@@ -13,6 +13,7 @@ export interface Reel {
     title: string;
     vendor: string;
     price: number;
+    category: string;
 
     // Location data
     latitude: number;                // Reel location latitude

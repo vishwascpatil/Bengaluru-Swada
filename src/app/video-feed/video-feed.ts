@@ -460,9 +460,10 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         title: 'Masala Dosa',
         vendor: 'CTR',
         videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-        thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Masala_Dosa_with_Chutney_and_Sambar.jpg/1200px-Masala_Dosa_with_Chutney_and_Sambar.jpg',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=2070&auto=format&fit=crop',
         price: 120,
-        latitude: 12.9352, // Koramangala, Bangalore
+        category: 'South Indian',
+        latitude: 12.9352, // Kormangala, Bangalore
         longitude: 77.6245,
         uploadedBy: this.auth.currentUser?.uid || 'system',
         cloudflareVideoId: 'sample-id-1',
@@ -479,6 +480,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Idli_Sambar.JPG/1200px-Idli_Sambar.JPG',
         price: 80,
+        category: 'South Indian',
         latitude: 12.9716, // Indiranagar, Bangalore
         longitude: 77.6412,
         uploadedBy: this.auth.currentUser?.uid || 'system',

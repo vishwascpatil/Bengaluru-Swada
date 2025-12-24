@@ -40,7 +40,10 @@
   <div class="video-overlay">
     <div class="video-info">
       <div class="food-details">
-        <h3 class="dish-name">{{displayTitle}}</h3>
+        <div class="title-category-row">
+          <h3 class="dish-name">{{displayTitle}}</h3>
+          <span class="category-badge">{{reel?.category}}</span>
+        </div>
         <p class="vendor-name">{{displayVendor}}</p>
         <div class="price-distance">
           <span class="price">₹{{displayPrice}}</span>
