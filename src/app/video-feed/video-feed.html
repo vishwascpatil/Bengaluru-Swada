@@ -22,10 +22,18 @@
   <!-- Premium Pull to Refresh Indicator -->
   <div class="refresh-indicator" [style.transform]="'translateY(' + (isRefreshing ? 70 : pullMoveY) + 'px)'"
     [class.refreshing]="isRefreshing" [class.visible]="pullMoveY > 10">
-    <div class="spinner-container" [style.transform]="'rotate(' + (pullMoveY * 1.5) + 'deg)'">
-      <div class="spinner-outer-ring"></div>
-      <div class="spinner-inner-ring"></div>
-      <div class="spinner-core"></div>
+    <div class="spinner-container">
+      <div class="carrot-spinner">
+        <svg viewBox="0 0 40 40" class="carrot-svg">
+          <!-- Carrot Body -->
+          <path d="M20 35C20 35 14 25 14 15C14 10 17 7 20 7C23 7 26 10 26 15C26 25 20 35 20 35Z" fill="#ff6b35" />
+          <!-- Carrot Details (Lines) -->
+          <path d="M17 18h6M16 22h8M18 26h4" stroke="rgba(0,0,0,0.1)" stroke-width="1.5" stroke-linecap="round" />
+          <!-- Carrot Leaves -->
+          <path d="M20 7V2M20 7L16 3M20 7L24 3" stroke="#4caf50" stroke-width="2.5" stroke-linecap="round" />
+        </svg>
+      </div>
+      <div class="loading-ripple"></div>
     </div>
   </div>
 

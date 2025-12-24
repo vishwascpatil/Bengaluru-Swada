@@ -315,12 +315,24 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   }
 
   /**
-   * Public method to scroll to the first reel and refresh the feed
+   * Public method to scroll to the first reel and refresh the feed with an animation
    */
   async scrollToTopAndRefresh() {
-    console.log('[VideoFeed] Scrolling to top and refreshing...');
-    this.currentIndex = 0;
-    this.isGlobalMuted = true;
+    console.log('[VideoFeed] Animated scroll to top and refreshing...');
+
+    if (this.currentIndex > 0) {
+      this.isGlobalMuted = true;
+      const steps = this.currentIndex;
+      // Faster animation if user scrolled deep
+      const delay = Math.max(30, 80 - (steps * 2));
+
+      for (let i = steps - 1; i >= 0; i--) {
+        this.currentIndex = i;
+        this.cdr.detectChanges();
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
     await this.refresh();
   }
 
