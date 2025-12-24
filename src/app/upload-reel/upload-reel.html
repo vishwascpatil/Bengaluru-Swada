@@ -8,13 +8,34 @@
     <div class="upload-content">
         <!-- Video Preview Section -->
         <div class="video-preview-section">
-            <div class="video-preview" *ngIf="videoPreviewUrl; else fileSelector">
-                <video [src]="videoPreviewUrl" controls playsinline class="preview-video"></video>
-                <button class="remove-video-btn" (click)="removeFile()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                </button>
+            <div class="video-preview selected" *ngIf="selectedFile; else fileSelector">
+                <div class="file-info-header">
+                    <div class="file-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                            <path d="M15 10L19 14L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                                stroke="currentColor" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <div class="file-details">
+                        <p class="file-name">{{selectedFile.name}}</p>
+                        <p class="file-size">{{(selectedFile.size / (1024 * 1024)).toFixed(2)}} MB</p>
+                    </div>
+                    <button class="remove-video-btn" (click)="removeFile()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="ready-progress">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: 100%"></div>
+                    </div>
+                    <p class="progress-status">Ready to Upload</p>
+                </div>
             </div>
 
             <ng-template #fileSelector>

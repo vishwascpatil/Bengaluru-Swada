@@ -79,30 +79,93 @@
         object-fit: cover;
     }
 
+    &.selected {
+        aspect-ratio: auto;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        background: #1a1a1a;
+        min-height: auto;
+    }
+
+    .file-info-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+    }
+
+    .file-icon {
+        width: 56px;
+        height: 56px;
+        background: rgba(255, 107, 53, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ff6b35;
+    }
+
+    .file-details {
+        flex: 1;
+
+        .file-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin: 0 0 4px 0;
+            word-break: break-all;
+        }
+
+        .file-size {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+        }
+    }
+
+    .ready-progress {
+        .progress-bar-container {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+
+            .progress-bar-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #ff6b35 0%, #ff8c42 100%);
+                border-radius: 4px;
+            }
+        }
+
+        .progress-status {
+            font-size: 13px;
+            font-weight: 500;
+            color: #34c759;
+            margin: 0;
+        }
+    }
+
     .remove-video-btn {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(1px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: static;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 50%;
         width: 36px;
         height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: #888;
         cursor: pointer;
         transition: all 0.2s ease;
 
         &:hover {
-            background: rgba(255, 59, 48, 0.9);
-            border-color: rgba(255, 59, 48, 1);
-        }
-
-        &:active {
-            transform: scale(0.95);
+            background: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
+            border-color: rgba(255, 59, 48, 0.2);
         }
     }
 }
