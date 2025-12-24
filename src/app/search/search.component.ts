@@ -145,10 +145,9 @@ export class SearchComponent implements OnInit {
             );
         }
 
-        // 2. Category (Mock logic since we don't have categories in DB yet, filtering by title/vendor as proxy or skipping)
+        // 2. Category 
         if (this.selectedCategory !== 'All') {
-            // For now, if we don't have category field, we might skip or do a fuzzy match
-            // result = result.filter(r => r.category === this.selectedCategory);
+            result = result.filter(r => r.categories && Array.isArray(r.categories) && r.categories.includes(this.selectedCategory));
         }
 
         // 3. Price

@@ -1,12 +1,18 @@
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
 .search-container {
     height: 100%;
     overflow-y: auto;
-    background: #f8f9fa;
-    /* Light background for contrast or stick to dark mode? User app seems dark. sticking to dark. */
     background: #000;
-    padding-bottom: 80px;
-    /* Space for bottom nav */
+    padding-bottom: 100px;
+    /* Increased for better safety */
     color: white;
+    -webkit-overflow-scrolling: touch;
 }
 
 .search-header {

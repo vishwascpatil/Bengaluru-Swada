@@ -29,6 +29,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   pullStartY = 0;
   pullMoveY = 0;
   isRefreshing = false;
+  private hasTriggeredHaptic = false;
   readonly pullThreshold = 150;
   readonly swipeThresholdX = 50; // Horizontal swipe threshold
 
@@ -256,6 +257,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     // Pull to refresh logic (vertical)
     if (this.currentIndex === 0 && !this.isRefreshing) {
       this.pullStartY = e.touches[0].clientY;
+      this.hasTriggeredHaptic = false;
     }
   }
 
@@ -267,6 +269,17 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       if (diff > 0) {
         this.pullMoveY = diff * 0.5;
         if (diff > 10) e.preventDefault(); // Lock scroll for PTR
+
+        // Instagram-style tactile feedback when threshold is reached
+        if (this.pullMoveY >= this.pullThreshold && !this.hasTriggeredHaptic) {
+          this.hasTriggeredHaptic = true;
+          if (navigator.vibrate) {
+            navigator.vibrate(15); // Light tactile tick
+          }
+        } else if (this.pullMoveY < this.pullThreshold && this.hasTriggeredHaptic) {
+          // Reset if they pull back up
+          this.hasTriggeredHaptic = false;
+        }
       }
     }
   }
@@ -312,6 +325,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     // Reset pull state
     this.pullStartY = 0;
     this.pullMoveY = 0;
+    this.hasTriggeredHaptic = false;
   }
 
   /**
@@ -462,12 +476,12 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         thumbnailUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=2070&auto=format&fit=crop',
         price: 120,
-        category: 'South Indian',
+        categories: ['South Indian', 'Breakfast'],
         latitude: 12.9352, // Kormangala, Bangalore
         longitude: 77.6245,
         uploadedBy: this.auth.currentUser?.uid || 'system',
         cloudflareVideoId: 'sample-id-1',
-        duration: 60,
+        duration: 596,
         createdAt: Timestamp.now(),
         viewCount: 0,
         likes: 0,
@@ -475,17 +489,17 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         bookmarkedBy: []
       },
       {
-        title: 'Idli Vada',
+        title: 'Filter Coffee',
         vendor: 'Brahmins Coffee Bar',
         videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Idli_Sambar.JPG/1200px-Idli_Sambar.JPG',
         price: 80,
-        category: 'South Indian',
+        categories: ['South Indian', 'Beverages'],
         latitude: 12.9716, // Indiranagar, Bangalore
         longitude: 77.6412,
         uploadedBy: this.auth.currentUser?.uid || 'system',
         cloudflareVideoId: 'sample-id-2',
-        duration: 60,
+        duration: 600,
         createdAt: Timestamp.now(),
         viewCount: 0,
         likes: 0,
@@ -496,7 +510,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
     try {
       for (const reel of sampleReels) {
-        await this.reelsService.createReel(reel);
+        await this.reelsService.createReel(reel as any);
       }
       await this.loadReels();
     } catch (error) {

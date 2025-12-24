@@ -219,7 +219,6 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
   }
 
-  showRetry = false;
   private playWatchdogTimeout: any;
 
   private checkVideoReady() {
@@ -258,7 +257,6 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       // Reset loading state if we're trying to play
       if (video.readyState < 3) {
         this.isLoading = true;
-        this.showRetry = false;
       }
 
       const playPromise = video.play();
@@ -274,22 +272,10 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       if (this.playWatchdogTimeout) clearTimeout(this.playWatchdogTimeout);
       this.playWatchdogTimeout = setTimeout(() => {
         if (video.paused || video.readyState < 3) {
-          console.warn('[VideoCard] Playback stalled, showing retry');
+          console.warn('[VideoCard] Playback stalled');
           this.isLoading = true;
-          this.showRetry = true;
         }
       }, 3000);
-    }
-  }
-
-  retryLoad(event: Event) {
-    event.stopPropagation();
-    this.showRetry = false;
-    this.isLoading = true;
-    const video = this.videoEl?.nativeElement;
-    if (video) {
-      video.load();
-      video.play().catch(console.error);
     }
   }
 

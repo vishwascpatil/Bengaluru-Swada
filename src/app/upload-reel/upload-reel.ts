@@ -22,7 +22,8 @@ export class UploadReelComponent implements OnInit {
     title = '';
     vendor = '';
     price: number | null = null;
-    category = '';
+    categories: string[] = [];
+    tagInput = '';
     latitude: number | null = null;
     longitude: number | null = null;
 
@@ -110,7 +111,8 @@ export class UploadReelComponent implements OnInit {
         this.title = '';
         this.vendor = '';
         this.price = null;
-        this.category = '';
+        this.categories = [];
+        this.tagInput = '';
         this.uploadProgress = 0;
         this.uploadSuccess = false;
         this.isUploading = false;
@@ -122,10 +124,7 @@ export class UploadReelComponent implements OnInit {
      * Check if form has any unsaved changes
      */
     hasChanges(): boolean {
-        // If we are currently uploading, don't consider it "stale" changes to lost
-        // as the upload process handles its own state. 
-        // But for this requirement, we check if any field is filled.
-        return !!(this.selectedFile || this.title || this.vendor || this.price || this.latitude || this.longitude) && !this.uploadSuccess;
+        return !!(this.selectedFile || this.title || this.vendor || this.price || this.categories.length > 0 || this.latitude || this.longitude) && !this.uploadSuccess;
     }
 
     /**
@@ -138,37 +137,33 @@ export class UploadReelComponent implements OnInit {
             this.vendor.trim() &&
             this.price !== null &&
             this.price > 0 &&
-            this.category.trim() !== '' &&
+            this.categories.length > 0 &&
             this.latitude !== null &&
             this.longitude !== null
         );
     }
 
     /**
-     * Intelligent category detection based on dish name
+     * Handle tag input and look for commas
      */
-    autoCategorize(): void {
-        const dish = this.title.toLowerCase();
+    handleTagInput(): void {
+        if (this.tagInput.includes(',')) {
+            const newTags = this.tagInput.split(',')
+                .map(t => t.trim())
+                .filter(t => t !== '' && !this.categories.includes(t));
 
-        const mappings: { [key: string]: string[] } = {
-            'South Indian': ['dosa', 'idli', 'vada', 'pongal', 'bisi bele bath', 'pulao', 'meals', 'sambar'],
-            'North Indian': ['roti', 'paneer', 'dal', 'paratha', 'chole', 'naan', 'manchurian'],
-            'Breakfast': ['idli', 'vada', 'dosa', 'poha', 'uppitu', 'khara bath', 'coffee'],
-            'Snacks': ['vada', 'pakoda', 'chaat', 'bhel', 'samosa'],
-            'Beverages': ['tea', 'coffee', 'juice', 'shake', 'lassi']
-        };
-
-        let detected = '';
-        for (const [cat, keywords] of Object.entries(mappings)) {
-            if (keywords.some(k => dish.includes(k))) {
-                detected = cat;
-                break;
+            if (newTags.length > 0) {
+                this.categories = [...this.categories, ...newTags];
             }
+            this.tagInput = '';
         }
+    }
 
-        if (detected) {
-            this.category = detected;
-        }
+    /**
+     * Remove a tag from the list
+     */
+    removeTag(index: number): void {
+        this.categories.splice(index, 1);
     }
 
     showLocationPicker = false;
@@ -268,7 +263,7 @@ export class UploadReelComponent implements OnInit {
                                         title: this.title.trim(),
                                         vendor: this.vendor.trim(),
                                         price: this.price!,
-                                        category: this.category.trim(),
+                                        categories: this.categories,
                                         latitude: this.latitude!,
                                         longitude: this.longitude!,
                                         uploadedBy: currentUser.uid,
