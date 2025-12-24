@@ -314,6 +314,16 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     this.pullMoveY = 0;
   }
 
+  /**
+   * Public method to scroll to the first reel and refresh the feed
+   */
+  async scrollToTopAndRefresh() {
+    console.log('[VideoFeed] Scrolling to top and refreshing...');
+    this.currentIndex = 0;
+    this.isGlobalMuted = true;
+    await this.refresh();
+  }
+
   async refresh() {
     this.isRefreshing = true;
     // Haptic feedback if available

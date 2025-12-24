@@ -19,15 +19,14 @@
       [class.new-active]="activeTab === 'new'"></div>
   </div>
 
-  <!-- Pull to Refresh Spinner -->
-  <div class="refresh-indicator" [style.transform]="'translateY(' + (isRefreshing ? 60 : pullMoveY) + 'px)'"
-    [class.refreshing]="isRefreshing">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-      [style.transform]="'rotate(' + (pullMoveY * 2) + 'deg)'">
-      <path
-        d="M12 4V2M12 20v2M4 12H2m20 0h-2m-2.05-5.95l-1.414-1.414M4.929 19.071L6.343 17.657m12.728 0l-1.414 1.414M4.929 4.929L6.343 6.343"
-        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-    </svg>
+  <!-- Premium Pull to Refresh Indicator -->
+  <div class="refresh-indicator" [style.transform]="'translateY(' + (isRefreshing ? 70 : pullMoveY) + 'px)'"
+    [class.refreshing]="isRefreshing" [class.visible]="pullMoveY > 10">
+    <div class="spinner-container" [style.transform]="'rotate(' + (pullMoveY * 1.5) + 'deg)'">
+      <div class="spinner-outer-ring"></div>
+      <div class="spinner-inner-ring"></div>
+      <div class="spinner-core"></div>
+    </div>
   </div>
 
   <!-- Loading / Skeleton State -->

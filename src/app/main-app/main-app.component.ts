@@ -137,6 +137,14 @@ export class MainAppComponent implements OnInit {
   }
 
   select(tab: string) {
+    // If clicking the current tab while it's already active
+    if (this.activeTab === tab) {
+      if (tab === 'feed' && this.videoFeedComponent) {
+        this.videoFeedComponent.scrollToTopAndRefresh();
+      }
+      return;
+    }
+
     // If leaving upload tab with unsaved changes, prompt user
     if (this.activeTab === 'upload' && tab !== 'upload' && this.uploadReelComponent?.hasChanges()) {
       this.pendingTab = tab;
