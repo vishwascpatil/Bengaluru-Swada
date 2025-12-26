@@ -155,140 +155,74 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (this.progressBarHideTimeout) {
       clearTimeout(this.progressBarHideTimeout);
     }
-    if (this.playWatchdogTimeout) {
-      clearTimeout(this.playWatchdogTimeout);
-    }
+
   }
 
   ngAfterViewInit() {
     const video = this.videoEl.nativeElement;
 
-    // Log all relevant events to debug
+    // Use native events for state and progress
     const events = [
-      'loadstart', 'loadedmetadata', 'loadeddata', 'canplay',
-      'playing', 'waiting', 'error', 'stalled', 'suspend', 'emptied'
+      'error', 'ended', 'timeupdate'
     ];
 
     events.forEach(event => {
       video.addEventListener(event, () => {
-        if (event === 'playing' || event === 'canplay' || event === 'loadeddata') {
-          this.isLoading = false;
-          this.startProgressTracking();
-        }
-        if (event === 'waiting') {
-          this.isLoading = true;
+        if (event === 'timeupdate') {
+          if (!this.isSeeking && video.duration) {
+            this.progress = (video.currentTime / video.duration) * 100;
+          }
         }
         if (event === 'error') {
           console.error('[VideoCard] Video error:', video.error);
-          this.isLoading = false;
         }
         if (event === 'ended') {
           this.progress = 0;
-          // Loop is handled by attribute, but just in case
-          this.play();
+          this.play(); // Loop
         }
       });
     });
 
     // Initial check
-    this.checkVideoReady();
-
-    // Auto-play if initialized as active
     if (this.active) {
       this.play();
-    } else if (this.priority === 'high') {
-      // Preload if high priority but not active
-      video.load();
     }
-
-    // Safety timeout
-    setTimeout(() => {
-      if (this.isLoading && !this.active) {
-        // If not active, we don't care about spinner as much
-        this.isLoading = false;
-      }
-    }, 2000);
   }
 
   resetVideo() {
     const video = this.videoEl?.nativeElement;
     if (video) {
       video.pause();
-      video.currentTime = 0;
-      this.progress = 0;
+      // Intentional: Do not reset currentTime.
     }
-  }
-
-  private playWatchdogTimeout: any;
-
-  private checkVideoReady() {
-    if (this.videoEl && this.videoEl.nativeElement) {
-      const video = this.videoEl.nativeElement;
-      if (video.readyState >= 3) {
-        this.isLoading = false;
-      }
-    }
-  }
-
-  private startProgressTracking() {
-    if (this.progressInterval) {
-      clearInterval(this.progressInterval);
-    }
-
-    const video = this.videoEl?.nativeElement;
-    if (!video) return;
-
-    this.progressInterval = setInterval(() => {
-      if (!this.isSeeking && video.duration) {
-        this.progress = (video.currentTime / video.duration) * 100;
-      }
-    }, 50);
   }
 
   play() {
     const video = this.videoEl?.nativeElement;
-    if (video) {
-      // Ensure it's correctly muted before play starts
-      video.muted = !this.active || this.isMuted;
+    if (!video) return;
 
-      // Restart video from beginning
-      video.currentTime = 0;
+    // Ensure it's correctly muted before play starts
+    video.muted = !this.active || this.isMuted;
 
-      // Reset loading state if we're trying to play
-      if (video.readyState < 3) {
-        this.isLoading = true;
-      }
-
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {
-          console.error('[VideoCard] Error playing video:', err);
-          // If play fails, hide spinner so user can see poster/interact
-          this.isLoading = false;
-        });
-      }
-
-      // Watchdog: if video doesn't start playing in 3s, show retry
-      if (this.playWatchdogTimeout) clearTimeout(this.playWatchdogTimeout);
-      this.playWatchdogTimeout = setTimeout(() => {
-        if (video.paused || video.readyState < 3) {
-          console.warn('[VideoCard] Playback stalled');
-          this.isLoading = true;
-        }
-      }, 3000);
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        // Auto-play policy or user interaction needed
+        // console.warn('[VideoCard] Play failed:', err);
+      });
     }
   }
 
   preload() {
     const video = this.videoEl?.nativeElement;
     if (video) {
-      video.preload = 'auto';
-      video.load();
+      // Metadata is enough for fast list scrolling
+      video.preload = 'metadata';
     }
   }
 
   pause() {
-    if (this.playWatchdogTimeout) clearTimeout(this.playWatchdogTimeout);
+
     this.videoEl?.nativeElement.pause();
   }
 
