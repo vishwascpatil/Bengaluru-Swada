@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HLS Transcoder Chamber</title>
+    <!-- Register COI for this iframe only -->
+    <script src="coi-serviceworker.js"></script>
+    <script type="module">
+        import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
+        import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
+
+        let ffmpeg = null;
+        let loadPromise = null;
+
+        async function loadFFmpeg() {
+            if (loadPromise) return loadPromise;
+
+            loadPromise = (async () => {
+                ffmpeg = new FFmpeg();
+
+                ffmpeg.on('log', ({ message }) => {
+                    window.parent.postMessage({ type: 'LOG', message }, '*');
+                });
+                ffmpeg.on('progress', ({ progress }) => {
+                    window.parent.postMessage({ type: 'PROGRESS', progress }, '*');
+                });
+
+                // Create a shim worker that imports the library worker from CDN
+                // This bypasses the browser's check for same-origin worker script
+                const workerShim = `
+                    import "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/worker.js";
+                `;
+                const workerBlob = new Blob([workerShim], { type: 'text/javascript' });
+                const workerBlobURL = URL.createObjectURL(workerBlob);
+
+                await ffmpeg.load({
+                    coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
+                    wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
+                    workerURL: workerBlobURL,
+                    classWorkerURL: workerBlobURL // Fallback/Alternative param name for 0.12.x
+                });
+
+                return ffmpeg;
+            })();
+
+            return loadPromise;
+        }
+
+        // Global error handler for uncaught errors
+        window.onerror = function (message, source, lineno, colno, error) {
+            window.parent.postMessage({ type: 'ERROR', message: `JS Error: ${message}` }, '*');
+            return true;
+        };
+
+        window.addEventListener('message', async (event) => {
+            const { type, file, name } = event.data;
+            if (type === 'TRANSCODE') {
+                try {
+                    await loadFFmpeg();
+                    const inputName = 'input_' + name;
+                    await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+                    // HLS Transcoding
+                    await ffmpeg.exec([
+                        '-i', inputName,
+                        '-profile:v', 'baseline',
+                        '-level', '3.0',
+                        '-s', '720x1280',
+                        '-start_number', '0',
+                        '-hls_time', '2',
+                        '-hls_list_size', '0',
+                        '-f', 'hls',
+                        'index.m3u8'
+                    ]);
+
+                    const playlistData = await ffmpeg.readFile('index.m3u8');
+                    const playlistBlob = new Blob([playlistData.buffer], { type: 'application/x-mpegURL' });
+
+                    const segments = [];
+                    const files = await ffmpeg.listDir('.');
+                    for (const f of files) {
+                        if (f.name.endsWith('.ts')) {
+                            const data = await ffmpeg.readFile(f.name);
+                            segments.push({
+                                name: f.name,
+                                blob: new Blob([data.buffer], { type: 'video/MP2T' })
+                            });
+                        }
+                    }
+
+                    // Cleanup
+                    await ffmpeg.deleteFile(inputName);
+                    await ffmpeg.deleteFile('index.m3u8');
+                    for (const s of segments) {
+                        await ffmpeg.deleteFile(s.name);
+                    }
+
+                    window.parent.postMessage({
+                        type: 'COMPLETE',
+                        playlist: playlistBlob,
+                        segments: segments
+                    }, '*');
+
+                } catch (error) {
+                    window.parent.postMessage({ type: 'ERROR', message: error.message }, '*');
+                }
+            }
+        });
+
+        // Let parent know we are ready
+        window.parent.postMessage({ type: 'READY' }, '*');
+    </script>
+</head>
+
+<body>
+    <p>Transcoder Active</p>
+</body>
+
+</html>
