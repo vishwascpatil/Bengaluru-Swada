@@ -60,7 +60,9 @@ export class UploadReelComponent implements OnInit {
         private locationService: LocationService
     ) { }
 
-    ngOnInit(): void { }
+    ngOnInit(): void {
+        this.resetForm();
+    }
 
     /**
      * Handle file selection from input
@@ -352,6 +354,7 @@ export class UploadReelComponent implements OnInit {
             this.uploadComplete.emit();
 
             setTimeout(() => {
+                this.resetForm();
                 this.router.navigate(['/main-app']);
             }, 1500);
 

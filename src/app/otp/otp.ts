@@ -80,7 +80,7 @@ export class OtpComponent implements OnInit {
 
     // Auto-focus next input
     if (this.otp[i] && i < 5) {
-      const nextInput = document.querySelectorAll('.otp-input')[i + 1] as any;
+      const nextInput = document.querySelectorAll('.native-input')[i + 1] as any;
       if (nextInput) nextInput.focus();
     }
   }
