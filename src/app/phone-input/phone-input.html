@@ -1,33 +1,56 @@
-<div class="phone-input-page">
-  <div class="mobile-input-section">
-    <div class="mobile-form">
-      <h2 class="welcome-text">Welcome to Bengaluru Swada!</h2>
-      <p class="subtitle light-grey">
-        Enter your mobile number to discover amazing street food near you
+<div class="ios-login-layout">
+
+  <!-- Content Container -->
+  <div class="login-content">
+
+    <!-- Header -->
+    <div class="header-section">
+      <h1 class="welcome-title">Welcome<br>to Bengaluru Swada</h1>
+      <p class="subtitle">Enter your number to start exploring.</p>
+    </div>
+
+    <!-- Input Section -->
+    <div class="input-wrapper">
+      <div class="phone-input-group" [class.focused]="isFocused">
+        <span class="country-code">+91</span>
+        <div class="vertical-divider"></div>
+        <input type="tel" id="mobileNumber" placeholder="Mobile Number" maxlength="10" pattern="[0-9]{10}"
+          [(ngModel)]="mobile" (input)="onInput()" (focus)="isFocused = true" (blur)="isFocused = false"
+          [disabled]="loading">
+      </div>
+
+      <!-- Error Message (Inline) -->
+      <div class="error-feedback" *ngIf="error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+    </div>
+
+    <!-- Spacer to push button to bottom -->
+    <div class="spacer"></div>
+
+    <!-- Bottom Actions -->
+    <div class="bottom-actions">
+      <div id="recaptcha-container"></div>
+
+      <p class="privacy-note">
+        By continuing, you verify that you are the owner of this number.
       </p>
-
-      <div class="input-container">
-        <div class="country-code">+91</div>
-        <input type="tel" id="mobileNumber" placeholder="Mobile No." maxlength="10" pattern="[0-9]{10}"
-          [(ngModel)]="mobile" (input)="onInput()" [disabled]="loading" />
-      </div>
-
-      <div class="error-message" *ngIf="error">
-        <span>⚠️ {{ error }}</span>
-      </div>
-
 
       <button class="continue-btn" [class.active]="valid && !loading" [disabled]="!valid || loading"
         (click)="continue()">
         <span *ngIf="!loading">Continue</span>
-        <span *ngIf="loading" class="loading-spinner">Sending OTP...</span>
+        <div *ngIf="loading" class="spinner-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
       </button>
-
-      <p class="privacy-text light-grey">
-        We'll send you an OTP to verify your number. Your privacy is important to us.
-      </p>
-
-      <div id="recaptcha-container"></div>
     </div>
+
   </div>
 </div>

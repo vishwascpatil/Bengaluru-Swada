@@ -1,76 +1,77 @@
-<div class="profile-page premium-theme">
-    <div class="scroll-content">
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <img src="assets/dosa-header.png" alt="Vibrant Dosa Illustration" class="header-image">
-            <div class="header-overlay"></div>
-        </div>
+<div class="ios-profile-layout">
+    <!-- Orange Hero Background -->
+    <div class="hero-bg"></div>
 
-        <!-- Profile Detail Card -->
-        <div class="profile-card">
-            <div class="avatar-wrapper">
-                <img src="assets/premium-avatar.png" alt="Avatar" class="profile-avatar"
-                    onerror="this.src='https://ui-avatars.com/api/?name=User&background=333&color=fff'">
-            </div>
+    <!-- Main Floating Card -->
+    <div class="profile-card-container">
 
-            <h1 class="phone-number">{{userPhoneNumber || userEmail}}</h1>
-
-            <button class="logout-btn" (click)="logout()">
-                Logout
-            </button>
-
-            <!-- Menu List -->
-            <div class="menu-list">
-                <div class="menu-item">
-                    <div class="menu-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
-                    </div>
-                    <span class="menu-text">Terms and Conditions</span>
-                </div>
-
-                <div class="menu-item">
-                    <div class="menu-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                    </div>
-                    <span class="menu-text">Privacy Policy</span>
-                </div>
-
-                <div class="menu-item">
-                    <div class="menu-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                    </div>
-                    <span class="menu-text">Help & Support</span>
-                </div>
-
-                <div class="menu-item">
-                    <div class="menu-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                    </div>
-                    <span class="menu-text">About Us</span>
-                </div>
+        <!-- Avatar Section (Overlapping) -->
+        <div class="avatar-ring">
+            <div class="avatar-gradient-placeholder">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
             </div>
         </div>
 
-        <!-- Hidden Favorites Section (Keep logic available) -->
-        <div class="hidden-content" *ngIf="false">
-            <app-favorites [showHeader]="false"></app-favorites>
+        <!-- User Info -->
+        <h1 class="user-identity">{{userPhoneNumber || userEmail || 'Guest User'}}</h1>
+
+        <!-- Logout Action -->
+        <button class="logout-action-btn" (click)="logout()">
+            Logout
+        </button>
+
+        <!-- Menu Actions Grid/List -->
+        <div class="menu-actions">
+
+            <div class="menu-row">
+                <div class="icon-box light-orange">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                </div>
+                <span class="menu-label">Terms and Conditions</span>
+            </div>
+
+            <div class="menu-row">
+                <div class="icon-box light-orange">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                </div>
+                <span class="menu-label">Privacy Policy</span>
+            </div>
+
+            <div class="menu-row">
+                <div class="icon-box light-orange">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <circle cx="12" cy="12" r="4" />
+                    </svg>
+                </div>
+                <span class="menu-label">Help & Support</span>
+            </div>
+
+            <div class="menu-row last">
+                <div class="icon-box light-orange">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                </div>
+                <span class="menu-label">About Us</span>
+            </div>
+
         </div>
+
+    </div>
+
+    <!-- Hidden Favorites (Preserving Logic) -->
+    <div class="hidden-content" *ngIf="false">
+        <app-favorites [showHeader]="false"></app-favorites>
     </div>
 </div>

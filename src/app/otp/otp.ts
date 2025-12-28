@@ -25,6 +25,7 @@ export class OtpComponent implements OnInit {
   complete = false;
   loading = false;
   error = '';
+  currentFocusIndex = -1;
   confirmationResult: ConfirmationResult | null = null;
 
   hasError = false;

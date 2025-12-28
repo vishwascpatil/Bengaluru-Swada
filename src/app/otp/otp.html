@@ -1,37 +1,77 @@
-<div class="otp-container">
-  <div class="otp-section">
-    <div class="otp-form">
-      <h2 class="otp-title">Verify Your Number</h2>
-      <p class="otp-subtitle">We've sent a 6-digit OTP to <span class="phone-number">{{phone}}</span></p>
+<div class="ios-otp-layout">
+  <div class="otp-content">
 
-      <div class="otp-container">
-        <input class="otp-input" [class.error-border]="hasError" type="text" inputmode="numeric" maxlength="1"
-          *ngFor="let n of [0,1,2,3,4,5]; let i = index" [(ngModel)]="otp[i]" (input)="onOtpInput(i)">
+    <!-- Top Nav / Back Action (Optional visuals) -->
+    <div class="top-bar" (click)="change()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      <span class="back-text">Wrong number?</span>
+    </div>
+
+    <!-- Header -->
+    <div class="header-section">
+      <h1 class="verify-title">Verify<br>Your Number</h1>
+      <p class="subtitle">Enter the 6-digit code sent to <br><span class="highlight-phone">{{phone}}</span></p>
+    </div>
+
+    <!-- OTP Inputs -->
+    <div class="otp-wrapper">
+      <div class="digit-box" *ngFor="let n of [0,1,2,3,4,5]; let i = index" [class.filled]="otp[i]?.length > 0"
+        [class.active]="i === currentFocusIndex">
+        <input type="text" inputmode="numeric" maxlength="1" [(ngModel)]="otp[i]" (input)="onOtpInput(i)"
+          (focus)="currentFocusIndex = i" (blur)="currentFocusIndex = -1" class="native-input">
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-feedback" *ngIf="hasError || error">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ error || 'Invalid code. Please try again.' }}</span>
+    </div>
+
+    <!-- Spacer -->
+    <div class="spacer"></div>
+
+    <!-- Actions -->
+    <div class="action-area">
+      <!-- Resend Timer -->
+      <div class="resend-wrapper">
+        <p class="timer-text" *ngIf="countdown > 0">
+          Resend code in <span class="time-val">00:{{countdown < 10 ? '0' +countdown : countdown}}</span>
+        </p>
+        <button class="resend-btn" *ngIf="countdown === 0" (click)="resend()">
+          Resend Code
+        </button>
       </div>
 
-      <button class="verify-btn" [disabled]="!complete || loading" (click)="verify()">
-        {{ loading ? 'Verifying OTP...' : 'Verify OTP' }}
+      <!-- Verify Button -->
+      <button class="verify-action-btn" [class.active]="complete && !loading" [disabled]="!complete || loading"
+        (click)="verify()">
+        <span *ngIf="!loading">Verify Number</span>
+        <div *ngIf="loading" class="spinner-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
       </button>
 
-      <div class="resend-container">
-        <p class="resend-text">Didn't receive OTP?</p>
-        <p class="timer" *ngIf="countdown > 0">Resend in <span class="countdown">{{countdown}}s</span></p>
-        <p class="resend-link" *ngIf="countdown === 0" (click)="resend()">Resend OTP</p>
-      </div>
-
-      <div (click)="change()">← Change Number</div>
       <div id="recaptcha-container-otp"></div>
     </div>
+
   </div>
 
   <!-- Success Overlay -->
-  <div class="success-overlay" *ngIf="isVerified">
-    <div class="success-content">
-      <div class="checkmark-circle">
-        <div class="checkmark draw"></div>
-      </div>
-      <h2>Verified!</h2>
-      <!-- <p>Redirecting...</p> -->
+  <div class="success-screen" *ngIf="isVerified">
+    <div class="success-icon-box">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
     </div>
+    <h2>Verified</h2>
   </div>
 </div>

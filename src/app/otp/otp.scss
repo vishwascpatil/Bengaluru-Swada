@@ -1,190 +1,290 @@
-/* OTP styling */
-.otp-section {
+/* Modern iOS 26 Standards - OTP Page */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;700;800&display=swap');
+
+:host {
+    display: block;
+    height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #ffffff;
+}
+
+.ios-otp-layout {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 32px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.otp-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    padding-top: 20px;
+    /* Safe area top */
+}
+
+/* --- Top Bar --- */
+.top-bar {
     display: flex;
     align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem 1rem;
-    background: #fff;
-    font-family: 'Poppins', sans-serif;
-}
-
-.otp-form {
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-}
-
-.otp-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-}
-
-.otp-subtitle {
-    font-size: 1rem;
-    color: #7f8c8d;
-    margin-bottom: 2.5rem;
-}
-
-.phone-number {
-    color: #ff6b35;
-    font-weight: 600;
-}
-
-.otp-container {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-    width: 100%;
-
-    @media (min-width: 400px) {
-        gap: 1rem;
-    }
-}
-
-.otp-input {
-    width: 100%;
-    max-width: 45px;
-    aspect-ratio: 1;
-    height: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 12px;
-    text-align: center;
-    font-size: 1.2rem;
-    background: #fff;
-    color: #495057;
-    transition: all 0.2s;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
-    padding: 0;
-
-    @media (min-width: 400px) {
-        max-width: 60px;
-        font-size: 1.5rem;
-    }
-
-    &:focus {
-        border-color: #ff6b35;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-    }
-}
-
-.error-border {
-    border-color: red !important;
-    box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.1) !important;
-}
-
-.verify-btn {
-    width: 100%;
-    padding: 1rem;
-    border-radius: 12px;
-    border: none;
-    background: #dfe4ea;
-    color: #495057;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: not-allowed;
-    margin-bottom: 2rem;
-    transition: all 0.2s;
-
-    &:not([disabled]) {
-        background: #ff6b35;
-        color: #fff;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(255, 107, 53, 0.3);
-    }
-}
-
-.resend-container {
-    margin-bottom: 2rem;
-    color: #7f8c8d;
-    font-size: 0.9rem;
-}
-
-.resend-text {
-    margin-bottom: 0.3rem;
+    gap: 4px;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: color 0.2s;
+    padding: 12px 0;
+    opacity: 0;
+    animation: fadeIn 0.6s ease forwards;
+    width: fit-content;
 
-    &:hover {
-        color: #495057;
+    .back-text {
+        font-size: 15px;
+        color: #007AFF;
+        font-weight: 500;
     }
 }
 
-.timer {
-    color: #7f8c8d;
+/* --- Header --- */
+.header-section {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    animation: slideDown 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 
-    .countdown {
-        color: #ff6b35;
+.verify-title {
+    font-size: 34px;
+    font-weight: 800;
+    color: #1c1c1e;
+    line-height: 1.1;
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    font-size: 17px;
+    color: #8E8E93;
+    margin: 0;
+    font-weight: 400;
+    line-height: 1.5;
+
+    .highlight-phone {
+        color: #1c1c1e;
         font-weight: 600;
     }
 }
 
-.resend-link {
-    color: #ff6b35;
+/* --- OTP Inputs --- */
+.otp-wrapper {
+    display: flex;
+    gap: 8px;
+    /* Default gap */
+    justify-content: space-between;
+    margin-bottom: 16px;
+    animation: fadeIn 0.8s ease backwards 0.2s;
+}
+
+.digit-box {
+    flex: 1;
+    aspect-ratio: 0.85;
+    /* Taller boxes */
+    background: #F2F2F7;
+    border-radius: 12px;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+
+    &.active {
+        background: #ffffff;
+        border-color: #FF6B35;
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+        transform: translateY(-2px);
+    }
+
+    &.filled {
+        background: #F2F2F7;
+        border-color: #E5E5EA;
+
+        input {
+            color: #1c1c1e;
+        }
+    }
+
+    .native-input {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: transparent;
+        text-align: center;
+        font-size: 24px;
+        font-weight: 700;
+        color: #1c1c1e;
+        padding: 0;
+        outline: none;
+        caret-color: #FF6B35;
+    }
+}
+
+.error-feedback {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #FF3B30;
+    font-size: 14px;
+    font-weight: 500;
+    animation: shake 0.4s ease;
+}
+
+/* --- Action Area --- */
+.spacer {
+    flex: 1;
+}
+
+.action-area {
+    margin-bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s backwards;
+}
+
+.resend-wrapper {
+    text-align: center;
+    min-height: 20px;
+}
+
+.timer-text {
+    font-size: 15px;
+    color: #8E8E93;
+    margin: 0;
+
+    .time-val {
+        font-variant-numeric: tabular-nums;
+        color: #1c1c1e;
+        font-weight: 600;
+    }
+}
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: #FF6B35;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    text-decoration: underline;
+    padding: 4px 12px;
+
+    &:active {
+        opacity: 0.7;
+    }
+}
+
+.verify-action-btn {
+    width: 100%;
+    height: 56px;
+    border-radius: 16px;
+    background: #E5E5EA;
+    color: #8E8E93;
+    font-size: 17px;
+    font-weight: 600;
+    border: none;
+    cursor: not-allowed;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.active {
+        background: #FF6B35;
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+
+        &:active {
+            transform: scale(0.96);
+        }
+    }
+}
+
+/* Spinner */
+.spinner-dots {
+    display: flex;
+    gap: 4px;
+
+    .dot {
+        width: 8px;
+        height: 8px;
+        background: white;
+        border-radius: 50%;
+        animation: bounce 1.4s infinite ease-in-out both;
+
+        &:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        &:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+    }
 }
 
 /* Success Overlay */
-.success-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.95);
+.success-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.98);
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease-out;
-}
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.3s ease;
 
-.success-content {
-    text-align: center;
+    .success-icon-box {
+        width: 80px;
+        height: 80px;
+        background: #34C759;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.3);
+        animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
 
     h2 {
-        color: #2c3e50;
-        margin: 1rem 0 0.5rem;
-        font-size: 2rem;
-    }
-
-    p {
-        color: #7f8c8d;
+        font-size: 24px;
+        font-weight: 700;
+        color: #1c1c1e;
+        margin: 0;
+        animation: slideUp 0.4s ease 0.1s backwards;
     }
 }
 
-.checkmark-circle {
-    width: 80px;
-    height: 80px;
-    position: relative;
-    display: inline-block;
-    vertical-align: top;
-    border-radius: 50%;
-    background-color: #2ecc71;
-    animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-.checkmark {
-    &:after {
-        content: '';
-        display: block;
-        width: 20px;
-        height: 40px;
-        border: solid #fff;
-        border-width: 0 4px 4px 0;
-        position: absolute;
-        top: 16px;
-        left: 28px;
-        transform: rotate(45deg);
+/* Animations */
+@keyframes slideDown {
+    from {
         opacity: 0;
-        animation: checkmark 0.3s ease-out 0.3s forwards;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -208,14 +308,31 @@
     }
 }
 
-@keyframes checkmark {
-    from {
-        opacity: 0;
-        height: 0;
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
     }
 
-    to {
-        opacity: 1;
-        height: 40px;
+    25% {
+        transform: translateX(-4px);
+    }
+
+    75% {
+        transform: translateX(4px);
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1);
     }
 }

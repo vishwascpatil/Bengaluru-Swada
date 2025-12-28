@@ -26,6 +26,7 @@ export class PhoneInputComponent implements OnInit {
   valid = false;
   loading = false;
   error = '';
+  isFocused = false;
 
   recaptchaVerifier!: RecaptchaVerifier;
   confirmationResult!: ConfirmationResult;
