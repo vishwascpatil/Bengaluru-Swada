@@ -243,4 +243,17 @@ export class SearchComponent implements OnInit {
             loc.pincode.includes(query)
         );
     }
+
+    reset() {
+        this.searchQuery = '';
+        this.reels = [];
+        this.filteredReels = [];
+        this.isLoading = false;
+
+        // Reset Filters
+        this.selectedCategory = 'All';
+        this.selectedPriceRange = this.priceRanges[0];
+        this.selectedDistance = this.distances[0];
+        this.selectedSort = 'Nearest First';
+    }
 }

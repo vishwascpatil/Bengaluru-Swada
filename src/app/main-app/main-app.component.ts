@@ -46,6 +46,7 @@ export class MainAppComponent implements OnInit {
   @ViewChild(ProfileComponent) profileComponent!: ProfileComponent;
   @ViewChild(VideoFeedComponent) videoFeedComponent!: VideoFeedComponent;
   @ViewChild(UploadReelComponent) uploadReelComponent!: UploadReelComponent;
+  @ViewChild(SearchComponent) searchComponent!: SearchComponent;
 
   constructor(
     private router: Router,
@@ -156,6 +157,11 @@ export class MainAppComponent implements OnInit {
   }
 
   private executeTabChange(tab: string) {
+    // Reset search if leaving search tab
+    if (this.activeTab === 'search' && tab !== 'search' && this.searchComponent) {
+      this.searchComponent.reset();
+    }
+
     this.activeTab = tab;
     this.navigate.emit(tab);
 
