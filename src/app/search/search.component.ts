@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
 import { Reel } from '../models/reel.model';
 import { LocationService } from '../services/location.service';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
     selector: 'app-search',
@@ -52,6 +53,7 @@ export class SearchComponent implements OnInit {
     constructor(
         private reelsService: ReelsService,
         private locationService: LocationService,
+        private navigationService: NavigationService,
         private router: Router
     ) { }
 
@@ -209,13 +211,8 @@ export class SearchComponent implements OnInit {
 
     openReel(reel: any) {
         // Navigate to feed with this reel
-        // This logic relies on MainAppComponent handling state
-        this.router.navigate(['/main-app'], {
-            state: {
-                openFeed: true,
-                reelId: reel.id
-            }
-        });
+        console.log('[Search] Opening reel:', reel.id);
+        this.navigationService.selectReel(reel.id);
     }
 
     // Location Modal methods
