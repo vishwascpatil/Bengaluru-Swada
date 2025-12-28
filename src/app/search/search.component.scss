@@ -204,45 +204,71 @@
     }
 }
 
-.filters-scroll {
+.filters-compact {
     padding: 0 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #000;
+    position: sticky;
+    top: 74px;
+    /* Approx height of search header */
+    z-index: 9;
+}
 
-    .filter-section-title {
-        font-size: 13px;
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.vertical-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+.chip {
+    background: rgba(255, 255, 255, 0.08);
+    /* Lighter glass feel */
+    color: #ccc;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .check {
+        font-weight: bold;
+        color: white;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-1px);
+    }
+
+    &.active {
+        background: #ff6b35;
+        color: white;
+        border-color: #ff6b35;
         font-weight: 600;
-        color: #fff;
-        margin: 12px 0 8px;
-    }
-
-    .filter-group {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding-bottom: 4px;
-        scrollbar-width: none;
-        /* Hide scrollbar */
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
-    }
-
-    .chip {
-        background: #1a1a1a;
-        color: #aaa;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 13px;
-        white-space: nowrap;
-        cursor: pointer;
-        transition: all 0.2s;
-
-        &.active {
-            background: #ff6b35;
-            color: white;
-            border-color: #ff6b35;
-        }
+        box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
     }
 }
 

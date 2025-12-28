@@ -76,38 +76,30 @@
     </div>
 
     <!-- Filters Section -->
-    <div class="filters-scroll">
-        <!-- Categories (Optional, kept simpler for now or mapped) -->
-        <!-- <div class="filter-group">
-      <button *ngFor="let cat of categories" 
-              class="chip" 
-              [class.active]="selectedCategory === cat"
-              (click)="selectCategory(cat)">
-        {{cat}}
-      </button>
-    </div> -->
-
-        <div class="filter-section-title">Price Range</div>
-        <div class="filter-group">
-            <button *ngFor="let range of priceRanges" class="chip" [class.active]="selectedPriceRange === range"
-                (click)="selectPrice(range)">
-                {{range.label}}
+    <!-- Compact Filters -->
+    <div class="filters-compact">
+        <div class="filter-row">
+            <!-- Sort Options -->
+            <button *ngFor="let sort of sortOptions" class="chip" [class.active]="selectedSort === sort"
+                (click)="selectSort(sort)">
+                <span *ngIf="selectedSort === sort" class="check">✓</span>
+                {{sort}}
             </button>
-        </div>
 
-        <div class="filter-section-title">Distance</div>
-        <div class="filter-group">
+            <div class="vertical-divider"></div>
+
+            <!-- Distance Options -->
             <button *ngFor="let dist of distances" class="chip" [class.active]="selectedDistance === dist"
                 (click)="selectDistance(dist)">
                 {{dist.label}}
             </button>
         </div>
 
-        <div class="filter-section-title">Sort By</div>
-        <div class="filter-group">
-            <button *ngFor="let sort of sortOptions" class="chip" [class.active]="selectedSort === sort"
-                (click)="selectSort(sort)">
-                {{sort}}
+        <div class="filter-row">
+            <!-- Price Options -->
+            <button *ngFor="let range of priceRanges" class="chip" [class.active]="selectedPriceRange === range"
+                (click)="selectPrice(range)">
+                {{range.label}}
             </button>
         </div>
     </div>

@@ -120,20 +120,15 @@ export class SearchComponent implements OnInit {
     }
 
     async applyFilters() {
-        // Only load if we haven't loaded yet and there's some active interaction
-        if (this.reels.length === 0 && !this.isLoading) {
-            // Check if any filter is non-default or search query is present
-            const hasActiveSearch = this.searchQuery.trim().length > 0;
-            const hasActiveFilters = this.selectedCategory !== 'All' ||
-                this.selectedPriceRange.label !== 'All' ||
-                this.selectedDistance.label !== 'All';
+        // Strict requirement: Don't show results if search query is empty
+        if (!this.searchQuery.trim()) {
+            this.filteredReels = [];
+            return;
+        }
 
-            if (hasActiveSearch || hasActiveFilters) {
-                await this.loadReels();
-            } else {
-                this.filteredReels = [];
-                return;
-            }
+        // Lazy load reels if needed
+        if (this.reels.length === 0 && !this.isLoading) {
+            await this.loadReels();
         }
 
         let result = this.reels;
