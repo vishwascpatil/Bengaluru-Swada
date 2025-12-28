@@ -8,24 +8,30 @@
     -webkit-overflow-scrolling: touch;
 }
 
-.favorites-header {
-    padding: 24px 20px;
+.hero-header {
+    padding: 24px 20px 32px;
     background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 
     h1 {
-        font-size: 32px;
+        font-size: 34px;
         font-weight: 800;
         margin: 0 0 8px 0;
         color: #1c1c1e;
-        letter-spacing: -1px;
+        letter-spacing: -0.5px;
     }
 
     .subtitle {
-        font-size: 15px;
-        color: #636366;
+        font-size: 17px;
+        color: #8E8E93;
         margin: 0;
         font-weight: 400;
+        max-width: 280px;
+        line-height: 1.4;
     }
 }
 

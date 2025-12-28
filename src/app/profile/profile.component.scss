@@ -167,10 +167,12 @@
     border-radius: 12px;
     cursor: pointer;
     margin-bottom: 24px;
+    transition: background 0.2s, transform 0.1s;
 
     &:active {
         background: #E5E5EA;
         opacity: 0.8;
+        transform: scale(0.96);
     }
 }
 

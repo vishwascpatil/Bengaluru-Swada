@@ -174,11 +174,12 @@
     font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.1s;
 
     &:active {
         background: #E5E5EA;
         color: #8E8E93;
+        transform: scale(0.96);
     }
 }
 
