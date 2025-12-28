@@ -26,11 +26,9 @@
         <div class="reel-card" *ngFor="let reel of bookmarkedReels" (click)="playReel(reel)">
             <div class="reel-thumbnail">
                 <video #videoThumb *ngIf="reel.videoUrl" [src]="reel.videoUrl" muted playsinline preload="metadata"
-                    style="opacity: 0; transition: opacity 0.3s;" (loadeddata)="videoThumb.style.opacity='1'"
                     (loadedmetadata)="videoThumb.currentTime = 0.1"></video>
 
-                <!-- Only show overlay when video is ready (opacity is 1) -->
-                <div class="play-overlay" [style.opacity]="videoThumb.style.opacity === '1' ? 1 : 0">
+                <div class="play-overlay">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
                         <path d="M8 5v14l11-7z" />
                     </svg>
