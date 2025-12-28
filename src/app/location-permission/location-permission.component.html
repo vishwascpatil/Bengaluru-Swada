@@ -1,79 +1,88 @@
-<div class="location-section">
-  <div class="location-form">
-    <div class="location-icon">
-      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="locationGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#ff8c5a;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-          fill="url(#locationGradient)" />
+<div class="ios-layout">
+  <!-- Hero Section -->
+  <div class="hero-content">
+    <div class="pin-icon-container">
+      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" class="location-pin">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ff6b35" />
+        <circle cx="12" cy="9" r="2.5" fill="white" />
       </svg>
-    </div>
-    <h2 class="location-title">Find Street Food Near You</h2>
-    <p class="location-subtitle">We need your location to show you the best street food options around you</p>
-
-    <div class="location-benefits">
-      <div class="benefit-item"><span class="benefit-icon">🎯</span><span class="benefit-text">Discover food stalls
-          nearby</span></div>
-      <div class="benefit-item"><span class="benefit-icon">💰</span><span class="benefit-text">See accurate prices &
-          distance</span></div>
+      <div class="pin-shadow"></div>
     </div>
 
-    <button class="allow-location-btn" (click)="allow()">Allow Location Access</button>
-    <button class="manual-location-btn" (click)="manual()">Select Location Manually</button>
-    <p class="location-privacy">Your location data is secure and only used to show nearby food options.</p>
+    <h1 class="ios-title">Find Street Food<br>Near You</h1>
+    <p class="ios-subtitle">We need your location to show you the best street food options around you.</p>
+
+    <div class="features-list">
+      <div class="feature-row">
+        <div class="icon-circle pink-bg">
+          <span class="emoji">🎯</span>
+        </div>
+        <span class="feature-text">Discover food stalls nearby</span>
+      </div>
+
+      <div class="feature-row">
+        <div class="icon-circle yellow-bg">
+          <span class="emoji">💰</span>
+        </div>
+        <span class="feature-text">See accurate prices & distance</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Location Selector Modal -->
-  <div class="modal-overlay" *ngIf="showLocationModal" (click)="closeLocationModal()">
-    <div class="location-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
+  <!-- Bottom Action Area -->
+  <div class="action-area">
+    <button class="primary-btn" (click)="allow()">Allow Location Access</button>
+    <button class="secondary-btn" (click)="manual()">Select Location Manually</button>
+    <div class="privacy-note">
+      <div class="privacy-line"></div>
+      <p>Your location data is secure and only used to show nearby food options.</p>
+    </div>
+  </div>
+
+  <!-- iOS Sheet Modal -->
+  <div class="modal-backdrop" *ngIf="showLocationModal" (click)="closeLocationModal()">
+    <div class="ios-sheet" (click)="$event.stopPropagation()">
+      <div class="drag-handle"></div>
+
+      <div class="sheet-header">
         <h2>Select Location</h2>
-        <button class="close-btn" (click)="closeLocationModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <button class="close-icon-btn" (click)="closeLocationModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
 
-      <div class="search-box">
-        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
-          <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-        </svg>
-        <input type="text" [(ngModel)]="searchQuery" placeholder="Search for a location..." class="search-input"
-          #searchInput />
+      <div class="search-container">
+        <div class="search-bar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" [(ngModel)]="searchQuery" placeholder="Search area or pincode" #searchInput>
+        </div>
       </div>
 
-      <div class="locations-list">
-        <div class="location-item" *ngFor="let loc of filteredLocations" (click)="selectLocation(loc)">
-          <div class="location-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                fill="currentColor" />
+      <div class="locations-scroll">
+        <div class="location-row" *ngFor="let loc of filteredLocations" (click)="selectLocation(loc)">
+          <div class="loc-icon-bg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff6b35">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+              <circle cx="12" cy="9" r="2.5" fill="white" />
             </svg>
           </div>
-          <div class="location-info">
-            <div class="location-name">{{loc.name}}</div>
-            <div class="location-area">Pincode: {{loc.pincode}}</div>
+          <div class="loc-details">
+            <span class="loc-name">{{loc.name}}</span>
+            <span class="loc-sub">{{loc.pincode}}</span>
           </div>
-          <svg class="chevron-right" width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </div>
 
-        <div class="no-results" *ngIf="filteredLocations.length === 0">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
-            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          </svg>
+        <div class="empty-state" *ngIf="filteredLocations.length === 0">
           <p>No locations found</p>
-          <span>Try searching for a different area</span>
         </div>
       </div>
     </div>

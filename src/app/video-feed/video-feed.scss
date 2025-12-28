@@ -53,17 +53,16 @@
     background: #fff;
     border-radius: 2px;
     transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    transform: translateX(-125px);
-    /* Center under All */
+    transform: translateX(-65px);
+    /* Center under Explore (Default) */
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 
-    &.trending-active {
-        transform: translateX(-42px);
-        /* Center under Trending */
+    &.explore-active {
+        transform: translateX(-65px);
     }
 
     &.new-active {
-        transform: translateX(85px);
+        transform: translateX(65px);
         /* Center under New Arrivals */
     }
 }

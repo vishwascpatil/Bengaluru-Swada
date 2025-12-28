@@ -21,7 +21,7 @@ import { Timestamp } from '@angular/fire/firestore';
 })
 export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @Input() isActive: boolean = true;
-  activeTab: 'all' | 'trending' | 'new' = 'all';
+  activeTab: 'explore' | 'new' = 'explore';
 
   isGlobalMuted = true;
   reels: Reel[] = [];
@@ -105,14 +105,10 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       })
     );
 
-    // Sort reels if on 'all' tab, otherwise just update distances
-    if (this.activeTab === 'all') {
-      reelsWithUpdatedDistances.sort((a, b) => {
-        const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
-        const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
-        return distA - distB;
-      });
-    }
+    // Sort reels if on 'explore' tab (actually, explore is random, so maybe we don't resort by distance?)
+    // But if we want to update distances, we just did that.
+    // Let's keep the existing order for explore (random) to avoid jarring reorders on location update.
+    // If 'new', it's sorted by date.
 
     this.reels = reelsWithUpdatedDistances;
     this.currentIndex = 0;
@@ -141,7 +137,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
   }
 
-  async switchTab(tab: 'all' | 'trending' | 'new') {
+  async switchTab(tab: 'explore' | 'new') {
     if (this.activeTab === tab) return;
 
     this.activeTab = tab;
@@ -158,13 +154,16 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     try {
       let fetchedReels: Reel[] = [];
 
-      if (this.activeTab === 'trending') {
-        fetchedReels = await this.reelsService.getTrendingReels(20);
-      } else if (this.activeTab === 'new') {
+      if (this.activeTab === 'new') {
         fetchedReels = await this.reelsService.getNewArrivals(20);
       } else {
-        // 'all' tab - fetch more to ensure good proximity variety
+        // 'explore' tab - fetch all and shuffle
         fetchedReels = await this.reelsService.getReels(50);
+        // Fisher-Yates Shuffle
+        for (let i = fetchedReels.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [fetchedReels[i], fetchedReels[j]] = [fetchedReels[j], fetchedReels[i]];
+        }
       }
 
       console.log('[VideoFeed] Fetched reels:', fetchedReels.length);
@@ -197,14 +196,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         })
       );
 
-      // If it's the 'all' tab, sort strictly by proximity
-      if (this.activeTab === 'all') {
-        reelsWithDistance.sort((a, b) => {
-          const distA = a.distance === '-- km' ? Infinity : parseFloat(a.distance.split(' ')[0]);
-          const distB = b.distance === '-- km' ? Infinity : parseFloat(b.distance.split(' ')[0]);
-          return distA - distB;
-        });
-      }
+      // Explore is random, New is sorted by date. No distance sorting imposed.
 
       this.reels = reelsWithDistance;
       console.log('[VideoFeed] Final reels count:', this.reels.length);
@@ -293,13 +285,11 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     // Ensure it's mostly horizontal swipe
     if (Math.abs(deltaX) > this.swipeThresholdX && Math.abs(deltaX) > Math.abs(deltaY)) {
       if (deltaX > 0) {
-        // Swipe Left -> Go Right
-        if (this.activeTab === 'all') this.switchTab('trending');
-        else if (this.activeTab === 'trending') this.switchTab('new');
+        // Swipe Left -> Go Right (Explore -> New)
+        if (this.activeTab === 'explore') this.switchTab('new');
       } else {
-        // Swipe Right -> Go Left
-        if (this.activeTab === 'new') this.switchTab('trending');
-        else if (this.activeTab === 'trending') this.switchTab('all');
+        // Swipe Right -> Go Left (New -> Explore)
+        if (this.activeTab === 'new') this.switchTab('explore');
       }
       return; // Exit if handled as swipe
     }

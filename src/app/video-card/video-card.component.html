@@ -5,6 +5,15 @@
     (click)="onVideoTap($event)">
   </video>
 
+  <!-- Top Left View Count -->
+  <div class="view-count-overlay" *ngIf="displayViewCount > 0">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+    <span>{{ formatViewCount(displayViewCount) }}</span>
+  </div>
+
   <!-- Loading Spinner Removed for simplicity -->
   <div class="loading-spinner" *ngIf="isLoading">
     <div class="spinner"></div>
@@ -45,7 +54,7 @@
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
           {{displayVendor}}
-          <svg class="arrow-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          <svg class="arrow-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2196F3"
             stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
@@ -58,14 +67,7 @@
     </div>
 
     <div class="action-buttons">
-      <!-- View Count -->
-      <div class="view-count-action" *ngIf="displayViewCount > 0">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" />
-          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
-        </svg>
-        <span class="count-text">{{ formatViewCount(displayViewCount) }}</span>
-      </div>
+      <!-- View Count Removed from here -->
       <button class="action-btn like-btn" [class.liked]="displayIsLiked" (click)="toggleLike()">
         <svg class="action-icon" width="28" height="28" viewBox="0 0 24 24"
           [attr.fill]="displayIsLiked ? 'currentColor' : 'none'">

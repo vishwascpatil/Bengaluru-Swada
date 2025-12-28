@@ -4,19 +4,15 @@
 
   <!-- Tab Header -->
   <div class="feed-tabs">
-    <div class="tab-item" [class.active]="activeTab === 'all'" (click)="switchTab('all')">
-      <span>All</span>
-    </div>
-    <div class="tab-separator">|</div>
-    <div class="tab-item" [class.active]="activeTab === 'trending'" (click)="switchTab('trending')">
-      <span>Trending</span>
+    <div class="tab-item" [class.active]="activeTab === 'explore'" (click)="switchTab('explore')">
+      <span>Explore</span>
     </div>
     <div class="tab-separator">|</div>
     <div class="tab-item" [class.active]="activeTab === 'new'" (click)="switchTab('new')">
       <span>New Arrivals</span>
     </div>
     <!-- Moving Underline Indicator -->
-    <div class="tab-indicator" [class.trending-active]="activeTab === 'trending'"
+    <div class="tab-indicator" [class.explore-active]="activeTab === 'explore'"
       [class.new-active]="activeTab === 'new'"></div>
   </div>
 
