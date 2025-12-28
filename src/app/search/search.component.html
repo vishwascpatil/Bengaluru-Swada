@@ -77,7 +77,7 @@
 
     <!-- Filters Section -->
     <!-- Compact Filters -->
-    <div class="filters-compact">
+    <div class="filters-compact" *ngIf="hasSearchMatches">
         <div class="filter-row">
             <!-- Sort Options -->
             <button *ngFor="let sort of sortOptions" class="chip" [class.active]="selectedSort === sort"

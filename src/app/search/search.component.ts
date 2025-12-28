@@ -119,10 +119,13 @@ export class SearchComponent implements OnInit {
         }
     }
 
+    hasSearchMatches = false;
+
     async applyFilters() {
         // Strict requirement: Don't show results if search query is empty
         if (!this.searchQuery.trim()) {
             this.filteredReels = [];
+            this.hasSearchMatches = false;
             return;
         }
 
@@ -141,6 +144,9 @@ export class SearchComponent implements OnInit {
                 r.vendor?.toLowerCase().includes(q)
             );
         }
+
+        // Logic check: Do we have matches relevant to the text query?
+        this.hasSearchMatches = result.length > 0;
 
         // 2. Category 
         if (this.selectedCategory !== 'All') {

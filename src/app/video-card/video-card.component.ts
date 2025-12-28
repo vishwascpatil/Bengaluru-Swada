@@ -390,15 +390,23 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   openGoogleMaps(): void {
+    if (!this.isBrowser) return;
+
     if (this.reel?.latitude && this.reel?.longitude) {
       const { latitude, longitude } = this.reel;
       const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-      (window as any).open(url, '_blank');
+      window.open(url, '_blank');
+    } else {
+      const vendor = this.displayVendor;
+      const title = this.displayTitle;
+      const searchQuery = encodeURIComponent(`${vendor} ${title} Bangalore`);
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
+      window.open(mapsUrl, '_blank');
     }
   }
 
-  share() {
-    this.shared.emit();
+  share(): void {
+    this.shareApp();
   }
 
   toggleLike() {
@@ -527,34 +535,26 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       video.currentTime = percentage * video.duration;
       this.progress = percentage * 100;
     }
+  }
 
-    // Open Google Maps for directions to vendor location
-    openGoogleMaps(): void {
-      if(!this.isBrowser) return;
 
-      const vendor = this.displayVendor;
-      const title = this.displayTitle;
 
-      // Create search query for Google Maps
-      const searchQuery = encodeURIComponent(`${vendor} ${title} Bangalore`);
-      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
+  // Share the app with others
+  shareApp(): void {
+    if (!this.isBrowser) return;
 
-      window.open(mapsUrl, '_blank');
-    }
+    this.shared.emit();
 
-    // Share the app with others
-    shareApp(): void {
-      if(!this.isBrowser) return;
+    const shareData = {
+      title: 'Bengaluru Swada - Discover Street Food',
+      text: 'Check out this amazing street food discovery app! Find the best local food near you.',
+      url: window.location.origin
+    };
 
-      const shareData = {
-        title: 'Bengaluru Swada - Discover Street Food',
-        text: 'Check out this amazing street food discovery app! Find the best local food near you.',
-        url: window.location.origin
-      };
-
-      // Use Web Share API if available
-      if(navigator.share) {
-      navigator.share(shareData).catch((error) => {
+    // Use Web Share API if available
+    const nav = window.navigator as any;
+    if (nav && nav.share) {
+      nav.share(shareData).catch((error: any) => {
         console.log('Error sharing:', error);
         this.fallbackShare();
       });
@@ -569,9 +569,10 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     const text = `Check out Bengaluru Swada - Discover amazing street food near you! ${url}`;
 
     // Copy to clipboard
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Link copied to clipboard! Share it with your friends.');
+    const nav = window.navigator as any;
+    if (nav && nav.clipboard) {
+      nav.clipboard.writeText(text).then(() => {
+        window.alert('Link copied to clipboard! Share it with your friends.');
       }).catch(() => {
         this.showShareOptions(url);
       });
