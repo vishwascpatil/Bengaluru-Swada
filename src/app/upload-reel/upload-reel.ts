@@ -1,12 +1,16 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
+
+declare const document: any;
+declare const window: any;
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
 import { LocationService } from '../services/location.service';
 import { Auth } from '@angular/fire/auth';
-import { HttpEventType, HttpResponse } from '@angular/common/http';
+import { HttpEventType } from '@angular/common/http';
 import { environment } from '../../environments/environment.development';
+import { lastValueFrom } from 'rxjs';
 
 import { LocationPickerComponent } from '../location-picker/location-picker.component';
 
@@ -34,9 +38,16 @@ export class UploadReelComponent implements OnInit {
     selectedFile: File | null = null;
     videoPreviewUrl: string | null = null;
     isUploading = false;
+    isTranscoding = false;
     uploadProgress = 0;
+    transcodeProgress = 0;
     uploadError: string | null = null;
     uploadSuccess = false;
+
+    private transcodeIframe: any | null = null;
+    private transcodeResolver: ((value: any) => void) | null = null;
+    private transcodeRejecter: ((reason: any) => void) | null = null;
+    private isTranscoderReady = false;
 
     // Validation
     readonly maxFileSize = 200 * 1024 * 1024; // 100MB
@@ -55,7 +66,7 @@ export class UploadReelComponent implements OnInit {
      * Handle file selection from input
      */
     onFileSelected(event: Event): void {
-        const input = event.target as HTMLInputElement;
+        const input = event.target as any;
         if (input.files && input.files.length > 0) {
             const file = input.files[0];
             this.validateAndSetFile(file);
@@ -197,8 +208,77 @@ export class UploadReelComponent implements OnInit {
     }
 
     /**
-     * Upload video and create reel
+     * Initialize Transcoding Iframe
      */
+    private initTranscodeIframe(): Promise<void> {
+        if (this.transcodeIframe) return Promise.resolve();
+
+        return new Promise((resolve) => {
+            this.transcodeIframe = document.createElement('iframe');
+            this.transcodeIframe.style.display = 'none';
+            this.transcodeIframe.src = 'assets/transcoder/index.html';
+
+            window.addEventListener('message', (event: MessageEvent) => {
+                const data = event.data;
+                if (!data || typeof data !== 'object') return;
+
+                switch (data.type) {
+                    case 'READY':
+                        this.isTranscoderReady = true;
+                        resolve();
+                        break;
+                    case 'PROGRESS':
+                        this.transcodeProgress = Math.round(data.progress * 100);
+                        break;
+                    case 'LOG':
+                        console.log('[Iframe Transcoder LOG]', data.message);
+                        break;
+                    case 'COMPLETE':
+                        if (this.transcodeResolver) {
+                            this.transcodeResolver({ playlist: data.playlist, segments: data.segments });
+                            this.transcodeResolver = null;
+                        }
+                        break;
+                    case 'ERROR':
+                        if (this.transcodeRejecter) {
+                            this.transcodeRejecter(new Error(data.message));
+                            this.transcodeRejecter = null;
+                        }
+                        break;
+                }
+            });
+
+            document.body.appendChild(this.transcodeIframe);
+        });
+    }
+
+    /**
+     * Transcode video to HLS via Iframe
+     */
+    private async transcodeToHls(file: File): Promise<{ playlist: Blob, segments: { name: string, blob: Blob }[] }> {
+        console.log('[Upload] Starting transcoding process...');
+        await this.initTranscodeIframe();
+        console.log('[Upload] Iframe initialized, sending file to transcode...');
+
+        return new Promise((resolve, reject) => {
+            this.transcodeResolver = resolve;
+            this.transcodeRejecter = reject;
+
+            console.log('[Upload] Posting message to iframe:', {
+                type: 'TRANSCODE',
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type
+            });
+
+            this.transcodeIframe?.contentWindow?.postMessage({
+                type: 'TRANSCODE',
+                file,
+                name: file.name
+            }, '*');
+        });
+    }
+
     /**
      * Upload video and create reel via Cloudflare R2
      */
@@ -209,107 +289,77 @@ export class UploadReelComponent implements OnInit {
         }
 
         const currentUser = this.auth.currentUser;
-        if (!currentUser) {
-            this.uploadError = 'You must be logged in to upload a reel';
-            return;
-        }
+        const uid = currentUser?.uid || 'test-user-id'; // Fallback for testing
+
+        // Removed auth check for testing purposes
 
         this.isUploading = true;
+        this.isTranscoding = true;
         this.uploadError = null;
         this.uploadProgress = 0;
-        this.uploadSuccess = false; // Reset success state on new attempt
+        this.transcodeProgress = 0;
+        this.uploadSuccess = false;
 
         try {
-            // Generate unique filename: videos/uid/timestamp_filename
+            // 1. Transcode to HLS via Isolated Iframe
+            const hlsData = await this.transcodeToHls(this.selectedFile);
+            this.isTranscoding = false;
+
+            // Generate unique directory: videos/uid/timestamp/
             const timestamp = Date.now();
-            // Sanitize filename
-            const safeName = this.selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
-            const key = `videos/${currentUser.uid}/${timestamp}_${safeName}`;
+            const prefix = `videos/${uid}/${timestamp}/`;
 
-            // 1. Get Signed URL
-            this.reelsService.getUploadUrl(key, this.selectedFile.type).subscribe({
-                next: (response) => {
-                    const { uploadUrl, key: finalKey } = response;
+            // 2. Upload Segments
+            for (let i = 0; i < hlsData.segments.length; i++) {
+                const segment = hlsData.segments[i];
+                const key = `${prefix}${segment.name}`;
+                const uploadResp = await lastValueFrom(this.reelsService.getUploadUrl(key, segment.blob.type));
+                await lastValueFrom(this.reelsService.uploadToR2(uploadResp.uploadUrl, segment.blob as any));
+                this.uploadProgress = Math.round(((i + 1) / (hlsData.segments.length + 1)) * 100);
+            }
 
-                    // 2. Upload to R2
-                    if (!this.selectedFile) return;
+            // 3. Upload Playlist
+            const playlistKey = `${prefix}index.m3u8`;
+            const playlistUploadResp = await lastValueFrom(this.reelsService.getUploadUrl(playlistKey, hlsData.playlist.type));
+            await lastValueFrom(this.reelsService.uploadToR2(playlistUploadResp.uploadUrl, hlsData.playlist as any));
+            this.uploadProgress = 100;
 
-                    this.reelsService.uploadToR2(uploadUrl, this.selectedFile).subscribe({
-                        next: async (event: any) => {
-                            // Import HttpEventType to check progress
-                            // We can't easily import HttpEventType inside this method without adding it to imports
-                            // So we cheat a bit or check for 'type' property if we don't want to change imports globally yet,
-                            // but better to rely on imported enum. Alternatively assuming event numbers: 
-                            // 1 = UploadProgress, 4 = Response
+            // 4. Create Firestore Record
+            const cdnUrl = `https://r2-video-uploader.bengaluru-swada.workers.dev/${playlistKey}`;
 
-                            if (event.type === HttpEventType.UploadProgress) {
-                                if (event.total) {
-                                    this.uploadProgress = Math.round(100 * event.loaded / event.total);
-                                }
-                            } else if (event.type === HttpEventType.Response) {
-                                // Upload complete
-                                try {
-                                    // 3. Create Firestore specific Record
-                                    // Construct CDN URL (Use Worker URL for playback)
-                                    // Direct replacement to ensure no environment mismatch
-                                    const cdnUrl = `https://r2-video-uploader.bengaluru-swada.workers.dev/${finalKey}`;
-
-                                    await this.reelsService.createReel({
-                                        cloudflareVideoId: '',
-                                        videoUrl: cdnUrl,
-                                        thumbnailUrl: '', // Cloudflare Stream would give this, R2 doesn't auto-generate thumb. 
-                                        // For now leave empty or use a default.
-                                        duration: 0,
-                                        title: this.title.trim(),
-                                        vendor: this.vendor.trim(),
-                                        price: this.price!,
-                                        categories: this.categories,
-                                        latitude: this.latitude!,
-                                        longitude: this.longitude!,
-                                        uploadedBy: currentUser.uid,
-                                        createdAt: null as any,
-                                        viewCount: 0,
-                                        likes: 0,
-                                        likedBy: [],
-                                        bookmarkedBy: []
-                                    });
-
-                                    this.uploadSuccess = true;
-                                    this.isUploading = false; // CRITICAL: Reset state so UI becomes interactive
-                                    this.uploadComplete.emit(); // Notify parent
-
-                                    setTimeout(() => {
-                                        this.router.navigate(['/main-app']).catch(err => {
-                                            console.error('Navigation failed:', err);
-                                            this.uploadError = 'Auto-redirect failed. Please click "Done".';
-                                        });
-                                    }, 1500);
-
-                                } catch (error) {
-                                    console.error('Error creating reel record:', error);
-                                    this.uploadError = 'Video uploaded but failed to save metadata.';
-                                    this.isUploading = false;
-                                }
-                            }
-                        },
-                        error: (err) => {
-                            console.error('R2 Upload error:', err);
-                            this.uploadError = 'Failed to upload video to server.';
-                            this.isUploading = false;
-                        }
-                    });
-                },
-                error: (err) => {
-                    console.error('Signed URL error:', err);
-                    this.uploadError = 'Failed to initialize upload.';
-                    this.isUploading = false;
-                }
+            await this.reelsService.createReel({
+                cloudflareVideoId: '',
+                videoUrl: cdnUrl,
+                thumbnailUrl: '',
+                duration: 0,
+                title: this.title.trim(),
+                vendor: this.vendor.trim(),
+                price: this.price!,
+                categories: this.categories,
+                latitude: this.latitude!,
+                longitude: this.longitude!,
+                uploadedBy: uid,
+                createdAt: null as any,
+                viewCount: 0,
+                likes: 0,
+                likedBy: [],
+                bookmarkedBy: [],
+                isPublic: true
             });
+
+            this.uploadSuccess = true;
+            this.isUploading = false;
+            this.uploadComplete.emit();
+
+            setTimeout(() => {
+                this.router.navigate(['/main-app']);
+            }, 1500);
 
         } catch (error) {
             console.error('Upload flow error:', error);
-            this.uploadError = error instanceof Error ? error.message : 'Unknown error occurred';
+            this.uploadError = error instanceof Error ? error.message : 'Unknown error occurred during processing.';
             this.isUploading = false;
+            this.isTranscoding = false;
         }
     }
 

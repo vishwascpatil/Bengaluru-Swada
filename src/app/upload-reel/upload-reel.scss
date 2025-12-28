@@ -522,6 +522,17 @@
     .upload-progress {
         margin-bottom: 24px;
 
+        &.transcoding {
+            .helper-text {
+                display: block;
+                margin-top: 4px;
+                font-size: 11px;
+                color: #ff6b35;
+                text-align: center;
+                opacity: 0.8;
+            }
+        }
+
         .progress-bar {
             height: 6px;
             background: rgba(255, 255, 255, 0.1);
@@ -534,6 +545,10 @@
                 background: linear-gradient(90deg, #ff6b35 0%, #ff8c42 100%);
                 transition: width 0.3s ease;
                 border-radius: 3px;
+
+                &.transcode-fill {
+                    background: linear-gradient(90deg, #4da3ff 0%, #a855f7 100%);
+                }
             }
         }
 

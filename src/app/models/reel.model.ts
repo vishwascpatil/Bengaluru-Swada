@@ -33,6 +33,7 @@ export interface Reel {
     bookmarkedBy: string[];         // Array of user IDs who bookmarked this reel
 
     // Client-side state (not stored in Firestore)
-    isLiked?: boolean;              // Current user's like status
+    isLiked?: boolean;              // Current user's look status
     isBookmarked?: boolean;         // Current user's bookmark status
+    isPublic?: boolean;             // Visibility status for security rules
 }

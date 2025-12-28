@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Output, ChangeDetectorRef, OnInit } from '@angular/core';
+
+declare const document: any;
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -77,7 +79,7 @@ export class OtpComponent implements OnInit {
 
     // Auto-focus next input
     if (this.otp[i] && i < 5) {
-      const nextInput = document.querySelectorAll('.otp-input')[i + 1] as HTMLElement;
+      const nextInput = document.querySelectorAll('.otp-input')[i + 1] as any;
       if (nextInput) nextInput.focus();
     }
   }

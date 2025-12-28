@@ -20,6 +20,7 @@ import {
     DocumentSnapshot,
     onSnapshot
 } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
 import { Reel } from '../models/reel.model';
 import { Observable, lastValueFrom } from 'rxjs';
 
@@ -32,7 +33,7 @@ import { environment } from '../../environments/environment.development';
 export class ReelsService {
     private readonly collectionName = 'reels';
 
-    constructor(private firestore: Firestore, private http: HttpClient) { }
+    constructor(private firestore: Firestore, private http: HttpClient, private auth: Auth) { }
 
     /**
      * Get Trending Reels based on weighted score + time decay
@@ -45,6 +46,7 @@ export class ReelsService {
             const reelsRef = collection(this.firestore, this.collectionName);
             const q = query(
                 reelsRef,
+                where('isPublic', '==', true),
                 orderBy('createdAt', 'desc'),
                 limit(limitCount * 3) // Fetch 3x required to find gems
             );
@@ -120,6 +122,7 @@ export class ReelsService {
             const reelsRef = collection(this.firestore, this.collectionName);
             let q = query(
                 reelsRef,
+                where('isPublic', '==', true),
                 orderBy('createdAt', 'desc'),
                 limit(limitCount)
             );
@@ -198,6 +201,7 @@ export class ReelsService {
             const reelsRef = collection(this.firestore, this.collectionName);
             const docRef = await addDoc(reelsRef, {
                 ...reelData,
+                isPublic: true,
                 createdAt: Timestamp.now(),
                 viewCount: 0,
                 likes: 0,
@@ -437,4 +441,7 @@ export class ReelsService {
     isBookmarkedByUser(reel: Reel, userId: string): boolean {
         return reel.bookmarkedBy?.includes(userId) || false;
     }
+
+
 }
+

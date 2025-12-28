@@ -1,6 +1,10 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+
+declare const window: any;
+declare const document: any;
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Reel } from '../models/reel.model';
+import Hls from 'hls.js';
 
 @Component({
   selector: 'app-video-card',
@@ -20,7 +24,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() distance = '';
   @Input() active = false;
   @Input() relativeIndex = 0;
-  @Input() priority: 'high' | 'low' = 'low';
+  @Input() priority: 'high' | 'auto' | 'low' = 'low';
 
   // Social features
   @Input() likes = 0;
@@ -35,21 +39,22 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   @Input() canDelete = false;
 
-
-  @ViewChild('videoEl') videoEl!: ElementRef<HTMLVideoElement>;
+  @ViewChild('videoEl') videoEl!: ElementRef<any>;
 
   // Double-tap to mute/unmute
   private lastTapTime = 0;
   showLikeAnimation = false;
   isProgressBarVisible = false;
   private progressBarHideTimeout: any;
-  private singleTapTimeout?: number;
+  private singleTapTimeout?: any;
+  private hls: Hls | null = null;
+  private isBrowser = false;
+  private currentInitSrc = '';
 
   // Get display values from reel or fallback to individual inputs
   get displaySrc(): string {
     let url = this.reel?.videoUrl || this.src;
-
-    // STRICT FIX: Force replacement of old invalid domain
+    // Cloudflare Worker replacement if needed, though best done at service level
     if (url && url.includes('videos.bengaluru-swada.com')) {
       url = url.replace('https://videos.bengaluru-swada.com', 'https://r2-video-uploader.bengaluru-swada.workers.dev');
     }
@@ -100,71 +105,210 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   showMuteIcon = false;
   private progressInterval: any;
 
+  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
+
   ngOnChanges(changes: SimpleChanges) {
+    if (!this.isBrowser) return;
+
     // 1. Handle Source Changes
     if (changes['reel'] || changes['src']) {
       const currentSrc = this.displaySrc;
       const prevSrc = changes['reel']?.previousValue?.videoUrl || changes['src']?.previousValue;
 
       if (currentSrc !== prevSrc) {
-        this.isLoading = true;
-        if (this.videoEl && this.videoEl.nativeElement) {
-          this.videoEl.nativeElement.load();
-        }
+        // removed this.isLoading = true; to prevent stuck state
+        this.initVideo();
       }
     }
 
-    // 2. Handle Active State (Play/Pause)
-    // This strictly controls playback to avoid race conditions
+    // 2. Handle Priority Changes (Preloading logic)
+    if (changes['priority']) {
+      this.updateHlsPriority();
+    }
+
+    // 3. Handle Active State (Play/Pause)
     if (changes['active']) {
       if (this.active) {
-        // If becoming active, play.
-        // We do NOT call load() here; play() handles it.
         this.play();
       } else {
-        // If becoming inactive, pause and reset.
         this.pause();
-        this.resetVideo();
+        // If we dropping from active to specific priority handled in updateHlsPriority
+        // But ensures we don't keep playing
       }
     }
 
-    // 3. Handle Priority (Preloading)
-    // Only preload if NOT active (active one is handled above)
-    if (changes['priority'] && !this.active) {
-      if (this.priority === 'high' && this.videoEl?.nativeElement) {
-        // Smart preload: only load if we have no data
-        if (this.videoEl.nativeElement.readyState === 0) {
-          this.videoEl.nativeElement.load();
-        }
-      }
-    }
-
-    // 4. Handle External Mute & Strict Active Enforcement
-    // We lean on the template [muted] binding for the definitive state,
-    // but we can also set it here for immediate effect.
+    // 4. Mute State
     if (this.videoEl?.nativeElement) {
       this.videoEl.nativeElement.muted = !this.active || this.isMuted;
     }
   }
 
   ngOnDestroy() {
-    this.pause();
+    this.destroyHls();
     if (this.progressInterval) {
       clearInterval(this.progressInterval);
     }
     if (this.progressBarHideTimeout) {
       clearTimeout(this.progressBarHideTimeout);
     }
-
   }
 
   ngAfterViewInit() {
-    const video = this.videoEl.nativeElement;
+    if (this.isBrowser) {
+      console.log('[VideoCard] ngAfterViewInit', this.reel?.id);
+      this.initVideo();
+      this.setupNativeListeners();
 
-    // Use native events for state and progress
-    const events = [
-      'error', 'ended', 'timeupdate'
-    ];
+      // Safety check: verify init happened
+      setTimeout(() => {
+        if (!this.hls && (this.priority === 'high' || this.priority === 'auto')) {
+          console.warn('[VideoCard] Safety Retry Init for', this.reel?.id);
+          this.initVideo();
+        }
+      }, 500);
+    }
+  }
+
+  private initVideo() {
+    const video = this.videoEl?.nativeElement;
+    const src = this.displaySrc;
+
+    if (!video) {
+      // Expected during early ngOnChanges
+      console.warn('[VideoCard] initVideo skipped: No video element for', this.reel?.id);
+      return;
+    }
+    if (!src) {
+      console.warn('[VideoCard] initVideo skipped: No src available for', this.reel?.id);
+      this.isLoading = false; // Ensure we don't show spinner if no content
+      return;
+    }
+
+    // Now we are actually starting
+    this.isLoading = (this.priority === 'high'); // Only show spinner for active video
+
+    console.log('[VideoCard] InitVideo V2 for:', this.reel?.id, 'Idx:', this.relativeIndex, 'Priority:', this.priority);
+
+    // RULE 4: Initial HLS only if priority is not low
+    if (this.priority === 'low') {
+      // console.log('[VideoCard] Skipping init due to low priority');
+      this.isLoading = false; // Don't show spinner for low priority background items
+      return;
+    }
+
+    // Prevent redundant initialization
+    if (this.hls && this.currentInitSrc === src) {
+      console.log('[VideoCard] Skipping HLS init (already active for src)');
+      this.updateHlsPriority(); // Just update state
+      return;
+    }
+
+    // Cleanup existing
+    this.destroyHls();
+    this.currentInitSrc = src;
+
+    // CACHE BUSTING: Force fresh network fetch to avoid stale disk cache black screen
+    const uniqueSrc = src.includes('?') ? `${src}&t=${Date.now()}` : `${src}?t=${Date.now()}`;
+    console.log('[VideoCard] Loading Source:', uniqueSrc);
+
+    // RULE 6: Strict Format Enforcement
+    if (!src.endsWith('.m3u8')) {
+      throw new Error('[VideoCard] MP4 playback is forbidden');
+    }
+
+    if (Hls.isSupported()) {
+      // RULE 1: BUFFER INFLATION BUG FIX
+      const config: Partial<any> = {
+        debug: false,
+        enableWorker: true,
+        startLevel: 0, // RULE 2: PRELOAD BITRATE BUG FIX
+        autoStartLoad: true, // Enabled for faster start (initVideo only runs for high/auto)
+        maxBufferLength: 6, // Reverted to 6s for stability
+        maxMaxBufferLength: 12, // Reverted to 12s
+        backBufferLength: 3, // Reverted to 3s
+        startFragPrefetch: true, // Enabled prefetch to reduce startup delay
+        fragLoadingTimeOut: 2000,
+        fragLoadingMaxRetry: 3,
+      };
+
+      this.hls = new Hls(config);
+      this.hls.attachMedia(video);
+
+      this.hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+        this.hls?.loadSource(uniqueSrc);
+        // Loading handled in updateHlsPriority
+      });
+
+      this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        this.updateHlsPriority();
+      });
+
+      this.hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              this.hls?.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              this.hls?.recoverMediaError();
+              break;
+            default:
+              this.destroyHls();
+              break;
+          }
+        }
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl') === 'probably') {
+      // RULE 5: NATIVE SAFARI HLS SAFETY
+      video.src = uniqueSrc;
+    }
+  }
+
+  private updateHlsPriority() {
+    // If HLS instance doesn't exist and we moved to high/auto, we must init
+    if (!this.hls && (this.priority === 'high' || this.priority === 'auto')) {
+      this.initVideo();
+      return;
+    }
+
+    if (!this.hls) return;
+
+    switch (this.priority) {
+      case 'high':
+        // FIX 1: HIGH vs AUTO PLAYBACK DETERMINISM
+        // console.log('[VideoCard] Priority HIGH -> Playing', this.reel?.id);
+        this.hls.startLoad(0);
+        this.videoEl?.nativeElement.play().catch((err: any) => console.warn('[VideoCard] Autoplay blocked?', err));
+        break;
+
+      case 'auto':
+        this.hls.startLoad(0);
+        this.videoEl?.nativeElement.pause();
+        break;
+
+      case 'low':
+        // RULE 3: MEMORY LEAK ON LOW PRIORITY
+        this.destroyHls();
+        if (this.videoEl?.nativeElement) {
+          this.videoEl.nativeElement.src = '';
+          this.videoEl.nativeElement.load();
+        }
+        break;
+    }
+  }
+
+  private destroyHls() {
+    if (this.hls) {
+      this.hls.destroy();
+      this.hls = null;
+    }
+  }
+
+  private setupNativeListeners() {
+    const video = this.videoEl.nativeElement;
+    const events = ['error', 'ended', 'timeupdate', 'waiting', 'playing'];
 
     events.forEach(event => {
       video.addEventListener(event, () => {
@@ -172,9 +316,13 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
           if (!this.isSeeking && video.duration) {
             this.progress = (video.currentTime / video.duration) * 100;
           }
+          this.isLoading = false; // Playing implies loaded
         }
-        if (event === 'error') {
-          console.error('[VideoCard] Video error:', video.error);
+        if (event === 'waiting') {
+          this.isLoading = true;
+        }
+        if (event === 'playing') {
+          this.isLoading = false;
         }
         if (event === 'ended') {
           this.progress = 0;
@@ -182,51 +330,53 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
         }
       });
     });
+  }
 
-    // Initial check
-    if (this.active) {
-      this.play();
+
+  play() {
+    const video = this.videoEl?.nativeElement;
+    if (!video) return;
+
+    if (!video.paused) {
+      // Already playing, ignore to prevent AbortErrors
+      return;
     }
+
+    this.videoEl.nativeElement.muted = !this.active || this.isMuted;
+
+    // Ensure HLS is loading if we try to play
+    if (this.hls) {
+      this.hls.startLoad();
+      // Ramp up buffer potential if it was low
+      //this.hls.config.maxBufferLength = 30;
+    }
+
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err: any) => {
+        console.warn('[VideoCard] Play failed:', err);
+      });
+    }
+  }
+
+  pause() {
+    this.videoEl?.nativeElement.pause();
   }
 
   resetVideo() {
     const video = this.videoEl?.nativeElement;
     if (video) {
       video.pause();
-      // Intentional: Do not reset currentTime.
-    }
-  }
-
-  play() {
-    const video = this.videoEl?.nativeElement;
-    if (!video) return;
-
-    // Ensure it's correctly muted before play starts
-    video.muted = !this.active || this.isMuted;
-
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(err => {
-        // Auto-play policy or user interaction needed
-        // console.warn('[VideoCard] Play failed:', err);
-      });
+      // Optional: video.currentTime = 0; 
     }
   }
 
   preload() {
-    const video = this.videoEl?.nativeElement;
-    if (video) {
-      // Metadata is enough for fast list scrolling
-      video.preload = 'metadata';
-    }
+    // Handled via updateHlsPriority
   }
 
-  pause() {
+  // --- SOCIAL & UI METHODS (Unchanged logic mostly) ---
 
-    this.videoEl?.nativeElement.pause();
-  }
-
-  // Toggle bookmark status
   bookmark(): void {
     if (!this.reel) {
       this.isBookmarked = !this.isBookmarked;
@@ -236,20 +386,14 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   onDelete(event: Event) {
     event.stopPropagation();
-    // Confirm? Parent can handle confirm dialog or we can do it here. 
-    // Emitting immediately for parent to handle flow.
     this.deleted.emit();
   }
 
-  // Open Google Maps with the reel's location
   openGoogleMaps(): void {
     if (this.reel?.latitude && this.reel?.longitude) {
       const { latitude, longitude } = this.reel;
       const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-      window.open(url, '_blank');
-    } else {
-      console.warn('No location data available for this reel');
-      // Optional: Show a toast or alert to the user
+      (window as any).open(url, '_blank');
     }
   }
 
@@ -267,31 +411,18 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
   }
 
-  /**
-   * Handle double-tap to like
-   */
   toggleMute() {
     const video = this.videoEl?.nativeElement;
     if (video) {
       if (video.paused) {
-        video.play().catch(err => console.error('[VideoCard] Error playing on tap:', err));
+        video.play().catch((err: any) => console.error('[VideoCard] Error playing on tap:', err));
       }
-
-      // Toggle mute state
       const newMutedState = !this.isMuted;
-
-      // Safety: If not active, keep muted anyway
       video.muted = !this.active || newMutedState;
-
       this.isMuted = newMutedState;
       this.muteChanged.emit(newMutedState);
-
       this.showMuteAnimation();
-
-      // Show the progress bar when muting/unmuting
       this.isProgressBarVisible = true;
-
-      // Auto-hide after 2 seconds
       if (this.progressBarHideTimeout) {
         clearTimeout(this.progressBarHideTimeout);
       }
@@ -308,9 +439,6 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     }, 1000);
   }
 
-  /**
-   * Handle double-tap to like (only like, never unlike)
-   */
   doubleTapLike() {
     if (!this.isLiked) {
       this.toggleLike();
@@ -319,17 +447,14 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
   }
 
-  /**
-   * Handle video tap - single tap mutes/unmutes, double tap likes
-   */
-  onVideoTap(event: MouseEvent | TouchEvent): void {
-    event.preventDefault();
+  onVideoTap(event: any): void {
+    if (event.cancelable) {
+      event.preventDefault();
+    }
     const currentTime = new Date().getTime();
     const tapLength = currentTime - this.lastTapTime;
 
     if (tapLength < 300 && tapLength > 0) {
-      // Double tap detected - like the video
-      // Clear any pending single tap action
       if (this.singleTapTimeout) {
         clearTimeout(this.singleTapTimeout);
         this.singleTapTimeout = undefined;
@@ -337,38 +462,14 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.doubleTapLike();
       this.lastTapTime = 0;
     } else {
-      // Potential single tap - wait to see if double tap follows
       this.lastTapTime = currentTime;
-      this.singleTapTimeout = window.setTimeout(() => {
+      this.singleTapTimeout = setTimeout(() => {
         this.toggleMute();
         this.singleTapTimeout = undefined;
-      }, 300); // Wait 300ms to see if double tap comes
+      }, 300);
     }
   }
 
-  /**
-   * Toggle progress bar visibility with auto-hide
-   */
-  private toggleProgressBar(): void {
-    // Clear any existing timeout
-    if (this.progressBarHideTimeout) {
-      clearTimeout(this.progressBarHideTimeout);
-    }
-
-    // Toggle visibility
-    this.isProgressBarVisible = !this.isProgressBarVisible;
-
-    // Auto-hide after 3 seconds if shown
-    if (this.isProgressBarVisible) {
-      this.progressBarHideTimeout = setTimeout(() => {
-        this.isProgressBarVisible = false;
-      }, 3000);
-    }
-  }
-
-  /**
-   * Show heart animation on double-tap
-   */
   private showLikeAnimationEffect(): void {
     this.showLikeAnimation = true;
     setTimeout(() => {
@@ -376,9 +477,6 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     }, 1000);
   }
 
-  /**
-   * Format view count for display (e.g., 1.2K, 1.5M)
-   */
   formatViewCount(count: number): string {
     if (count >= 1000000) {
       return (count / 1000000).toFixed(1) + 'M';
@@ -388,20 +486,17 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     return count.toString();
   }
 
-  /**
-   * Handle progress bar interaction for seeking
-   */
-  onProgressBarClick(event: MouseEvent | TouchEvent): void {
+  onProgressBarClick(event: any): void {
     event.stopPropagation();
     this.seekToPosition(event);
   }
 
-  onProgressBarTouchStart(event: TouchEvent): void {
+  onProgressBarTouchStart(event: any): void {
     this.isSeeking = true;
     this.seekToPosition(event);
   }
 
-  onProgressBarTouchMove(event: TouchEvent): void {
+  onProgressBarTouchMove(event: any): void {
     if (this.isSeeking) {
       this.seekToPosition(event);
     }
@@ -411,29 +506,26 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.isSeeking = false;
   }
 
-  private seekToPosition(event: MouseEvent | TouchEvent): void {
-    const progressContainer = (event.currentTarget as HTMLElement);
+  private seekToPosition(event: any): void {
+    const progressContainer = event.currentTarget;
     const rect = progressContainer.getBoundingClientRect();
 
     let clientX: number;
-    if (event instanceof MouseEvent) {
+    if (event.type.indexOf('touch') === -1) {
       clientX = event.clientX;
     } else {
-      // For touch events, use the first touch point
       const touch = event.touches[0] || event.changedTouches[0];
       if (!touch) return;
       clientX = touch.clientX;
     }
 
-    // Calculate the position within the progress bar
     const clickPosition = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const percentage = clickPosition / rect.width;
 
-    // Update the video's current time
     const video = this.videoEl?.nativeElement;
     if (video && video.readyState > 0) {
       video.currentTime = percentage * video.duration;
-      this.progress = percentage * 100; // Update progress immediately
+      this.progress = percentage * 100;
     }
   }
 }

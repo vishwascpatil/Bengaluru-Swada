@@ -138,7 +138,7 @@ export class LocationService {
                 }
             }, this.LOCATION_TIMEOUT_MS);
 
-            if (!('geolocation' in navigator)) {
+            if (!('geolocation' in (navigator as any))) {
                 if (!resolved) {
                     resolved = true;
                     clearTimeout(timer);
@@ -148,8 +148,8 @@ export class LocationService {
                 return;
             }
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
+            (navigator as any).geolocation.getCurrentPosition(
+                (position: any) => {
                     if (!resolved) {
                         resolved = true;
                         clearTimeout(timer);
@@ -160,7 +160,7 @@ export class LocationService {
                         resolve(this.userLocation);
                     }
                 },
-                (error) => {
+                (error: any) => {
                     if (!resolved) {
                         resolved = true;
                         clearTimeout(timer);

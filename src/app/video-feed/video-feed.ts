@@ -1,4 +1,8 @@
 import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy, ChangeDetectorRef, Input, OnChanges, SimpleChanges } from '@angular/core';
+
+declare const window: any;
+declare const confirm: any;
+declare const alert: any;
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { VideoCardComponent } from '../video-card/video-card.component';
@@ -30,7 +34,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   pullMoveY = 0;
   isRefreshing = false;
   private hasTriggeredHaptic = false;
-  readonly pullThreshold = 150;
+  readonly pullThreshold = 80; // Lowered from 150 for easier trigger
   readonly swipeThresholdX = 50; // Horizontal swipe threshold
 
   isLoading = true; // Start true for skeleton
@@ -49,17 +53,12 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   ) { }
 
   async ngOnInit() {
+    // 2. NETWORK UPDATE: Fetch fresh content silently
     await this.loadReels();
   }
 
   ngAfterViewInit() {
-    // Minimal delay for DOM to be ready
-    setTimeout(() => {
-      if (this.reels.length > 0) {
-        // Playback driven by [active]="true" on first item
-        this.trackView();
-      }
-    }, 50); // Reduced from 1000ms for faster initial load
+    // Removed redundant trackView timeout
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -212,7 +211,6 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     } catch (error) {
       console.error('[VideoFeed] Error loading reels:', error);
     } finally {
-      // Delay slightly for smooth transition perception
       setTimeout(() => {
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -220,7 +218,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         if (this.reels.length > 0) {
           this.trackView();
         }
-      }, 500);
+      }, 50);
     }
   }
 
@@ -250,7 +248,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   // Pull to refresh variables are already defined above
 
-  onTouchStart(e: TouchEvent) {
+  onTouchStart(e: any) {
     this.touchStartY = e.touches[0].clientY;
     this.touchStartX = e.touches[0].clientX;
 
@@ -261,20 +259,20 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
   }
 
-  onTouchMove(e: TouchEvent) {
+  onTouchMove(e: any) {
     // Vertical / Pull Logic
     if (this.currentIndex === 0 && !this.isRefreshing && this.pullStartY > 0) {
       const currentY = e.touches[0].clientY;
       const diff = currentY - this.pullStartY;
       if (diff > 0) {
         this.pullMoveY = diff * 0.5;
-        if (diff > 10) e.preventDefault(); // Lock scroll for PTR
+        if (diff > 10 && e.cancelable) e.preventDefault(); // Lock scroll for PTR
 
         // Instagram-style tactile feedback when threshold is reached
         if (this.pullMoveY >= this.pullThreshold && !this.hasTriggeredHaptic) {
           this.hasTriggeredHaptic = true;
-          if (navigator.vibrate) {
-            navigator.vibrate(15); // Light tactile tick
+          if ((navigator as any).vibrate) {
+            (navigator as any).vibrate(15); // Light tactile tick
           }
         } else if (this.pullMoveY < this.pullThreshold && this.hasTriggeredHaptic) {
           // Reset if they pull back up
@@ -284,7 +282,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
   }
 
-  async onTouchEnd(e: TouchEvent) {
+  async onTouchEnd(e: any) {
     const endY = e.changedTouches[0].clientY;
     const endX = e.changedTouches[0].clientX;
 
@@ -318,7 +316,9 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
 
     // Handle pull-to-refresh
+    // console.log('[VideoFeed] PTR check:', this.pullMoveY, '>=', this.pullThreshold);
     if (this.pullMoveY >= this.pullThreshold && !this.isRefreshing) {
+      console.log('[VideoFeed] Refresh triggered!');
       await this.refresh();
     }
 
@@ -353,8 +353,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   async refresh() {
     this.isRefreshing = true;
     // Haptic feedback if available
-    if (navigator.vibrate) {
-      navigator.vibrate(50);
+    if ((navigator as any).vibrate) {
+      (navigator as any).vibrate(50);
     }
 
     try {
@@ -450,18 +450,18 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     if (!reel) return;
 
     // Use Web Share API if available
-    if (navigator.share) {
-      navigator.share({
+    if ((navigator as any).share) {
+      (navigator as any).share({
         title: reel.title,
         text: `Check out ${reel.title} from ${reel.vendor}!`,
         url: window.location.href
-      }).catch(err => console.log('Error sharing:', err));
+      }).catch((err: any) => console.log('Error sharing:', err));
     } else {
       // Fallback: copy to clipboard
       const shareText = `Check out ${reel.title} from ${reel.vendor}! ₹${reel.price}`;
-      navigator.clipboard.writeText(shareText)
-        .then(() => alert('Link copied to clipboard!'))
-        .catch(err => console.error('Error copying:', err));
+      (navigator as any).clipboard.writeText(shareText)
+        .then(() => console.log('Link copied to clipboard!'))
+        .catch((err: any) => console.error('Error copying:', err));
     }
   }
   /**
@@ -473,7 +473,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       {
         title: 'Masala Dosa',
         vendor: 'CTR',
-        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
         thumbnailUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=2070&auto=format&fit=crop',
         price: 120,
         categories: ['South Indian', 'Breakfast'],
@@ -491,7 +491,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       {
         title: 'Filter Coffee',
         vendor: 'Brahmins Coffee Bar',
-        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        videoUrl: 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
         thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Idli_Sambar.JPG/1200px-Idli_Sambar.JPG',
         price: 80,
         categories: ['South Indian', 'Beverages'],
@@ -555,7 +555,14 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   getPriority(index: number): 'high' | 'auto' | 'low' {
     const diff = Math.abs(index - this.currentIndex);
     if (diff === 0) return 'high';
-    if (diff === 1) return 'auto';
+    if (diff <= 2) return 'auto'; // Preload next 2 videos (Aggressive)
     return 'low';
+  }
+
+  /**
+   * TrackBy function for ngFor
+   */
+  trackByReelId(index: number, reel: Reel): string {
+    return reel.id || index.toString();
   }
 }

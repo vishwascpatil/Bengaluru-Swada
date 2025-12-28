@@ -12,6 +12,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://storage.googleapis.com">
   <link rel="preconnect" href="https://firebasestorage.googleapis.com">
+  <script>
+    // Cleanup any legacy registration from the root to restore Firestore connectivity
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        for (let reg of regs) {
+          if (reg.active && reg.active.scriptURL.includes('coi-serviceworker.js') && !reg.active.scriptURL.includes('/transcoder/')) {
+            reg.unregister().then(() => {
+              console.log('Legacy root COI worker cleared. Reloading...');
+              location.reload();
+            });
+          }
+        }
+      });
+    }
+  </script>
 </head>
 
 <body>

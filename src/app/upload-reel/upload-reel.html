@@ -163,12 +163,21 @@
                 <button class="done-btn-fallback" (click)="cancel()">Done</button>
             </div>
 
+            <!-- Transcoding Progress -->
+            <div class="upload-progress transcoding" *ngIf="isTranscoding">
+                <div class="progress-bar">
+                    <div class="progress-fill transcode-fill" [style.width.%]="transcodeProgress"></div>
+                </div>
+                <p class="progress-text">Processing Video... {{ transcodeProgress }}%</p>
+                <small class="helper-text">Optimizing for high-quality streaming (HLS)</small>
+            </div>
+
             <!-- Upload Progress -->
-            <div class="upload-progress" *ngIf="isUploading">
+            <div class="upload-progress" *ngIf="isUploading && !isTranscoding">
                 <div class="progress-bar">
                     <div class="progress-fill" [style.width.%]="uploadProgress"></div>
                 </div>
-                <p class="progress-text">Uploading... {{ uploadProgress }}%</p>
+                <p class="progress-text">Uploading to Swada Cloud... {{ uploadProgress }}%</p>
             </div>
 
             <!-- Action Buttons -->

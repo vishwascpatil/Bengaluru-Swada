@@ -1,8 +1,8 @@
 <div class="video-card" [class.active]="active" [class.prev]="relativeIndex < 0" [class.next]="relativeIndex > 0">
   <video #videoEl class="video-player" loop [muted]="!active || isMuted" playsinline webkit-playsinline
-    [preload]="priority === 'high' ? 'auto' : 'none'" x-webkit-airplay="allow" disablePictureInPicture
+    [preload]="priority === 'high' ? 'auto' : 'metadata'" x-webkit-airplay="allow" disablePictureInPicture
     poster="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
-    [src]="displaySrc" (click)="onVideoTap($event)" (touchend)="onVideoTap($event)">
+    (click)="onVideoTap($event)">
   </video>
 
   <!-- Loading Spinner Removed for simplicity -->

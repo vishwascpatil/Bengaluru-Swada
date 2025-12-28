@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+
+declare const window: any;
 import { CommonModule } from '@angular/common';
 import { ReelsService } from '../services/reels.service';
 
@@ -57,11 +59,11 @@ export class TrendingComponent implements OnInit {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    onTouchStart(e: TouchEvent) {
+    onTouchStart(e: any) {
         this.touchStartX = e.changedTouches[0].screenX;
     }
 
-    onTouchEnd(e: TouchEvent) {
+    onTouchEnd(e: any) {
         this.touchEndX = e.changedTouches[0].screenX;
         this.handleSwipe();
     }

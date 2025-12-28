@@ -1,4 +1,7 @@
 import { Component, EventEmitter, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+
+declare const alert: any;
+declare const window: any;
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -33,7 +36,7 @@ import { LocationService } from '../services/location.service';
   ]
 })
 export class LocationPermissionComponent implements AfterViewInit {
-  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('searchInput') searchInput?: ElementRef<any>;
 
   showLocationModal = false;
   searchQuery = '';
@@ -138,8 +141,8 @@ export class LocationPermissionComponent implements AfterViewInit {
   }
 
   allow() {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(pos => {
+    if ('geolocation' in (navigator as any)) {
+      (navigator as any).geolocation.getCurrentPosition((pos: any) => {
         const latitude = pos.coords.latitude;
         const longitude = pos.coords.longitude;
 
@@ -158,7 +161,7 @@ export class LocationPermissionComponent implements AfterViewInit {
             longitude: longitude
           }
         });
-      }, err => {
+      }, (err: any) => {
         console.error('Location error:', err);
         alert('Location denied or unavailable');
       }, { enableHighAccuracy: true, timeout: 10000 });
