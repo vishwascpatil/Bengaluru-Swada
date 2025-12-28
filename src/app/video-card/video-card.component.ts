@@ -527,5 +527,66 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       video.currentTime = percentage * video.duration;
       this.progress = percentage * 100;
     }
+
+    // Open Google Maps for directions to vendor location
+    openGoogleMaps(): void {
+      if(!this.isBrowser) return;
+
+      const vendor = this.displayVendor;
+      const title = this.displayTitle;
+
+      // Create search query for Google Maps
+      const searchQuery = encodeURIComponent(`${vendor} ${title} Bangalore`);
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
+
+      window.open(mapsUrl, '_blank');
+    }
+
+    // Share the app with others
+    shareApp(): void {
+      if(!this.isBrowser) return;
+
+      const shareData = {
+        title: 'Bengaluru Swada - Discover Street Food',
+        text: 'Check out this amazing street food discovery app! Find the best local food near you.',
+        url: window.location.origin
+      };
+
+      // Use Web Share API if available
+      if(navigator.share) {
+      navigator.share(shareData).catch((error) => {
+        console.log('Error sharing:', error);
+        this.fallbackShare();
+      });
+    } else {
+      this.fallbackShare();
+    }
+  }
+
+  // Fallback share method for browsers without Web Share API
+  private fallbackShare(): void {
+    const url = window.location.origin;
+    const text = `Check out Bengaluru Swada - Discover amazing street food near you! ${url}`;
+
+    // Copy to clipboard
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Link copied to clipboard! Share it with your friends.');
+      }).catch(() => {
+        this.showShareOptions(url);
+      });
+    } else {
+      this.showShareOptions(url);
+    }
+  }
+
+  // Show share options as fallback
+  private showShareOptions(url: string): void {
+    const message = encodeURIComponent('Check out Bengaluru Swada - Discover amazing street food!');
+    const encodedUrl = encodeURIComponent(url);
+
+    // Open WhatsApp share (most popular in India)
+    const whatsappUrl = `https://wa.me/?text=${message}%20${encodedUrl}`;
+    window.open(whatsappUrl, '_blank');
   }
 }

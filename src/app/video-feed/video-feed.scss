@@ -5,7 +5,7 @@
     scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling: touch;
     height: 100vh;
-    background: #000;
+    background: #ffffff;
 }
 
 /* --- Floating Tab Header --- */
@@ -76,9 +76,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #1c1c1e;
     z-index: 10;
-    background: #000; // True black for clean transition
+    background: #f8f8f8;
 }
 
 .simple-orange-loader {
