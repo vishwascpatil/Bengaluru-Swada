@@ -1,77 +1,109 @@
 <div class="ios-profile-layout">
-    <!-- Orange Hero Background -->
-    <div class="hero-bg"></div>
 
-    <!-- Main Floating Card -->
-    <div class="profile-card-container">
+    <!-- Header Area -->
+    <div class="profile-header">
+        <h1 class="page-title">Profile</h1>
+    </div>
 
-        <!-- Avatar Section (Overlapping) -->
-        <div class="avatar-ring">
-            <div class="avatar-gradient-placeholder">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
+    <div class="scroll-content">
+
+        <!-- Identity Section -->
+        <div class="identity-section">
+            <div class="avatar-container">
+                <div class="avatar-gradient">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+            </div>
+            <h2 class="user-name">{{fullName || 'Bengaluru Foodie'}}</h2>
+            <p class="user-handle">{{userPhoneNumber || userEmail}}</p>
+        </div>
+
+        <!-- Menu Group 1 -->
+        <div class="list-group">
+            <div class="list-item">
+                <div class="icon-slot orange">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <div class="content-slot">
+                    <span>Terms and Conditions</span>
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC"
+                        stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="list-item">
+                <div class="icon-slot blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <div class="content-slot">
+                    <span>Privacy Policy</span>
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC"
+                        stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
             </div>
         </div>
 
-        <!-- User Info -->
-        <h1 class="user-identity">{{userPhoneNumber || userEmail || 'Guest User'}}</h1>
+        <!-- Menu Group 2 -->
+        <div class="list-group">
+            <div class="list-item">
+                <div class="icon-slot green">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </div>
+                <div class="content-slot">
+                    <span>Help & Support</span>
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC"
+                        stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </div>
 
-        <!-- Logout Action -->
-        <button class="logout-action-btn" (click)="logout()">
-            Logout
+            <div class="list-item">
+                <div class="icon-slot purple">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
+                <div class="content-slot">
+                    <span>About Us</span>
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC"
+                        stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logout -->
+        <button class="logout-btn" (click)="logout()">
+            Calculate New Journey (Logout)
         </button>
 
-        <!-- Menu Actions Grid/List -->
-        <div class="menu-actions">
-
-            <div class="menu-row">
-                <div class="icon-box light-orange">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                </div>
-                <span class="menu-label">Terms and Conditions</span>
-            </div>
-
-            <div class="menu-row">
-                <div class="icon-box light-orange">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                </div>
-                <span class="menu-label">Privacy Policy</span>
-            </div>
-
-            <div class="menu-row">
-                <div class="icon-box light-orange">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <circle cx="12" cy="12" r="4" />
-                    </svg>
-                </div>
-                <span class="menu-label">Help & Support</span>
-            </div>
-
-            <div class="menu-row last">
-                <div class="icon-box light-orange">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="16" x2="12" y2="12" />
-                        <line x1="12" y1="8" x2="12.01" y2="8" />
-                    </svg>
-                </div>
-                <span class="menu-label">About Us</span>
-            </div>
-
-        </div>
+        <p class="version-text">Version 1.0.2 • Bengaluru Swada</p>
 
     </div>
 
-    <!-- Hidden Favorites (Preserving Logic) -->
-    <div class="hidden-content" *ngIf="false">
-        <app-favorites [showHeader]="false"></app-favorites>
-    </div>
+    <!-- Hidden Logic -->
+    <div *ngIf="false"><app-favorites></app-favorites></div>
 </div>

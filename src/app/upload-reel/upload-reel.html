@@ -1,199 +1,154 @@
-<div class="upload-container">
-    <div class="upload-header">
+<div class="ios-upload-layout">
 
-        <h1>Upload Reel</h1>
-        <div class="spacer"></div>
+    <!-- Header -->
+    <div class="upload-header">
+        <div class="header-left">
+            <!-- Optional Back Button -->
+        </div>
+        <h1 class="page-title">New Reel</h1>
+        <div class="header-right">
+            <!-- Optional Action -->
+        </div>
     </div>
 
-    <div class="upload-content">
-        <!-- Video Preview Section -->
-        <div class="video-preview-section">
-            <div class="video-preview selected" *ngIf="selectedFile; else fileSelector">
-                <div class="file-info-header">
-                    <div class="file-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                            <path d="M15 10L19 14L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-                                stroke="currentColor" stroke-width="2" />
-                        </svg>
-                    </div>
-                    <div class="file-details">
-                        <p class="file-name">{{selectedFile.name}}</p>
-                        <p class="file-size">{{(selectedFile.size / (1024 * 1024)).toFixed(2)}} MB</p>
-                    </div>
-                    <button class="remove-video-btn" (click)="removeFile()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" />
-                        </svg>
-                    </button>
-                </div>
+    <div class="scroll-content">
 
-                <div class="ready-progress">
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: 100%"></div>
-                    </div>
-                    <p class="progress-status">Ready to Upload</p>
+        <!-- Video Preview / Selector Hero -->
+        <div class="video-hero-section">
+            <div class="video-preview-card" *ngIf="selectedFile; else emptyState">
+                <div class="file-icon-badge">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
                 </div>
+                <div class="file-info">
+                    <p class="filename">{{selectedFile.name}}</p>
+                    <p class="filesize">{{(selectedFile.size / (1024 * 1024)).toFixed(1)}} MB</p>
+                </div>
+                <button class="remove-btn" (click)="removeFile()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
 
-            <ng-template #fileSelector>
-                <label class="file-selector">
+            <ng-template #emptyState>
+                <label class="upload-placeholder">
                     <input type="file" accept="video/mp4,video/quicktime,video/webm" (change)="onFileSelected($event)"
                         hidden>
-                    <div class="file-selector-content">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-                                stroke="currentColor" stroke-width="2" />
-                            <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" />
+                    <div class="icon-circle">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
                         </svg>
-                        <p class="selector-title">Select Video</p>
-                        <p class="selector-subtitle">MP4, MOV, or WebM (max 100MB)</p>
                     </div>
+                    <span class="upload-label">Select Video for Reel</span>
+                    <span class="upload-sub">MP4, MOV (Max 100MB)</span>
                 </label>
             </ng-template>
         </div>
 
-        <!-- Form Section -->
-        <div class="form-section">
-            <div class="form-group">
-                <label for="title">Dish Name *</label>
-                <input type="text" id="title" [(ngModel)]="title" placeholder="e.g., Masala Dosa"
-                    [disabled]="isUploading">
+        <!-- Form Fields -->
+        <div class="form-wrapper">
+
+            <!-- Dish Name -->
+            <div class="input-group">
+                <label>Dish Name</label>
+                <input type="text" [(ngModel)]="title" placeholder="e.g. Masala Dosa" [disabled]="isUploading">
             </div>
 
-            <div class="form-group">
-                <label>Categories *</label>
-                <div class="tag-input-container" [class.disabled]="isUploading">
+            <!-- Categories -->
+            <div class="input-group">
+                <label>Categories</label>
+                <div class="tags-row">
                     <div class="tag-pill" *ngFor="let cat of categories; let i = index">
                         {{cat}}
-                        <button class="remove-tag" (click)="removeTag(i)" [disabled]="isUploading">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5"
-                                    stroke-linecap="round" />
-                            </svg>
-                        </button>
+                        <span class="remove-x" (click)="removeTag(i)">×</span>
                     </div>
-                    <input type="text" id="tagInput" [(ngModel)]="tagInput" (input)="handleTagInput()"
-                        placeholder="Add category (comma to separate)" [disabled]="isUploading">
                 </div>
-                <small class="helper-text">Add items like Breakfast, South Indian, Spicy, etc.</small>
+                <input type="text" [(ngModel)]="tagInput" (input)="handleTagInput()"
+                    placeholder="Add category (e.g. Spicy)..." [disabled]="isUploading" class="secondary-input">
             </div>
 
-            <div class="form-group">
-                <label for="vendor">Vendor Name *</label>
-                <input type="text" id="vendor" [(ngModel)]="vendor" placeholder="e.g., Vidyarthi Bhavan"
-                    [disabled]="isUploading">
+            <!-- Vendor -->
+            <div class="input-group">
+                <label>Vendor Name</label>
+                <input type="text" [(ngModel)]="vendor" placeholder="e.g. CTR" [disabled]="isUploading">
             </div>
 
-            <div class="form-group">
-                <label for="price">Price (₹) *</label>
-                <input type="number" id="price" [(ngModel)]="price" placeholder="50" min="0" [disabled]="isUploading">
+            <!-- Price -->
+            <div class="input-group">
+                <label>Price (₹)</label>
+                <input type="number" [(ngModel)]="price" placeholder="0" [disabled]="isUploading">
             </div>
 
-            <div class="form-group location-group">
-                <label>Store Location *</label>
-                <div class="location-actions">
-                    <button type="button" class="location-card" (click)="getCurrentLocation()" [disabled]="isUploading">
-                        <div class="card-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" />
-                                <circle cx="12" cy="9" r="2.5" fill="currentColor" />
+            <!-- Location -->
+            <div class="input-group">
+                <label>Store Location</label>
+                <div class="location-grid">
+                    <div class="location-tile" (click)="getCurrentLocation()" [class.disabled]="isUploading">
+                        <div class="tile-icon orange">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                                <circle cx="12" cy="9" r="2.5" />
                             </svg>
                         </div>
-                        <div class="card-content">
-                            <span class="card-title">Current Location</span>
-                            <span class="card-subtitle">Use GPS coordinates</span>
-                        </div>
-                    </button>
+                        <span>Current Location</span>
+                    </div>
 
-                    <button type="button" class="location-card map-card" (click)="openLocationPicker()"
-                        [disabled]="isUploading">
-                        <div class="card-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <path d="M3 11V21H21V11M3 11L12 3L21 11M3 11H21" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round" />
-                                <circle cx="12" cy="14" r="3" stroke="currentColor" stroke-width="2" />
+                    <div class="location-tile" (click)="openLocationPicker()" [class.disabled]="isUploading">
+                        <div class="tile-icon blue">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                                <line x1="8" y1="2" x2="8" y2="18"></line>
+                                <line x1="16" y1="6" x2="16" y2="22"></line>
                             </svg>
                         </div>
-                        <div class="card-content">
-                            <span class="card-title">Pick on Map</span>
-                            <span class="card-subtitle">Select manually</span>
-                        </div>
-                    </button>
+                        <span>Pick on Map</span>
+                    </div>
+                </div>
+
+                <!-- Lat/Lng Readonly -->
+                <div class="coords-row" *ngIf="latitude || longitude">
+                    <div class="coord-pill">{{latitude || 0}}</div>
+                    <div class="coord-pill">{{longitude || 0}}</div>
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="latitude">Latitude *</label>
-                    <input type="number" id="latitude" [(ngModel)]="latitude" placeholder="12.9352" step="0.0001"
-                        [disabled]="isUploading">
-                </div>
-
-                <div class="form-group">
-                    <label for="longitude">Longitude *</label>
-                    <input type="number" id="longitude" [(ngModel)]="longitude" placeholder="77.6245" step="0.0001"
-                        [disabled]="isUploading">
-                </div>
-            </div>
-
-            <!-- Error Message -->
-            <div class="error-message" *ngIf="uploadError">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                    <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                </svg>
-                {{ uploadError }}
-            </div>
-
-            <!-- Success Message -->
-            <div class="success-message" *ngIf="uploadSuccess">
-                <div class="success-info">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" />
-                        <path d="M22 4L12 14.01l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                    <span>Upload successful! Redirecting...</span>
-                </div>
-                <button class="done-btn-fallback" (click)="cancel()">Done</button>
-            </div>
-
-            <!-- Transcoding Progress -->
-            <div class="upload-progress transcoding" *ngIf="isTranscoding">
-                <div class="progress-bar">
-                    <div class="progress-fill transcode-fill" [style.width.%]="transcodeProgress"></div>
-                </div>
-                <p class="progress-text">Processing Video... {{ transcodeProgress }}%</p>
-                <small class="helper-text">Optimizing for high-quality streaming (HLS)</small>
-            </div>
-
-            <!-- Upload Progress -->
-            <div class="upload-progress" *ngIf="isUploading && !isTranscoding">
-                <div class="progress-bar">
-                    <div class="progress-fill" [style.width.%]="uploadProgress"></div>
-                </div>
-                <p class="progress-text">Uploading to Swada Cloud... {{ uploadProgress }}%</p>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <!-- <button class="cancel-btn" (click)="cancel()" [disabled]="isUploading">
-                    Cancel
-                </button> -->
-                <button class="upload-btn" (click)="uploadReel()" [disabled]="!isFormValid() || isUploading">
-                    <span *ngIf="!isUploading">Upload Reel</span>
-                    <span *ngIf="isUploading">Uploading...</span>
-                </button>
-            </div>
         </div>
+
+        <!-- Padding for bottom bar -->
+        <div style="height: 100px;"></div>
+
+    </div>
+
+    <!-- Bottom Submit Bar -->
+    <div class="submit-bar">
+
+        <!-- Status Messages -->
+        <div class="status-toast error" *ngIf="uploadError">{{uploadError}}</div>
+        <div class="status-toast success" *ngIf="uploadSuccess">Upload Successful!</div>
+
+        <!-- Progress -->
+        <div class="progress-area" *ngIf="isUploading || isTranscoding">
+            <div class="progress-track">
+                <div class="progress-bar" [style.width.%]="isTranscoding ? transcodeProgress : uploadProgress"></div>
+            </div>
+            <span class="progress-label">{{isTranscoding ? 'Optimizing Video...' : 'Uploading...'}}</span>
+        </div>
+
+        <button class="primary-btn" (click)="uploadReel()" [disabled]="!isFormValid() || isUploading">
+            {{ isUploading ? 'Processing...' : 'Upload Reel' }}
+        </button>
     </div>
 
     <app-location-picker *ngIf="showLocationPicker" (locationSelected)="onLocationSelected($event)"
         (cancel)="closeLocationPicker()">
     </app-location-picker>
+
 </div>
