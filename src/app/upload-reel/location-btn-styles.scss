@@ -1,10 +1,10 @@
 .location-btn {
     width: 100%;
     padding: 14px 16px;
-    background: rgba(255, 107, 53, 0.1);
-    border: 1px solid rgba(255, 107, 53, 0.3);
+    background: var(--primary-shadow-xs);
+    border: 1px solid var(--primary-shadow);
     border-radius: 12px;
-    color: #ff6b35;
+    color: var(--primary-color);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -15,8 +15,8 @@
     gap: 8px;
 
     &:hover:not(:disabled) {
-        background: rgba(255, 107, 53, 0.2);
-        border-color: #ff6b35;
+        background: var(--primary-tint);
+        border-color: var(--primary-color);
     }
 
     &:disabled {

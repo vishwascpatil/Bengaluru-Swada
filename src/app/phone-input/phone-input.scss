@@ -68,8 +68,8 @@
 
     &.focused {
         background: #ffffff;
-        border-color: #FF6B35;
-        box-shadow: 0 4px 20px rgba(255, 107, 53, 0.15);
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 20px var(--primary-shadow-sm);
     }
 }
 
@@ -108,7 +108,7 @@ input {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #FF3B30;
+    color: var(--primary-color);
     font-size: 13px;
     font-weight: 500;
     padding-left: 8px;
@@ -149,10 +149,10 @@ input {
     justify-content: center;
 
     &.active {
-        background: #FF6B35;
+        background: var(--primary-color);
         color: white;
         cursor: pointer;
-        box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+        box-shadow: 0 8px 24px var(--primary-shadow);
 
         &:active {
             transform: scale(0.96);

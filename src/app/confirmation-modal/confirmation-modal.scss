@@ -72,12 +72,12 @@
     }
 
     .confirm-btn {
-        background: #ff3b30;
+        background: var(--primary-color);
         color: white;
-        box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+        box-shadow: 0 4px 12px var(--primary-shadow);
 
         &:hover {
-            background: #ff453a;
+            background: var(--primary-active);
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(255, 59, 48, 0.4);
         }

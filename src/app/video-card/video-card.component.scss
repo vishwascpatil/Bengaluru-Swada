@@ -249,10 +249,10 @@
 }
 
 .price {
-    background: rgba(255, 107, 53, 0.85);
-    /* Brand Orange, semi-transparent */
+    background: var(--primary-color);
+    /* Brand Green, semi-transparent */
     color: white;
-    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    box-shadow: 0 4px 12px var(--primary-shadow);
     border: none;
     /* Solid color pop */
 }
@@ -324,14 +324,14 @@
 }
 
 .bookmark-btn.bookmarked {
-    background: rgba(255, 107, 53, 0.2);
-    /* Orange tint */
-    border-color: rgba(255, 107, 53, 0.4);
-    color: #ff6b35;
+    background: var(--primary-tint);
+    /* Green tint */
+    border-color: var(--primary-shadow);
+    color: var(--primary-color);
 
     .action-icon {
-        fill: #ff6b35;
-        stroke: #ff6b35;
+        fill: var(--primary-color);
+        stroke: var(--primary-color);
     }
 }
 

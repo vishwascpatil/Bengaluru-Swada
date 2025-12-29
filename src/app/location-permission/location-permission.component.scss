@@ -34,7 +34,7 @@
     margin-bottom: 32px;
 
     .location-pin {
-        filter: drop-shadow(0 8px 16px rgba(255, 107, 53, 0.25));
+        filter: drop-shadow(0 8px 16px var(--primary-shadow));
         animation: float 3s ease-in-out infinite;
     }
 
@@ -117,11 +117,11 @@
     flex-shrink: 0;
 
     &.pink-bg {
-        background: #FFEBEE;
+        background: var(--primary-tint);
     }
 
     &.yellow-bg {
-        background: #FFF8E1;
+        background: var(--primary-shadow-sm);
     }
 
     .emoji {
@@ -150,12 +150,12 @@
     height: 56px;
     border-radius: 16px;
     /* Modern iOS pill/squircle */
-    background: #FF6B35;
+    background: var(--primary-color);
     color: white;
     font-size: 17px;
     font-weight: 600;
     border: none;
-    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    box-shadow: 0 4px 12px var(--primary-shadow);
     cursor: pointer;
     transition: transform 0.1s;
 
@@ -194,7 +194,7 @@
 
     .privacy-line {
         width: 3px;
-        background: #FF6B35;
+        background: var(--primary-color);
         border-radius: 2px;
         flex-shrink: 0;
     }
@@ -316,7 +316,7 @@
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    background: rgba(255, 107, 53, 0.1);
+    background: var(--primary-shadow-xs);
     display: flex;
     align-items: center;
     justify-content: center;

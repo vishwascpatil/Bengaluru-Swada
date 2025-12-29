@@ -96,8 +96,8 @@
 
     &.active {
         background: #ffffff;
-        border-color: #FF6B35;
-        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px var(--primary-shadow-sm);
         transform: translateY(-2px);
     }
 
@@ -121,7 +121,7 @@
         color: #1c1c1e;
         padding: 0;
         outline: none;
-        caret-color: #FF6B35;
+        caret-color: var(--primary-color);
     }
 }
 
@@ -129,7 +129,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #FF3B30;
+    color: var(--primary-color);
     font-size: 14px;
     font-weight: 500;
     animation: shake 0.4s ease;
@@ -168,7 +168,7 @@
 .resend-btn {
     background: none;
     border: none;
-    color: #FF6B35;
+    color: var(--primary-color);
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
@@ -195,10 +195,10 @@
     justify-content: center;
 
     &.active {
-        background: #FF6B35;
+        background: var(--primary-color);
         color: white;
         cursor: pointer;
-        box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+        box-shadow: 0 8px 24px var(--primary-shadow);
 
         &:active {
             transform: scale(0.96);

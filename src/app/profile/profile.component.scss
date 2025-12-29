@@ -56,7 +56,7 @@
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        background: linear-gradient(135deg, #FF6B35, #FF8C42);
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-active));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -113,7 +113,7 @@
         color: white;
 
         &.orange {
-            background: #FF9500;
+            background: var(--primary-color);
         }
 
         &.blue {
@@ -159,7 +159,7 @@
 .logout-btn {
     width: 100%;
     background: #FFFFFF;
-    color: #FF3B30;
+    color: var(--primary-color);
     font-size: 17px;
     font-weight: 400;
     padding: 14px;

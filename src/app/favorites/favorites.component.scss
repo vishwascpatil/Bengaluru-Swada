@@ -48,7 +48,7 @@
         width: 40px;
         height: 40px;
         border: 3px solid #e5e5ea;
-        border-top-color: #ff6b35;
+        border-top-color: var(--primary-color);
         border-radius: 50%;
         animation: spin 1s linear infinite;
     }
@@ -203,7 +203,7 @@
 }
 
 .price {
-    background: #ff6b35;
+    background: var(--primary-color);
     color: white;
     padding: 4px 10px;
     border-radius: 10px;
