@@ -2,7 +2,7 @@ import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/cor
 
 declare const document: any;
 declare const window: any;
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common'; // Added Location
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
@@ -57,11 +57,16 @@ export class UploadReelComponent implements OnInit {
         private reelsService: ReelsService,
         private auth: Auth,
         private router: Router,
-        private locationService: LocationService
+        private locationService: LocationService,
+        private location: Location // Injected Location
     ) { }
 
     ngOnInit(): void {
         this.resetForm();
+    }
+
+    goBack(): void {
+        this.location.back();
     }
 
     /**

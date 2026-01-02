@@ -111,6 +111,13 @@ export class MainAppComponent implements OnInit {
       }
     });
 
+    // Subscribe to tab changes
+    this.navigationService.activeTab$.subscribe(tab => {
+      if (tab) {
+        this.select(tab);
+      }
+    });
+
     // Subscribe to reel selection from favorites
     this.navigationService.selectedReelId$.subscribe(reelId => {
       if (reelId) {
@@ -165,9 +172,9 @@ export class MainAppComponent implements OnInit {
     this.activeTab = tab;
     this.navigate.emit(tab);
 
-    // Reload favorites data when profile tab is clicked
+    // Reload profile data when profile tab is clicked
     if (tab === 'profile' && this.profileComponent) {
-      this.profileComponent.reloadFavorites();
+      this.profileComponent.refresh();
     }
 
     // Reload favorites data when favorites tab is clicked

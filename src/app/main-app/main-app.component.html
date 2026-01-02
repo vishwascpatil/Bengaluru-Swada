@@ -14,54 +14,6 @@
   <app-upload-reel [class.hidden]="activeTab !== 'upload'" (uploadComplete)="select('feed')"
     (canceled)="select('feed')"></app-upload-reel>
 
-  <div class="bottom-nav">
-    <button class="bottom-nav-btn" [class.active]="activeTab === 'feed'" (click)="select('feed')">
-      <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" stroke-width="2" />
-        <path d="M10 8L16 12L10 16V8Z" fill="currentColor" stroke="none" />
-      </svg>
-      <!-- <span>Reels</span> -->
-    </button>
-
-    <!-- Search Button -->
-    <button class="bottom-nav-btn" [class.active]="activeTab === 'search'" (click)="select('search')">
-      <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
-        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-      </svg>
-    </button>
-
-
-
-    <!-- Upload Button -->
-    <button class="bottom-nav-btn upload-btn" [class.active]="activeTab === 'upload'" (click)="goToUpload()">
-      <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" stroke-width="2" />
-        <path d="M12 7v10M7 12h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-          stroke-linejoin="round" />
-      </svg>
-      <!-- <span>Upload</span> -->
-    </button>
-
-    <button class="bottom-nav-btn" [class.active]="activeTab === 'favorites'" (click)="select('favorites')">
-      <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-      <!-- <span>Favorites</span> -->
-    </button>
-
-    <div class="profile-container-bottom">
-      <button class="bottom-nav-btn" [class.active]="activeTab === 'profile'" (click)="select('profile')">
-        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 21C20 18.2386 17.7614 16 15 16H9C6.23858 16 4 18.2386 4 21" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round" />
-        </svg>
-      </button>
-    </div>
-  </div>
 
   <app-confirmation-modal *ngIf="showConfirmModal" message="By going outside all your changes will be lost."
     confirmText="Discard Changes" secondText="Stay Here" (confirm)="onConfirmLeave()" (cancel)="onCancelLeave()">

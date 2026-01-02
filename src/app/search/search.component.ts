@@ -254,4 +254,8 @@ export class SearchComponent implements OnInit {
         this.selectedDistance = this.distances[0];
         this.selectedSort = 'Nearest First';
     }
+
+    goBack() {
+        this.router.navigate(['/main-app']);
+    }
 }

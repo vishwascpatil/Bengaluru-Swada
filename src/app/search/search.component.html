@@ -1,16 +1,25 @@
 <div class="search-container">
     <!-- Search Header -->
     <div class="search-header">
-        <div class="location-context" (click)="openLocationModal()">
-            <svg class="location-pin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                    fill="currentColor" />
-            </svg>
-            <span class="location-text">{{locationName}}</span>
-            <svg class="chevron-down" width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
+        <div class="header-top">
+            <button class="back-btn" (click)="goBack()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
+            <div class="location-context" (click)="openLocationModal()">
+                <svg class="location-pin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                        fill="currentColor" />
+                </svg>
+                <span class="location-text">{{locationName}}</span>
+                <svg class="chevron-down" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </div>
         </div>
 
         <div class="search-bar">

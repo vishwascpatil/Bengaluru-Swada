@@ -10,6 +10,11 @@ import { authGuard } from './guards/auth.guard';
 import { noAuthGuard } from './guards/no-auth.guard';
 import { splashGuard } from './guards/splash.guard';
 
+import { SearchComponent } from './search/search.component';
+import { ProfileComponent } from './profile/profile.component';
+import { TrendingComponent } from './trending/trending.component';
+import { FavoritesComponent } from './favorites/favorites.component';
+
 export const routes: Routes = [
 	{ path: '', component: SplashComponent },
 	{ path: 'phone-input', component: PhoneInputComponent, canActivate: [splashGuard, noAuthGuard] },
@@ -17,5 +22,9 @@ export const routes: Routes = [
 	{ path: 'location-permission', component: LocationPermissionComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'main-app', component: MainAppComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'video-feed', component: VideoFeedComponent, canActivate: [authGuard, splashGuard] },
-	{ path: 'upload-reel', component: UploadReelComponent, canActivate: [authGuard, splashGuard] }
+	{ path: 'upload-reel', component: UploadReelComponent, canActivate: [authGuard, splashGuard] },
+	{ path: 'search', component: SearchComponent, canActivate: [authGuard, splashGuard] },
+	{ path: 'profile', component: ProfileComponent, canActivate: [authGuard, splashGuard] },
+	{ path: 'trending', component: TrendingComponent, canActivate: [authGuard, splashGuard] },
+	{ path: 'favorites', component: FavoritesComponent, canActivate: [authGuard, splashGuard] }
 ];

@@ -4,7 +4,7 @@ declare const window: any;
 declare const confirm: any;
 declare const alert: any;
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { VideoCardComponent } from '../video-card/video-card.component';
 import { ReelsService } from '../services/reels.service';
 import { LocationService } from '../services/location.service';
@@ -49,12 +49,21 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     private reelsService: ReelsService,
     private auth: Auth,
     private cdr: ChangeDetectorRef,
-    private locationService: LocationService
+    private locationService: LocationService,
+    private router: Router
   ) { }
 
   async ngOnInit() {
     // 2. NETWORK UPDATE: Fetch fresh content silently
     await this.loadReels();
+  }
+
+  goToSearch() {
+    this.router.navigate(['/search']);
+  }
+
+  goToProfile() {
+    this.router.navigate(['/profile']);
   }
 
   ngAfterViewInit() {
@@ -547,6 +556,17 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     if (diff === 0) return 'high';
     if (diff <= 2) return 'auto'; // Preload next 2 videos (Aggressive)
     return 'low';
+  }
+
+  /**
+   * Get total views across all reels
+   */
+  getTotalViews(): string {
+    const total = this.reels.reduce((sum, reel) => sum + (reel.viewCount || 0), 0);
+    if (total >= 1000) {
+      return `${(total / 1000).toFixed(1)}k`;
+    }
+    return total.toString();
   }
 
   /**

@@ -2,18 +2,30 @@
 <div class="video-feed" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)"
   (touchend)="onTouchEnd($event)">
 
-  <!-- Tab Header -->
-  <div class="feed-tabs">
-    <div class="tab-item" [class.active]="activeTab === 'explore'" (click)="switchTab('explore')">
-      <span>Explore</span>
+  <!-- New Header Design -->
+  <div class="feed-header">
+    <button class="header-icon-btn" (click)="goToSearch()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="M21 21l-4.35-4.35"></path>
+      </svg>
+    </button>
+
+    <div class="header-tabs">
+      <button class="tab-item" [class.active]="activeTab === 'explore'" (click)="switchTab('explore')">
+        Explore
+      </button>
+      <button class="tab-item" [class.active]="activeTab === 'new'" (click)="switchTab('new')">
+        New Arrivals
+      </button>
     </div>
-    <div class="tab-separator">|</div>
-    <div class="tab-item" [class.active]="activeTab === 'new'" (click)="switchTab('new')">
-      <span>New Arrivals</span>
-    </div>
-    <!-- Moving Underline Indicator -->
-    <div class="tab-indicator" [class.explore-active]="activeTab === 'explore'"
-      [class.new-active]="activeTab === 'new'"></div>
+
+    <button class="header-icon-btn" (click)="goToProfile()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </button>
   </div>
 
   <!-- Premium Pull to Refresh Indicator -->

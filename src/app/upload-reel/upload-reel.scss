@@ -30,11 +30,32 @@
     z-index: 10;
 }
 
+.back-link-btn {
+    background: rgba(16, 185, 129, 0.08); // Emerald tint
+    border: none;
+    color: #10b981; // Emerald
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-right: -40px; // Offset for centering title
+
+    &:active {
+        transform: scale(0.9);
+        background: rgba(16, 185, 129, 0.15);
+    }
+}
+
 .page-title {
     font-size: 17px;
-    font-weight: 600;
+    font-weight: 700;
     color: #000;
     margin: 0;
+    letter-spacing: -0.3px;
 }
 
 /* --- Scroll Content --- */

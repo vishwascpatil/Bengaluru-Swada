@@ -5,14 +5,9 @@
     (click)="onVideoTap($event)">
   </video>
 
-  <!-- Top Left View Count -->
-  <div class="view-count-overlay" *ngIf="displayViewCount > 0">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-    <span>{{ formatViewCount(displayViewCount) }}</span>
-  </div>
+
+
+
 
   <!-- Loading Spinner Removed for simplicity -->
   <div class="loading-spinner" *ngIf="isLoading">
@@ -107,6 +102,16 @@
         </svg>
       </button>
     </div>
+  </div>
+
+  <!-- Extreme Bottom Right View Count Badge -->
+  <div class="view-count-badge" *ngIf="displayViewCount > 0">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+    <span class="count-text">{{ formatViewCount(displayViewCount) }}</span>
   </div>
 
   <!-- Video Progress Bar -->

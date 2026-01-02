@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { Router } from '@angular/router';
 
 declare const window: any;
 declare const document: any;
@@ -105,8 +106,16 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   showMuteIcon = false;
   private progressInterval: any;
 
-  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+  constructor(
+    @Inject(PLATFORM_ID) platformId: Object,
+    private router: Router
+  ) {
     this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  goToProfile(event: Event) {
+    event.stopPropagation();
+    this.router.navigate(['/profile']);
   }
 
   ngOnChanges(changes: SimpleChanges) {

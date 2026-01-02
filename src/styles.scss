@@ -2,6 +2,7 @@
 :root {
     /* Primary Color Theme - Change this to explore different colors */
     --primary-color: #0D7D63;
+    --primary-color-rgb: 13, 125, 99;
     --primary-active: #0A5A48;
     --primary-light: #D0F0EA;
     --primary-lighter: #B5E5D6;
@@ -10,12 +11,12 @@
     --primary-shadow-xs: rgba(13, 125, 99, 0.1);
     --primary-tint: rgba(13, 125, 99, 0.2);
     --primary-border: #7ECAB0;
-    
+
     /* Background Colors */
     --bg-color: #FFFFFF;
     --bg-secondary: #F2F2F7;
     --bg-tertiary: #E5E5EA;
-    
+
     /* Text Colors */
     --text-main: #1C1C1E;
     --text-secondary: #8E8E93;
@@ -29,6 +30,15 @@
     --safe-area-top: env(safe-area-inset-top);
     --safe-area-bottom: env(safe-area-inset-bottom);
 }
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+
 
 * {
     margin: 0;
