@@ -1,4 +1,17 @@
 /* basic reset */
-:root { --bg:#fff; }
-html,body,app-root { height:100%; }
-app-root { display:block; font-family: 'Poppins', sans-serif; background:var(--bg); color:#222; }
+:root {
+    --bg: #fff;
+}
+
+html,
+body,
+app-root {
+    height: 100%;
+}
+
+app-root {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg);
+    color: #222;
+}

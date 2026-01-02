@@ -28,9 +28,10 @@
 
 /* --- Header --- */
 .header-section {
-    margin-top: 80px;
-    /* Optical spacing */
-    margin-bottom: 48px;
+    margin-top: 40px;
+    /* Reduced from 80 */
+    margin-bottom: 32px;
+    /* Reduced from 48 */
     animation: slideDown 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -116,11 +117,9 @@ input {
 }
 
 /* --- Bottom Actions --- */
-.spacer {
-    flex: 1;
-}
 
 .bottom-actions {
+    margin-top: 32px;
     margin-bottom: 24px;
     animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
     animation-delay: 0.3s;

@@ -30,23 +30,25 @@
     z-index: 10;
 }
 
-.back-link-btn {
-    background: rgba(16, 185, 129, 0.08); // Emerald tint
-    border: none;
-    color: #10b981; // Emerald
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+.close-glass-btn {
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-right: -40px; // Offset for centering title
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    color: #1c1c1e;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 
     &:active {
         transform: scale(0.9);
-        background: rgba(16, 185, 129, 0.15);
+        background: rgba(0, 0, 0, 0.1);
     }
 }
 

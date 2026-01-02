@@ -136,11 +136,9 @@
 }
 
 /* --- Action Area --- */
-.spacer {
-    flex: 1;
-}
 
 .action-area {
+    margin-top: 32px;
     margin-bottom: 32px;
     display: flex;
     flex-direction: column;

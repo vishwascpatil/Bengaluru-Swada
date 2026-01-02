@@ -333,8 +333,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   async scrollToTopAndRefresh() {
     console.log('[VideoFeed] Animated scroll to top and refreshing...');
 
+    this.isGlobalMuted = true;
     if (this.currentIndex > 0) {
-      this.isGlobalMuted = true;
       const steps = this.currentIndex;
       // Faster animation if user scrolled deep
       const delay = Math.max(30, 80 - (steps * 2));
@@ -535,8 +535,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     const index = this.reels.findIndex(r => r.id === reelId);
     if (index !== -1) {
       console.log(`[VideoFeed] Found reel at index ${index}, navigating...`);
+      this.isGlobalMuted = true;
       this.currentIndex = index;
-      this.isGlobalMuted = true; // Reset to muted default
       setTimeout(() => {
         // Playback driven by [active]
         this.trackView();
