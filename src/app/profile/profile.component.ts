@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Auth } from '@angular/fire/auth';
 import { Router, RouterModule } from '@angular/router';
 import { FavoritesComponent } from '../favorites/favorites.component';
+import { LegalViewComponent } from '../legal/legal-view.component';
 import { ReelsService } from '../services/reels.service';
 import { Reel } from '../models/reel.model';
 
 @Component({
     selector: 'app-profile',
     standalone: true,
-    imports: [CommonModule, FavoritesComponent, RouterModule],
+    imports: [CommonModule, FavoritesComponent, RouterModule, LegalViewComponent],
     templateUrl: './profile.component.html',
     styleUrls: ['./profile.component.scss']
 })
@@ -21,6 +22,7 @@ export class ProfileComponent implements OnInit {
     fullName: string = '';
 
     activeTab: 'bookmarks' | 'settings' = 'bookmarks';
+    activeLegalTab: 'terms' | 'privacy' | 'help' | null = null;
     userReels: Reel[] = [];
     isLoadingReels: boolean = false;
 

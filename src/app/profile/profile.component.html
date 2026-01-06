@@ -52,7 +52,7 @@
                 <!-- Settings Tab -->
                 <div class="settings-view" *ngIf="activeTab === 'settings'">
                     <div class="settings-list">
-                        <div class="settings-item">
+                        <div class="settings-item" (click)="activeLegalTab = 'terms'">
                             <div class="settings-icon green">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
@@ -66,7 +66,7 @@
                             </svg>
                         </div>
 
-                        <div class="settings-item">
+                        <div class="settings-item" (click)="activeLegalTab = 'privacy'">
                             <div class="settings-icon green">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
@@ -79,7 +79,7 @@
                             </svg>
                         </div>
 
-                        <div class="settings-item">
+                        <div class="settings-item" (click)="activeLegalTab = 'help'">
                             <div class="settings-icon green">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
@@ -115,4 +115,8 @@
 
         <p class="footer-text">Bengaluru Swada • v1.0.6</p>
     </div>
+
+    <!-- Legal Overlays -->
+    <app-legal-view [visible]="!!activeLegalTab" [type]="activeLegalTab" (close)="activeLegalTab = null">
+    </app-legal-view>
 </div>

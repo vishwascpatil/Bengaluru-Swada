@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Output, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, ChangeDetectorRef, OnInit, Inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 
-declare const document: any;
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -32,7 +32,13 @@ export class OtpComponent implements OnInit {
   isVerified = false;
   recaptchaVerifier!: RecaptchaVerifier;
 
-  constructor(private router: Router, private cdr: ChangeDetectorRef, private phoneAuthService: PhoneAuthService, private auth: Auth) {
+  constructor(
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private phoneAuthService: PhoneAuthService,
+    private auth: Auth,
+    @Inject(DOCUMENT) private document: any
+  ) {
     this.phone = this.phoneAuthService.getPhoneNumber();
     this.confirmationResult = this.phoneAuthService.getConfirmationResult();
 
@@ -80,8 +86,20 @@ export class OtpComponent implements OnInit {
 
     // Auto-focus next input
     if (this.otp[i] && i < 5) {
-      const nextInput = document.querySelectorAll('.native-input')[i + 1] as any;
+      const nextInput = this.document.querySelectorAll('.native-input')[i + 1] as any;
       if (nextInput) nextInput.focus();
+    }
+  }
+
+  onKeyDown(event: any, i: number) {
+    if (event.key === 'Backspace') {
+      // If current box is empty, move focus to previous box
+      if (!this.otp[i] && i > 0) {
+        const prevInput = this.document.querySelectorAll('.native-input')[i - 1] as any;
+        if (prevInput) {
+          prevInput.focus();
+        }
+      }
     }
   }
 
@@ -123,8 +141,8 @@ export class OtpComponent implements OnInit {
 
       this.loading = false;
       this.hasError = true;
-      // Clear OTP inputs on error
-      this.otp = ['', '', '', '', '', ''];
+      // DO NOT clear OTP inputs on error to allow correction
+      // this.otp = ['', '', '', '', '', ''];
       this.complete = false;
     }
   }

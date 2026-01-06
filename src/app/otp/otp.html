@@ -19,7 +19,8 @@
       <div class="digit-box" *ngFor="let n of [0,1,2,3,4,5]; let i = index" [class.filled]="otp[i]?.length > 0"
         [class.active]="i === currentFocusIndex">
         <input type="text" inputmode="numeric" maxlength="1" [(ngModel)]="otp[i]" (input)="onOtpInput(i)"
-          (focus)="currentFocusIndex = i" (blur)="currentFocusIndex = -1" class="native-input">
+          (keydown)="onKeyDown($event, i)" (focus)="currentFocusIndex = i" (blur)="currentFocusIndex = -1"
+          class="native-input">
       </div>
     </div>
 
