@@ -1,4 +1,5 @@
-import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy, ChangeDetectorRef, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy, ChangeDetectorRef, Input, OnChanges, SimpleChanges, Inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 
 declare const window: any;
 declare const confirm: any;
@@ -21,7 +22,7 @@ import { Timestamp } from '@angular/fire/firestore';
 })
 export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @Input() isActive: boolean = true;
-  activeTab: 'explore' | 'new' = 'explore';
+  activeTab: 'explore' | 'new' | 'near' = 'explore';
 
   isGlobalMuted = true;
   reels: Reel[] = [];
@@ -33,6 +34,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   pullStartY = 0;
   pullMoveY = 0;
   isRefreshing = false;
+  swipeDeltaY = 0;
+  isSwiping = false;
   private hasTriggeredHaptic = false;
   readonly pullThreshold = 80; // Lowered from 150 for easier trigger
   readonly swipeThresholdX = 50; // Horizontal swipe threshold
@@ -50,8 +53,22 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     private auth: Auth,
     private cdr: ChangeDetectorRef,
     private locationService: LocationService,
-    private router: Router
+    private router: Router,
+    @Inject(DOCUMENT) private document: any
   ) { }
+
+  private centerActiveTab() {
+    setTimeout(() => {
+      const activeTabEl = this.document.querySelector('.tab-item.active');
+      if (activeTabEl) {
+        activeTabEl.scrollIntoView({
+          behavior: 'smooth',
+          inline: 'center',
+          block: 'nearest'
+        });
+      }
+    }, 100);
+  }
 
   async ngOnInit() {
     // 2. NETWORK UPDATE: Fetch fresh content silently
@@ -67,7 +84,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   }
 
   ngAfterViewInit() {
-    // Removed redundant trackView timeout
+    this.centerActiveTab();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -146,7 +163,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
   }
 
-  async switchTab(tab: 'explore' | 'new') {
+  async switchTab(tab: 'explore' | 'new' | 'near') {
     if (this.activeTab === tab) return;
 
     this.activeTab = tab;
@@ -154,6 +171,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     this.currentIndex = 0;
     this.isLoading = true;
 
+    this.centerActiveTab();
     await this.loadReels();
   }
 
@@ -165,6 +183,9 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
       if (this.activeTab === 'new') {
         fetchedReels = await this.reelsService.getNewArrivals(20);
+      } else if (this.activeTab === 'near') {
+        // Fetch a larger sample to find nearby ones
+        fetchedReels = await this.reelsService.getReels(50);
       } else {
         // 'explore' tab - fetch all and shuffle
         fetchedReels = await this.reelsService.getReels(50);
@@ -205,7 +226,15 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         })
       );
 
-      // Explore is random, New is sorted by date. No distance sorting imposed.
+      // Explore is random, New is sorted by date.
+      // Near is sorted by distance.
+      if (this.activeTab === 'near') {
+        reelsWithDistance.sort((a, b) => {
+          const distA = parseFloat((a.distance || '9999').replace(/[^\d.]/g, '')) || 9999;
+          const distB = parseFloat((b.distance || '9999').replace(/[^\d.]/g, '')) || 9999;
+          return distA - distB;
+        });
+      }
 
       this.reels = reelsWithDistance;
       console.log('[VideoFeed] Final reels count:', this.reels.length);
@@ -258,12 +287,17 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       this.pullStartY = e.touches[0].clientY;
       this.hasTriggeredHaptic = false;
     }
+
+    this.swipeDeltaY = 0;
+    this.isSwiping = false;
   }
 
   onTouchMove(e: any) {
     // Vertical / Pull Logic
+    const currentY = e.touches[0].clientY;
+    const diffY = currentY - this.touchStartY;
+
     if (this.currentIndex === 0 && !this.isRefreshing && this.pullStartY > 0) {
-      const currentY = e.touches[0].clientY;
       const diff = currentY - this.pullStartY;
       if (diff > 0) {
         this.pullMoveY = diff * 0.5;
@@ -279,7 +313,31 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
           // Reset if they pull back up
           this.hasTriggeredHaptic = false;
         }
+        return; // Exit pull to refresh early
       }
+    }
+
+    // Interactive Swipe Handling
+    const diffX = e.touches[0].clientX - this.touchStartX;
+    const threshold = 10;
+
+    // Only start swiping if mostly vertical and beyond threshold
+    if (!this.isSwiping && Math.abs(diffY) > threshold && Math.abs(diffY) > Math.abs(diffX)) {
+      this.isSwiping = true;
+    }
+
+    if (this.isSwiping) {
+      // Boundary Clamping: Resist swiping above first or below last
+      let clampedDiffY = diffY;
+      if (this.currentIndex === 0 && diffY > 0) {
+        clampedDiffY = diffY * 0.3; // Resistance
+      } else if (this.currentIndex === this.reels.length - 1 && diffY < 0) {
+        clampedDiffY = diffY * 0.3; // Resistance
+      }
+
+      this.swipeDeltaY = clampedDiffY;
+      if (e.cancelable) e.preventDefault();
+      this.cdr.detectChanges();
     }
   }
 
@@ -291,40 +349,47 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     const deltaX = this.touchStartX - endX; // Positive = Swipe Left, Negative = Swipe Right
 
     // Horizontal Swipe (Tab Switch)
-    // Ensure it's mostly horizontal swipe
     if (Math.abs(deltaX) > this.swipeThresholdX && Math.abs(deltaX) > Math.abs(deltaY)) {
       if (deltaX > 0) {
-        // Swipe Left -> Go Right (Explore -> New)
-        if (this.activeTab === 'explore') this.switchTab('new');
+        // Swipe Left -> Go Right
+        if (this.activeTab === 'explore') this.switchTab('near');
+        else if (this.activeTab === 'near') this.switchTab('new');
       } else {
-        // Swipe Right -> Go Left (New -> Explore)
-        if (this.activeTab === 'new') this.switchTab('explore');
+        // Swipe Right -> Go Left
+        if (this.activeTab === 'new') this.switchTab('near');
+        else if (this.activeTab === 'near') this.switchTab('explore');
       }
       return; // Exit if handled as swipe
     }
 
-    // Vertical Swipe (Video Navigation)
-    const thresholdY = 80;
-    if (deltaY > thresholdY) {
-      this.next();
-    } else if (deltaY < -thresholdY) {
-      // Only prev if not PTR
-      if (this.pullMoveY < this.pullThreshold) {
-        this.prev();
+    // Decision for Swipe
+    const thresholdY = 100; // Require 100px swipe to commit
+    const velocity = Math.abs(deltaY);
+
+    if (this.isSwiping) {
+      if (deltaY > thresholdY) {
+        this.next();
+      } else if (deltaY < -thresholdY) {
+        // Only prev if not PTR
+        if (this.pullMoveY < this.pullThreshold) {
+          this.prev();
+        }
       }
     }
 
     // Handle pull-to-refresh
-    // console.log('[VideoFeed] PTR check:', this.pullMoveY, '>=', this.pullThreshold);
     if (this.pullMoveY >= this.pullThreshold && !this.isRefreshing) {
       console.log('[VideoFeed] Refresh triggered!');
       await this.refresh();
     }
 
-    // Reset pull state
+    // Reset pull and swipe state
     this.pullStartY = 0;
     this.pullMoveY = 0;
+    this.swipeDeltaY = 0;
+    this.isSwiping = false;
     this.hasTriggeredHaptic = false;
+    this.cdr.detectChanges();
   }
 
   /**

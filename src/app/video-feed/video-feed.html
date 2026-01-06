@@ -15,6 +15,9 @@
       <button class="tab-item" [class.active]="activeTab === 'explore'" (click)="switchTab('explore')">
         Explore
       </button>
+      <button class="tab-item" [class.active]="activeTab === 'near'" (click)="switchTab('near')">
+        Near You
+      </button>
       <button class="tab-item" [class.active]="activeTab === 'new'" (click)="switchTab('new')">
         New Arrivals
       </button>
@@ -67,8 +70,9 @@
   <div class="reels-container" *ngIf="!isLoading && reels.length > 0">
     <app-video-card *ngFor="let reel of reels; let i = index; trackBy: trackByReelId" [reel]="reel"
       [active]="i === currentIndex && isActive" [relativeIndex]="i - currentIndex" [priority]="getPriority(i)"
-      [isMuted]="isGlobalMuted" [canDelete]="isOwner(reel)" (muteChanged)="onMuteChanged($event)"
-      (deleted)="onReelDeleted(reel)" (liked)="onLike(i)" (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
+      [isMuted]="isGlobalMuted" [canDelete]="isOwner(reel)" [swipeDeltaY]="swipeDeltaY" [isSwiping]="isSwiping"
+      (muteChanged)="onMuteChanged($event)" (deleted)="onReelDeleted(reel)" (liked)="onLike(i)"
+      (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
     </app-video-card>
   </div>
 </div>

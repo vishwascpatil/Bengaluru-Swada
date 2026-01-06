@@ -26,6 +26,8 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() active = false;
   @Input() relativeIndex = 0;
   @Input() priority: 'high' | 'auto' | 'low' = 'low';
+  @Input() swipeDeltaY = 0;
+  @Input() isSwiping = false;
 
   // Social features
   @Input() likes = 0;
