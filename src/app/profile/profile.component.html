@@ -21,7 +21,7 @@
     <div class="profile-content">
 
         <!-- Tabs -->
-        <div class="tabs-section">
+        <div class="tabs-section" (touchstart)="handleTouchStart($event)" (touchend)="handleTouchEnd($event)">
             <div class="tabs-header">
                 <button class="tab-btn" [class.active]="activeTab === 'bookmarks'" (click)="switchTab('bookmarks')">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

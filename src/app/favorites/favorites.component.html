@@ -21,25 +21,21 @@
         <p>Bookmark your favorite reels to see them here</p>
     </div>
 
-    <!-- Grid of Bookmarked Reels -->
-    <div class="reels-grid" *ngIf="!isLoading && bookmarkedReels.length > 0">
-        <div class="reel-card" *ngFor="let reel of bookmarkedReels" (click)="playReel(reel)">
-            <div class="reel-thumbnail">
-                <video #videoThumb *ngIf="reel.videoUrl" [src]="reel.videoUrl" muted playsinline preload="metadata"
-                    (loadedmetadata)="videoThumb.currentTime = 0.1"></video>
-
-                <div class="play-overlay">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
-                        <path d="M8 5v14l11-7z" />
-                    </svg>
-                </div>
+    <!-- Results Grid -->
+    <div class="results-grid" *ngIf="!isLoading && bookmarkedReels.length > 0">
+        <div class="food-card" *ngFor="let reel of bookmarkedReels" (click)="playReel(reel)">
+            <div class="card-image">
+                <video [src]="reel.videoUrl" muted playsinline preload="metadata" #videoThumb
+                    (loadedmetadata)="videoThumb.currentTime=0.1"></video>
+                <div class="distance-badge">{{reel.distanceStr}}</div>
             </div>
-            <div class="reel-info">
-                <h3 class="reel-title">{{ reel.title }}</h3>
-                <p class="reel-vendor">{{ reel.vendor }}</p>
-                <div class="reel-meta">
-                    <span class="price">₹{{ reel.price }}</span>
-                    <span class="distance">{{ reel.distance }}</span>
+            <div class="card-details">
+                <div class="header-row">
+                    <h3 class="dish-name">{{reel.title}}</h3>
+                </div>
+                <p class="vendor-name">{{reel.vendor}}</p>
+                <div class="price-row">
+                    <span class="price">₹{{reel.price}}</span>
                 </div>
             </div>
         </div>

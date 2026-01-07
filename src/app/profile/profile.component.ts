@@ -32,6 +32,9 @@ export class ProfileComponent implements OnInit {
         following: 248
     };
 
+    private touchstartX = 0;
+    private touchendX = 0;
+
     constructor(
         private auth: Auth,
         private router: Router,
@@ -139,6 +142,34 @@ export class ProfileComponent implements OnInit {
 
     goBack() {
         this.router.navigate(['/main-app']);
+    }
+
+    handleTouchStart(event: any) {
+        this.touchstartX = event.changedTouches[0].screenX;
+    }
+
+    handleTouchEnd(event: any) {
+        this.touchendX = event.changedTouches[0].screenX;
+        this.handleSwipeGesture();
+    }
+
+    private handleSwipeGesture() {
+        const swipeThreshold = 50; // Minimum distance for a swipe
+        const swipeDistance = this.touchendX - this.touchstartX;
+
+        if (Math.abs(swipeDistance) > swipeThreshold) {
+            if (swipeDistance < 0) {
+                // Swiped left - go to Settings
+                if (this.activeTab === 'bookmarks') {
+                    this.switchTab('settings');
+                }
+            } else {
+                // Swiped right - go to Bookmarks
+                if (this.activeTab === 'settings') {
+                    this.switchTab('bookmarks');
+                }
+            }
+        }
     }
 }
 

@@ -5,6 +5,7 @@ import { ReelsService } from '../services/reels.service';
 import { Auth } from '@angular/fire/auth';
 import { Reel } from '../models/reel.model';
 import { NavigationService } from '../services/navigation.service';
+import { LocationService } from '../services/location.service';
 
 @Component({
     selector: 'app-favorites',
@@ -23,7 +24,8 @@ export class FavoritesComponent implements OnInit {
         private auth: Auth,
         private router: Router,
         private cdr: ChangeDetectorRef,
-        private navigationService: NavigationService
+        private navigationService: NavigationService,
+        private locationService: LocationService
     ) { }
 
     async ngOnInit() {
@@ -51,9 +53,30 @@ export class FavoritesComponent implements OnInit {
             console.log('[Favorites] Fetched reels count:', allReels.length);
 
             // Filter bookmarked reels
-            this.bookmarkedReels = allReels.filter(reel =>
+            const bookmarked = allReels.filter(reel =>
                 this.reelsService.isBookmarkedByUser(reel, currentUser.uid)
             );
+
+            // Calculate distances
+            this.bookmarkedReels = await Promise.all(bookmarked.map(async (reel) => {
+                let distanceStr = '-- km';
+                if (reel.latitude && reel.longitude) {
+                    try {
+                        const userLoc = await this.locationService.getUserLocation();
+                        const distanceVal = this.locationService.calculateDistance(
+                            userLoc.latitude, userLoc.longitude,
+                            reel.latitude, reel.longitude
+                        );
+                        distanceStr = distanceVal.toFixed(1) + ' km';
+                    } catch (e) {
+                        console.warn('[Favorites] Error calculating distance for reel:', reel.id, e);
+                    }
+                }
+                return {
+                    ...reel,
+                    distanceStr
+                };
+            }));
 
             console.log('[Favorites] Bookmarked reels count:', this.bookmarkedReels.length);
         } catch (error) {
