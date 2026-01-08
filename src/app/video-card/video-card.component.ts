@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 
 declare const window: any;
@@ -101,6 +101,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   isLoading = true;
+  isVideoInitialized = false; // Prevent flash of unstyled video element
   progress = 0;
   isSeeking = false;
   @Input() isMuted = true;
@@ -110,7 +111,8 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   constructor(
     @Inject(PLATFORM_ID) platformId: Object,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
@@ -168,17 +170,23 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   ngAfterViewInit() {
     if (this.isBrowser) {
-      console.log('[VideoCard] ngAfterViewInit', this.reel?.id);
-      this.initVideo();
-      this.setupNativeListeners();
-
-      // Safety check: verify init happened
+      // Delay video creation to prevent flash of default icon
       setTimeout(() => {
-        if (!this.hls && (this.priority === 'high' || this.priority === 'auto')) {
-          console.warn('[VideoCard] Safety Retry Init for', this.reel?.id);
-          this.initVideo();
-        }
-      }, 500);
+        this.isVideoInitialized = true;
+        this.cdr.detectChanges(); // Ensure DOM is updated with <video> element
+
+        console.log('[VideoCard] ngAfterViewInit (Delayed)', this.reel?.id);
+        this.initVideo();
+        this.setupNativeListeners();
+
+        // Safety check: verify init happened
+        setTimeout(() => {
+          if (!this.hls && (this.priority === 'high' || this.priority === 'auto')) {
+            console.warn('[VideoCard] Safety Retry Init for', this.reel?.id);
+            this.initVideo();
+          }
+        }, 500);
+      }, 50); // Short delay allows skeleton to render first
     }
   }
 
