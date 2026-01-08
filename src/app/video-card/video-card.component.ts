@@ -103,6 +103,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   isLoading = true;
   isVideoInitialized = false; // Prevent flash of unstyled video element
   isVideoReady = false; // Opacity control: only show when truly passing frames
+  hasError = false; // Thumbnail error state
   progress = 0;
   isSeeking = false;
   @Input() isMuted = true;
@@ -129,11 +130,13 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     // 1. Handle Source Changes
     if (changes['reel'] || changes['src']) {
       const currentSrc = this.displaySrc;
+      console.log('[VideoCard] Source Changed. ID:', this.reel?.id, 'Src:', currentSrc, 'Poster:', this.displayPoster);
       const prevSrc = changes['reel']?.previousValue?.videoUrl || changes['src']?.previousValue;
 
       if (currentSrc !== prevSrc) {
         // removed this.isLoading = true; to prevent stuck state
         this.isVideoReady = false;
+        this.hasError = false;
         this.initVideo();
       }
     }
@@ -329,14 +332,20 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private setupNativeListeners() {
     const video = this.videoEl.nativeElement;
-    const events = ['error', 'ended', 'timeupdate', 'waiting', 'playing'];
+    const events = ['error', 'ended', 'timeupdate', 'waiting', 'playing', 'loadeddata'];
 
     events.forEach(event => {
       video.addEventListener(event, () => {
+        if (event === 'loadeddata') {
+          // Reveal video as soon as the first frame is ready
+          this.isVideoReady = true;
+          this.cdr.detectChanges();
+        }
         if (event === 'timeupdate') {
           if (!this.isSeeking && video.duration) {
             this.progress = (video.currentTime / video.duration) * 100;
           }
+          // Fallback: if loadeddata missed, ensure visibility on playback
           if (video.currentTime > 0.05 && !this.isVideoReady) {
             this.isVideoReady = true;
             this.cdr.detectChanges();
