@@ -11,8 +11,18 @@
 
 
   <!-- Loading Spinner Removed for simplicity -->
-  <div class="loading-spinner" *ngIf="isLoading">
-    <div class="spinner"></div>
+  <!-- Skeleton Overlay -->
+  <div class="skeleton-overlay" *ngIf="isLoading">
+    <div class="skeleton-info-group">
+      <div class="skeleton-line title"></div>
+      <div class="skeleton-line vendor"></div>
+    </div>
+    <div class="skeleton-action-group">
+      <div class="skeleton-circle"></div>
+      <div class="skeleton-circle"></div>
+      <div class="skeleton-circle"></div>
+      <div class="skeleton-circle"></div>
+    </div>
   </div>
 
   <!-- Double-tap Like Animation -->
