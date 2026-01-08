@@ -4,15 +4,10 @@
         <p class="subtitle">Your curated collection of tastes</p>
     </div>
 
-    <!-- Loading State: Instagram Grid Skeleton -->
-    <div class="results-grid" *ngIf="isLoading">
-        <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
-            <div class="skeleton-image"></div>
-            <div class="skeleton-info">
-                <div class="skeleton-line title"></div>
-                <div class="skeleton-line meta"></div>
-            </div>
-        </div>
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Loading favorites...</p>
     </div>
 
     <!-- Empty State -->
@@ -30,7 +25,6 @@
     <div class="results-grid" *ngIf="!isLoading && bookmarkedReels.length > 0">
         <div class="food-card" *ngFor="let reel of bookmarkedReels" (click)="playReel(reel)">
             <div class="card-image">
-                <div class="skeleton-thumb" *ngIf="!loadedThumbs.has(reel.id!)"></div>
                 <video [src]="reel.videoUrl" muted playsinline preload="metadata" #videoThumb
                     [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0" (loadeddata)="onThumbLoad(reel.id!)"
                     (loadedmetadata)="videoThumb.currentTime=0.1"></video>
