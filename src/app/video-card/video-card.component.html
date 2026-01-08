@@ -1,9 +1,9 @@
 <div class="video-card" [class.active]="active" [class.prev]="relativeIndex < 0" [class.next]="relativeIndex > 0"
   [class.swiping]="isSwiping"
   [style.transform]="isSwiping ? 'translateY(calc(' + (relativeIndex * 100) + '% + ' + swipeDeltaY + 'px))' : ''">
-  <video #videoEl class="video-player" *ngIf="isVideoInitialized" loop [muted]="!active || isMuted" playsinline
-    webkit-playsinline [preload]="priority === 'high' ? 'auto' : 'metadata'" x-webkit-airplay="allow"
-    disablePictureInPicture [poster]="displayPoster" (click)="onVideoTap($event)">
+  <video #videoEl class="video-player" *ngIf="isVideoInitialized" [class.video-ready]="isVideoReady" loop
+    [muted]="!active || isMuted" playsinline webkit-playsinline [preload]="priority === 'high' ? 'auto' : 'metadata'"
+    x-webkit-airplay="allow" disablePictureInPicture [poster]="displayPoster" (click)="onVideoTap($event)">
   </video>
 
 

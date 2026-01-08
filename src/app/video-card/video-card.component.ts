@@ -102,6 +102,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   isLoading = true;
   isVideoInitialized = false; // Prevent flash of unstyled video element
+  isVideoReady = false; // Opacity control: only show when truly passing frames
   progress = 0;
   isSeeking = false;
   @Input() isMuted = true;
@@ -132,6 +133,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
       if (currentSrc !== prevSrc) {
         // removed this.isLoading = true; to prevent stuck state
+        this.isVideoReady = false;
         this.initVideo();
       }
     }
@@ -334,6 +336,10 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
         if (event === 'timeupdate') {
           if (!this.isSeeking && video.duration) {
             this.progress = (video.currentTime / video.duration) * 100;
+          }
+          if (video.currentTime > 0.05 && !this.isVideoReady) {
+            this.isVideoReady = true;
+            this.cdr.detectChanges();
           }
           this.isLoading = false; // Playing implies loaded
         }

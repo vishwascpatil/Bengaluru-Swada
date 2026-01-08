@@ -108,6 +108,12 @@
     -ms-user-select: none;
     user-select: none;
     background: #000000;
+    opacity: 0;
+    transition: opacity 0.3s ease-in;
+
+    &.video-ready {
+        opacity: 1;
+    }
 
     // Hide default video poster/placeholder
     &::-webkit-media-controls {
