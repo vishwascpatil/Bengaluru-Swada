@@ -4,10 +4,15 @@
         <p class="subtitle">Your curated collection of tastes</p>
     </div>
 
-    <!-- Loading State -->
-    <div class="loading-state" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Loading favorites...</p>
+    <!-- Loading State: Instagram Grid Skeleton -->
+    <div class="results-grid" *ngIf="isLoading">
+        <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-info">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line meta"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Empty State -->

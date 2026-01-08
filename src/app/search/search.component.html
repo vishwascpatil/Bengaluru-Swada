@@ -115,9 +115,16 @@
 
     <!-- Results Grid -->
     <div class="results-grid">
-        <div class="loading-spinner" *ngIf="isLoading">
-            <div class="spinner"></div>
-        </div>
+        <!-- Loading State: Instagram Grid Skeleton -->
+        <ng-container *ngIf="isLoading">
+            <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-info">
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-line meta"></div>
+                </div>
+            </div>
+        </ng-container>
 
         <div class="empty-state" *ngIf="!isLoading && filteredReels.length === 0">
             <div *ngIf="reels.length === 0; else noResults">
