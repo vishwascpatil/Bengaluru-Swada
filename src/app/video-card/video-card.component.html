@@ -47,7 +47,7 @@
     </div>
   </div>
 
-  <div class="video-overlay">
+  <div class="video-overlay" *ngIf="!isLoading">
     <div class="video-info">
       <div class="food-details">
         <div class="title-category-row">
@@ -116,7 +116,7 @@
   </div>
 
   <!-- Extreme Bottom Right View Count Badge -->
-  <div class="view-count-badge" *ngIf="displayViewCount > 0">
+  <div class="view-count-badge" *ngIf="!isLoading && displayViewCount > 0">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
       stroke-linecap="round" stroke-linejoin="round">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
