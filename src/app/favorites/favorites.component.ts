@@ -18,6 +18,7 @@ export class FavoritesComponent implements OnInit {
     @Input() showHeader = true;
     bookmarkedReels: Reel[] = [];
     isLoading = true;
+    loadedThumbs: Set<string> = new Set();
 
     constructor(
         private reelsService: ReelsService,
@@ -94,5 +95,10 @@ export class FavoritesComponent implements OnInit {
         this.navigationService.selectReel(reel.id!);
         // Navigate to main-app (it will switch to feed tab automatically)
         this.router.navigate(['/main-app']);
+    }
+
+    onThumbLoad(reelId: string) {
+        this.loadedThumbs.add(reelId);
+        this.cdr.detectChanges();
     }
 }

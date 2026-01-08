@@ -130,7 +130,9 @@
 
         <div class="food-card" *ngFor="let reel of filteredReels" (click)="openReel(reel)">
             <div class="card-image">
+                <div class="skeleton-thumb" *ngIf="!loadedThumbs.has(reel.id!)"></div>
                 <video [src]="reel.videoUrl" muted playsinline preload="metadata" #videoThumb
+                    [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0" (loadeddata)="onThumbLoad(reel.id!)"
                     (loadedmetadata)="videoThumb.currentTime=0.1"></video>
                 <!-- <img [src]="reel.thumbnailUrl" alt="Food"> -->
                 <div class="distance-badge">{{reel.distanceStr}}</div>

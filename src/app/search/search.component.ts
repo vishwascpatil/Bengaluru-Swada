@@ -19,6 +19,7 @@ export class SearchComponent implements OnInit {
     reels: any[] = [];
     filteredReels: any[] = [];
     isLoading = false;
+    loadedThumbs: Set<string> = new Set();
 
     // Location selection
     locationName = 'Koramangala, Bangalore';
@@ -257,5 +258,9 @@ export class SearchComponent implements OnInit {
 
     goBack() {
         this.router.navigate(['/main-app']);
+    }
+
+    onThumbLoad(reelId: string) {
+        this.loadedThumbs.add(reelId);
     }
 }
