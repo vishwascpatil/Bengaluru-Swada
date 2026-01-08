@@ -35,17 +35,9 @@
   <div class="refresh-indicator" [style.transform]="'translateY(' + (isRefreshing ? 70 : pullMoveY) + 'px)'"
     [class.refreshing]="isRefreshing" [class.visible]="pullMoveY > 10">
     <div class="spinner-container">
-      <div class="carrot-spinner">
-        <svg viewBox="0 0 40 40" class="carrot-svg">
-          <!-- Carrot Body -->
-          <path d="M20 35C20 35 14 25 14 15C14 10 17 7 20 7C23 7 26 10 26 15C26 25 20 35 20 35Z" fill="#ff6b35" />
-          <!-- Carrot Details (Lines) -->
-          <path d="M17 18h6M16 22h8M18 26h4" stroke="rgba(0,0,0,0.1)" stroke-width="1.5" stroke-linecap="round" />
-          <!-- Carrot Leaves -->
-          <path d="M20 7V2M20 7L16 3M20 7L24 3" stroke="#4caf50" stroke-width="2.5" stroke-linecap="round" />
-        </svg>
-      </div>
-      <div class="loading-ripple"></div>
+      <svg class="instagram-spinner" viewBox="0 0 50 50">
+        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
+      </svg>
     </div>
   </div>
 
