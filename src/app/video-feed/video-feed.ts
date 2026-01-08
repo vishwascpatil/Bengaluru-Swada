@@ -13,10 +13,12 @@ import { Reel } from '../models/reel.model';
 import { Auth } from '@angular/fire/auth';
 import { Timestamp } from '@angular/fire/firestore';
 
+import { VideoFeedSkeletonComponent } from './video-feed-skeleton.component';
+
 @Component({
   selector: 'app-video-feed',
   standalone: true,
-  imports: [CommonModule, VideoCardComponent, RouterModule],
+  imports: [CommonModule, VideoCardComponent, RouterModule, VideoFeedSkeletonComponent],
   templateUrl: './video-feed.html',
   styleUrls: ['./video-feed.scss']
 })

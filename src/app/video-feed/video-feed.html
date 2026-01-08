@@ -49,10 +49,8 @@
     </div>
   </div>
 
-  <!-- Simple Consolidated Loader -->
-  <div class="loading-container" *ngIf="isLoading">
-    <div class="simple-orange-loader"></div>
-  </div>
+  <!-- Skeleton Loading -->
+  <app-video-feed-skeleton *ngIf="isLoading"></app-video-feed-skeleton>
 
   <!-- Empty State -->
   <div class="empty-state" *ngIf="!isLoading && reels.length === 0">
