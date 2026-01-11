@@ -6,6 +6,8 @@ import { ReelsService } from '../services/reels.service';
 import { Reel } from '../models/reel.model';
 import { LocationService } from '../services/location.service';
 import { NavigationService } from '../services/navigation.service';
+import { AdmobService } from '../services/admob.service';
+import { OnDestroy } from '@angular/core';
 
 @Component({
     selector: 'app-search',
@@ -14,7 +16,7 @@ import { NavigationService } from '../services/navigation.service';
     templateUrl: './search.component.html',
     styleUrls: ['./search.component.scss']
 })
-export class SearchComponent implements OnInit {
+export class SearchComponent implements OnInit, OnDestroy {
     searchQuery = '';
     reels: any[] = [];
     filteredReels: any[] = [];
@@ -55,6 +57,7 @@ export class SearchComponent implements OnInit {
         private reelsService: ReelsService,
         private locationService: LocationService,
         private navigationService: NavigationService,
+        private admobService: AdmobService,
         private router: Router
     ) { }
 
@@ -77,6 +80,7 @@ export class SearchComponent implements OnInit {
         } catch (e) {
             console.warn('Could not get initial location name', e);
         }
+        this.admobService.showBanner();
     }
 
     async loadReels() {
@@ -262,5 +266,9 @@ export class SearchComponent implements OnInit {
 
     onThumbLoad(reelId: string) {
         this.loadedThumbs.add(reelId);
+    }
+
+    ngOnDestroy() {
+        this.admobService.hideBanner();
     }
 }

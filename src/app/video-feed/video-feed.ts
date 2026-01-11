@@ -12,6 +12,7 @@ import { LocationService } from '../services/location.service';
 import { Reel } from '../models/reel.model';
 import { Auth } from '@angular/fire/auth';
 import { Timestamp } from '@angular/fire/firestore';
+import { AdmobService } from '../services/admob.service';
 
 import { VideoFeedSkeletonComponent } from './video-feed-skeleton.component';
 
@@ -47,6 +48,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   // Track which videos have been viewed
   private viewedReels = new Set<string>();
   private viewTrackingTimeout?: number;
+  private adsViewed = 0;
+  private readonly INTERSTITIAL_THRESHOLD = 7;
 
   @ViewChildren(VideoCardComponent) cards!: QueryList<VideoCardComponent>;
 
@@ -56,6 +59,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     private cdr: ChangeDetectorRef,
     private locationService: LocationService,
     private router: Router,
+    private admobService: AdmobService,
     @Inject(DOCUMENT) private document: any
   ) { }
 
@@ -75,6 +79,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   async ngOnInit() {
     // 2. NETWORK UPDATE: Fetch fresh content silently
     await this.loadReels();
+    this.admobService.showBanner();
   }
 
   goToSearch() {
@@ -103,6 +108,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     if (this.viewTrackingTimeout) {
       clearTimeout(this.viewTrackingTimeout);
     }
+    this.admobService.hideBanner();
   }
 
   /**
@@ -273,6 +279,13 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
           this.viewedReels.add(currentReel.id);
           // Update local view count
           currentReel.viewCount = (currentReel.viewCount || 0) + 1;
+
+          // Interstitial Logic
+          this.adsViewed++;
+          if (this.adsViewed >= this.INTERSTITIAL_THRESHOLD) {
+            this.admobService.showInterstitial();
+            this.adsViewed = 0;
+          }
         }
       }, 3000); // Track view after 3 seconds
     }

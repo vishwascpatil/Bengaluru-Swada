@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Auth } from '@angular/fire/auth';
 import { Router, RouterModule } from '@angular/router';
@@ -6,6 +6,7 @@ import { FavoritesComponent } from '../favorites/favorites.component';
 import { LegalViewComponent } from '../legal/legal-view.component';
 import { ReelsService } from '../services/reels.service';
 import { Reel } from '../models/reel.model';
+import { AdmobService } from '../services/admob.service';
 
 @Component({
     selector: 'app-profile',
@@ -14,7 +15,7 @@ import { Reel } from '../models/reel.model';
     templateUrl: './profile.component.html',
     styleUrls: ['./profile.component.scss']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
     @ViewChild(FavoritesComponent) favoritesComponent!: FavoritesComponent;
     userEmail: string | null = null;
     userPhoneNumber: string | null = null;
@@ -38,7 +39,8 @@ export class ProfileComponent implements OnInit {
     constructor(
         private auth: Auth,
         private router: Router,
-        private reelsService: ReelsService
+        private reelsService: ReelsService,
+        private admobService: AdmobService
     ) {
         const user = this.auth.currentUser;
         if (user) {
@@ -67,6 +69,7 @@ export class ProfileComponent implements OnInit {
 
     ngOnInit() {
         this.refresh();
+        this.admobService.showBanner();
     }
 
     async refresh() {
@@ -170,6 +173,10 @@ export class ProfileComponent implements OnInit {
                 }
             }
         }
+    }
+
+    ngOnDestroy() {
+        this.admobService.hideBanner();
     }
 }
 

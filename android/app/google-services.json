@@ -12,7 +12,16 @@
           "package_name": "com.bengaluruswada.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "831575973864-n0ki4kmnf3av7ksn1mohevq1cnffb8p9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bengaluruswada.app",
+            "certificate_hash": "bd4d7a896d988ad1dcdca35c56ed87f499a6df0b"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBOKIDFzEz9ZOcFqKN_BWWkAafJWunE5eY"
