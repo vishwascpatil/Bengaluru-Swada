@@ -1,17 +1,18 @@
 import { Component, EventEmitter, Output, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
+import { LocationService } from '../services/location.service';
 
 @Component({
     selector: 'app-location-picker',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, DecimalPipe],
     templateUrl: './location-picker.component.html',
     styleUrls: ['./location-picker.component.scss']
 })
 export class LocationPickerComponent implements OnInit, AfterViewInit, OnDestroy {
-    @Output() locationSelected = new EventEmitter<{ lat: number, lng: number }>();
+    @Output() locationSelected = new EventEmitter<{ lat: number, lng: number, address?: string }>();
     @Output() cancel = new EventEmitter<void>();
 
     private map: L.Map | undefined;
@@ -20,12 +21,13 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnDestroy
     searchQuery = '';
     searchResults: any[] = [];
     isSearching = false;
+    isConfirming = false;
 
     // Default to Bangalore
     selectedLat = 12.9716;
     selectedLng = 77.5946;
 
-    constructor() { }
+    constructor(private locationService: LocationService) { }
 
     ngOnInit(): void { }
 
@@ -124,11 +126,24 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnDestroy
         this.searchQuery = result.display_name.split(',')[0]; // Update search box with simple name
     }
 
-    confirmSelection(): void {
-        this.locationSelected.emit({
-            lat: this.selectedLat,
-            lng: this.selectedLng
-        });
+    async confirmSelection(): Promise<void> {
+        this.isConfirming = true;
+        try {
+            const address = await this.locationService.getExactAddress(this.selectedLat, this.selectedLng);
+            this.locationSelected.emit({
+                lat: this.selectedLat,
+                lng: this.selectedLng,
+                address: address
+            });
+        } catch (e) {
+            console.error('Error in confirmSelection getting address:', e);
+            this.locationSelected.emit({
+                lat: this.selectedLat,
+                lng: this.selectedLng
+            });
+        } finally {
+            this.isConfirming = false;
+        }
     }
 
     onCancel(): void {

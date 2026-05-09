@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, ChangeDetectorRef, OnInit, Inject } from '@angular/core';
+import { Component, EventEmitter, Output, ChangeDetectorRef, OnInit, Inject, AfterViewInit, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
 import { Router } from '@angular/router';
@@ -14,7 +14,8 @@ import { PhoneAuthService } from '../services/phone-auth.service';
   standalone: true,
   styleUrls: ['./otp.scss']
 })
-export class OtpComponent implements OnInit {
+export class OtpComponent implements OnInit, AfterViewInit {
+  @ViewChildren('otpInput') otpInputs!: QueryList<ElementRef>;
   phone = '';
   @Output() back = new EventEmitter<void>();
   @Output() verified = new EventEmitter<void>();
@@ -66,6 +67,15 @@ export class OtpComponent implements OnInit {
     });
   }
 
+  ngAfterViewInit() {
+    // Focus the first input field after a short delay to ensure keyboard opens
+    setTimeout(() => {
+      if (this.otpInputs && this.otpInputs.first) {
+        this.otpInputs.first.nativeElement.focus();
+      }
+    }, 500);
+  }
+
   startTimer() {
     clearInterval(this.timerHandle);
     this.countdown = 30;
@@ -86,8 +96,8 @@ export class OtpComponent implements OnInit {
 
     // Auto-focus next input
     if (this.otp[i] && i < 5) {
-      const nextInput = this.document.querySelectorAll('.native-input')[i + 1] as any;
-      if (nextInput) nextInput.focus();
+      const nextInput = this.otpInputs.toArray()[i + 1];
+      if (nextInput) nextInput.nativeElement.focus();
     }
   }
 
@@ -95,9 +105,9 @@ export class OtpComponent implements OnInit {
     if (event.key === 'Backspace') {
       // If current box is empty, move focus to previous box
       if (!this.otp[i] && i > 0) {
-        const prevInput = this.document.querySelectorAll('.native-input')[i - 1] as any;
+        const prevInput = this.otpInputs.toArray()[i - 1];
         if (prevInput) {
-          prevInput.focus();
+          prevInput.nativeElement.focus();
         }
       }
     }

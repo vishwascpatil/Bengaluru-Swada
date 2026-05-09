@@ -238,13 +238,9 @@ export class SearchComponent implements OnInit, OnDestroy {
     }
 
     get filteredLocations() {
-        const query = this.locationSearchQuery.toLowerCase().trim();
-        if (!query) return this.locationService.AREAS;
-
-        return this.locationService.AREAS.filter(loc =>
-            loc.name.toLowerCase().includes(query) ||
-            loc.pincode.includes(query)
-        );
+        // Since AREAS is deprecated and we're using real GPS/Map picker,
+        // disable the mock location switcher in search for now.
+        return [];
     }
 
     reset() {

@@ -15,9 +15,9 @@
       <div class="phone-input-group" [class.focused]="isFocused">
         <span class="country-code">+91</span>
         <div class="vertical-divider"></div>
-        <input type="tel" id="mobileNumber" placeholder="Mobile Number" maxlength="10" pattern="[0-9]{10}"
+        <input #mobileInput type="tel" id="mobileNumber" placeholder="Mobile Number" maxlength="10" pattern="[0-9]{10}"
           [(ngModel)]="mobile" (input)="onInput()" (focus)="isFocused = true" (blur)="isFocused = false"
-          [disabled]="loading">
+          [disabled]="loading" inputmode="numeric" autofocus>
       </div>
 
       <!-- Error Message (Inline) -->

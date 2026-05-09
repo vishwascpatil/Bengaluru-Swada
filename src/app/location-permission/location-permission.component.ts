@@ -131,6 +131,8 @@ export class LocationPermissionComponent implements AfterViewInit {
     { name: 'Vidyaranyapura', pincode: '560097', lat: 13.067000, lng: 77.560000 }
   ];
 
+  isFetchingLocation = false;
+
   constructor(private router: Router, private locationService: LocationService) { }
 
   ngAfterViewInit() {
@@ -141,13 +143,36 @@ export class LocationPermissionComponent implements AfterViewInit {
   }
 
   allow() {
-    if ('geolocation' in (navigator as any)) {
-      (navigator as any).geolocation.getCurrentPosition((pos: any) => {
-        const latitude = pos.coords.latitude;
-        const longitude = pos.coords.longitude;
+    this.isFetchingLocation = true;
 
-        // Find the nearest area name
-        const areaName = this.locationService.findNearestArea(latitude, longitude);
+    // Check if we are on an insecure origin (IP address without HTTPS)
+    const isSecureOrigin = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (!isSecureOrigin) {
+      alert('Location access requires a secure connection (HTTPS). Please use localhost or an HTTPS URL.');
+      this.isFetchingLocation = false;
+      return;
+    }
+
+    if (!('geolocation' in navigator)) {
+      alert('Geolocation is not supported by your browser.');
+      this.isFetchingLocation = false;
+      return;
+    }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
+    const successCallback = async (pos: any) => {
+      const latitude = pos.coords.latitude;
+      const longitude = pos.coords.longitude;
+
+      try {
+        // Find the exact area name using reverse geocoding
+        const areaName = await this.locationService.getExactAddress(latitude, longitude);
 
         // Store location in service
         this.locationService.setUserLocation(latitude, longitude);
@@ -161,16 +186,54 @@ export class LocationPermissionComponent implements AfterViewInit {
             longitude: longitude
           }
         });
-      }, (err: any) => {
-        console.error('Location error:', err);
-        alert('Location denied or unavailable');
-      }, { enableHighAccuracy: true, timeout: 10000 });
-    } else {
-      alert('Geolocation not supported');
+      } catch (error) {
+        console.error('Error fetching exact address:', error);
+        alert('Could not determine exact location. Please try again.');
+      } finally {
+        this.isFetchingLocation = false;
+      }
+    };
+
+    const errorCallback = (err: any) => {
+      console.error('Location error:', err);
+      
+      // If high accuracy failed, try one more time without it
+      if (options.enableHighAccuracy) {
+        console.log('Retrying without high accuracy...');
+        options.enableHighAccuracy = false;
+        navigator.geolocation.getCurrentPosition(successCallback, (secondErr) => {
+          this.handleLocationError(secondErr);
+        }, options);
+      } else {
+        this.handleLocationError(err);
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(successCallback, errorCallback, options);
+  }
+
+  private handleLocationError(err: any) {
+    this.isFetchingLocation = false;
+    switch (err.code) {
+      case err.PERMISSION_DENIED:
+        alert('Location access was denied. Please enable it in your browser settings and refresh.');
+        break;
+      case err.POSITION_UNAVAILABLE:
+        alert('Location information is unavailable. Please check your GPS settings.');
+        break;
+      case err.TIMEOUT:
+        alert('Location request timed out. Please try again or search manually.');
+        break;
+      default:
+        alert('An unknown error occurred while fetching location.');
+        break;
     }
   }
 
   manual() {
+    // Let's navigate to the main app which has the search/map feature, or just open the picker.
+    // The picker is its own component but not routed separately usually? 
+    // Wait, the app.routes.ts might have a route for it. For now let's keep the existing bottom sheet.
     this.showLocationModal = true;
     this.searchQuery = '';
     // Focus input after animation

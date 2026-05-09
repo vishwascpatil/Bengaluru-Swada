@@ -31,8 +31,16 @@
 
   <!-- Bottom Action Area -->
   <div class="action-area">
-    <button class="primary-btn" (click)="allow()">Allow Location Access</button>
-    <button class="secondary-btn" (click)="manual()">Select Location Manually</button>
+    <button class="primary-btn" (click)="allow()" [disabled]="isFetchingLocation">
+      <span *ngIf="!isFetchingLocation">Allow Location Access</span>
+      <span *ngIf="isFetchingLocation" class="loading-text">
+        <svg class="spinner" viewBox="0 0 50 50">
+          <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+        </svg>
+        Detecting location...
+      </span>
+    </button>
+    <button class="secondary-btn" (click)="manual()" [disabled]="isFetchingLocation">Select Location Manually</button>
     <div class="privacy-note">
       <div class="privacy-line"></div>
       <p>Your location data is secure and only used to show nearby food options.</p>

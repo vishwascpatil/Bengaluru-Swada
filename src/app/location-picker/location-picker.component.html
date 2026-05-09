@@ -33,8 +33,11 @@
                 <small>{{ selectedLat | number:'1.4-4' }}, {{ selectedLng | number:'1.4-4' }}</small>
             </div>
             <div class="actions">
-                <button class="cancel-btn" (click)="onCancel()">Cancel</button>
-                <button class="confirm-btn" (click)="confirmSelection()">Confirm Location</button>
+                <button class="cancel-btn" (click)="onCancel()" [disabled]="isConfirming">Cancel</button>
+                <button class="confirm-btn" (click)="confirmSelection()" [disabled]="isConfirming">
+                    <span *ngIf="!isConfirming">Confirm Location</span>
+                    <span *ngIf="isConfirming">Confirming...</span>
+                </button>
             </div>
         </div>
     </div>

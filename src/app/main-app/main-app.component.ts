@@ -59,7 +59,10 @@ export class MainAppComponent implements OnInit {
     if (navigation?.extras?.state) {
       const state = navigation.extras.state;
       if (state['location']) {
-        this.location = `${state['location']}, Bangalore`;
+        this.location = state['location'];
+        if (!this.location.toLowerCase().includes('bangalore') && !this.location.toLowerCase().includes('bengaluru')) {
+          this.location += ', Bangalore';
+        }
       }
       if (state['latitude'] && state['longitude']) {
         this.locationService.setUserLocation(state['latitude'], state['longitude']);
@@ -92,8 +95,11 @@ export class MainAppComponent implements OnInit {
     if (this.location === 'Koramangala, Bangalore') {
       try {
         const userLoc = await this.locationService.getUserLocation();
-        const areaName = this.locationService.findNearestArea(userLoc.latitude, userLoc.longitude);
-        this.location = `${areaName}, Bangalore`;
+        const areaName = await this.locationService.getExactAddress(userLoc.latitude, userLoc.longitude);
+        this.location = areaName;
+        if (!this.location.toLowerCase().includes('bangalore') && !this.location.toLowerCase().includes('bengaluru')) {
+          this.location += ', Bangalore';
+        }
       } catch (error) {
         console.error('Error getting location:', error);
         // Keep default location
@@ -103,7 +109,10 @@ export class MainAppComponent implements OnInit {
     // Subscribe to global location changes
     this.locationService.currentLocation$.subscribe(loc => {
       if (loc) {
-        this.location = `${loc.name}, Bangalore`;
+        this.location = loc.name;
+        if (!this.location.toLowerCase().includes('bangalore') && !this.location.toLowerCase().includes('bengaluru')) {
+          this.location += ', Bangalore';
+        }
         // Refresh video feed with new location data if on feed
         if (this.videoFeedComponent && this.activeTab === 'feed') {
           this.videoFeedComponent.reloadReelsForNewLocation();

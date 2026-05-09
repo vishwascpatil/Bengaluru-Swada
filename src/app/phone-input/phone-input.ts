@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -18,7 +18,8 @@ import {
   templateUrl: './phone-input.html',
   styleUrl: './phone-input.scss',
 })
-export class PhoneInputComponent implements OnInit {
+export class PhoneInputComponent implements OnInit, AfterViewInit {
+  @ViewChild('mobileInput') mobileInput!: ElementRef;
 
   //auth = getAuth();
 
@@ -48,6 +49,15 @@ export class PhoneInputComponent implements OnInit {
 
       this.recaptchaVerifier.render();
     });
+  }
+
+  ngAfterViewInit(): void {
+    // Focus the input field after a short delay to ensure the keyboard opens on mobile
+    setTimeout(() => {
+      if (this.mobileInput) {
+        this.mobileInput.nativeElement.focus();
+      }
+    }, 500);
   }
 
   onInput(): void {
