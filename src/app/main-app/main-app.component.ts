@@ -65,7 +65,7 @@ export class MainAppComponent implements OnInit {
         }
       }
       if (state['latitude'] && state['longitude']) {
-        this.locationService.setUserLocation(state['latitude'], state['longitude']);
+        this.locationService.updateLocation(state['location'] || 'Koramangala', state['latitude'], state['longitude']);
       }
       // Check if opening a specific reel from favorites
       if (state['openFeed'] && state['reelId']) {

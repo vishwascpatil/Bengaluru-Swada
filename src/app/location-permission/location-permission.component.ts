@@ -144,6 +144,7 @@ export class LocationPermissionComponent implements AfterViewInit {
 
   allow() {
     this.isFetchingLocation = true;
+    const nav = navigator as any;
 
     // Check if we are on an insecure origin (IP address without HTTPS)
     const isSecureOrigin = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -154,7 +155,7 @@ export class LocationPermissionComponent implements AfterViewInit {
       return;
     }
 
-    if (!('geolocation' in navigator)) {
+    if (!nav || !nav.geolocation) {
       alert('Geolocation is not supported by your browser.');
       this.isFetchingLocation = false;
       return;
@@ -175,7 +176,7 @@ export class LocationPermissionComponent implements AfterViewInit {
         const areaName = await this.locationService.getExactAddress(latitude, longitude);
 
         // Store location in service
-        this.locationService.setUserLocation(latitude, longitude);
+        this.locationService.updateLocation(areaName, latitude, longitude);
 
         // Navigate to main app with location data
         this.router.navigate(['/main-app'], {
@@ -201,7 +202,7 @@ export class LocationPermissionComponent implements AfterViewInit {
       if (options.enableHighAccuracy) {
         console.log('Retrying without high accuracy...');
         options.enableHighAccuracy = false;
-        navigator.geolocation.getCurrentPosition(successCallback, (secondErr) => {
+        nav.geolocation.getCurrentPosition(successCallback, (secondErr: any) => {
           this.handleLocationError(secondErr);
         }, options);
       } else {
@@ -209,7 +210,7 @@ export class LocationPermissionComponent implements AfterViewInit {
       }
     };
 
-    navigator.geolocation.getCurrentPosition(successCallback, errorCallback, options);
+    nav.geolocation.getCurrentPosition(successCallback, errorCallback, options);
   }
 
   private handleLocationError(err: any) {
@@ -247,7 +248,7 @@ export class LocationPermissionComponent implements AfterViewInit {
 
   selectLocation(loc: { name: string; pincode: string; lat: number; lng: number }) {
     // Store location in service
-    this.locationService.setUserLocation(loc.lat, loc.lng);
+    this.locationService.updateLocation(loc.name, loc.lat, loc.lng);
 
     // Navigate to main app with location data
     this.router.navigate(['/main-app'], {
