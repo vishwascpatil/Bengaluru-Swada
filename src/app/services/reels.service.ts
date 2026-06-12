@@ -58,6 +58,8 @@ export class ReelsService {
                 if (data.videoUrl && data.videoUrl.includes('videos.bengaluru-swada.com')) {
                     data.videoUrl = data.videoUrl.replace('https://videos.bengaluru-swada.com', 'https://r2-video-uploader.bengaluru-swada.workers.dev');
                 }
+                if (data.title) data.title = this.toTitleCase(data.title);
+                if (data.vendor) data.vendor = this.toTitleCase(data.vendor);
                 return { id: doc.id, ...data };
             });
 
@@ -133,10 +135,15 @@ export class ReelsService {
 
             const querySnapshot = await getDocs(q);
 
-            return querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as Reel));
+            return querySnapshot.docs.map(doc => {
+                const data = doc.data() as Reel;
+                if (data.title) data.title = this.toTitleCase(data.title);
+                if (data.vendor) data.vendor = this.toTitleCase(data.vendor);
+                return {
+                    id: doc.id,
+                    ...data
+                } as Reel;
+            });
         } catch (error) {
             console.error('Error fetching reels:', error);
             return [];
@@ -158,10 +165,15 @@ export class ReelsService {
             );
 
             const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as Reel));
+            return querySnapshot.docs.map(doc => {
+                const data = doc.data() as Reel;
+                if (data.title) data.title = this.toTitleCase(data.title);
+                if (data.vendor) data.vendor = this.toTitleCase(data.vendor);
+                return {
+                    id: doc.id,
+                    ...data
+                } as Reel;
+            });
         } catch (error) {
             console.error('Error fetching user reels:', error);
             return [];
@@ -179,9 +191,12 @@ export class ReelsService {
             const snapshot = await getDoc(reelDoc);
 
             if (snapshot.exists()) {
+                const data = snapshot.data() as Reel;
+                if (data.title) data.title = this.toTitleCase(data.title);
+                if (data.vendor) data.vendor = this.toTitleCase(data.vendor);
                 return {
                     id: snapshot.id,
-                    ...snapshot.data()
+                    ...data
                 } as Reel;
             }
             return null;
@@ -372,10 +387,15 @@ export class ReelsService {
 
             const unsubscribe = onSnapshot(q,
                 (snapshot) => {
-                    const reels = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    } as Reel));
+                    const reels = snapshot.docs.map(doc => {
+                        const data = doc.data() as Reel;
+                        if (data.title) data.title = this.toTitleCase(data.title);
+                        if (data.vendor) data.vendor = this.toTitleCase(data.vendor);
+                        return {
+                            id: doc.id,
+                            ...data
+                        } as Reel;
+                    });
                     observer.next(reels);
                 },
                 (error) => {
@@ -442,6 +462,13 @@ export class ReelsService {
         return reel.bookmarkedBy?.includes(userId) || false;
     }
 
-
+    toTitleCase(str: string): string {
+        if (!str) return '';
+        return str
+            .toLowerCase()
+            .split(/\s+/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
 }
 

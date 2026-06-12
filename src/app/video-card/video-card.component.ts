@@ -73,9 +73,18 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
     return url;
   }
+  private toTitleCase(str: string): string {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
   get displayPoster(): string { return this.reel?.thumbnailUrl || this.poster; }
-  get displayTitle(): string { return this.reel?.title || this.title; }
-  get displayVendor(): string { return this.reel?.vendor || this.vendor; }
+  get displayTitle(): string { return this.toTitleCase(this.reel?.title || this.title); }
+  get displayVendor(): string { return this.toTitleCase(this.reel?.vendor || this.vendor); }
   get displayPrice(): number | string { return this.reel?.price || this.price; }
   get displayDistance(): string { return this.reel?.distance || this.distance; }
   get displayLikes(): number { return this.reel?.likes || this.likes; }
