@@ -33,7 +33,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   @Input() isActive: boolean = true;
   activeTab: 'explore' | 'new' | 'near' = 'explore';
 
-  isGlobalMuted = true;
+  isGlobalMuted = false;
   reels: Reel[] = [];
   currentIndex = 0;
 
@@ -113,6 +113,10 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   ngOnChanges(changes: SimpleChanges) {
     if (changes['isActive']) {
       if (this.isActive) {
+        // By default, start unmuted when switching back/becoming active
+        this.isGlobalMuted = false;
+        this.cdr.markForCheck();
+
         // Acquire the audio mutex — this silences any other tab playing audio
         this.audioMutex.acquire('feed', () => {
           // We were silenced by another component — mute all our cards

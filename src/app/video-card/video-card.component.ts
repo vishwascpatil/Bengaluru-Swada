@@ -235,8 +235,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (this.priority === 'high' && this.active) {
-          this.syncMute();
-          video.play().catch((e: any) => console.warn('[VideoCard] Play failed:', e));
+          this.play();
         }
       });
 
@@ -263,8 +262,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       video.src = src;
       this.setupNativeListeners();
       if (this.priority === 'high') {
-        this.syncMute();
-        video.play().catch((e: any) => console.warn('[VideoCard] iOS play failed:', e));
+        this.play();
       }
     }
   }
@@ -281,8 +279,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
         }
         this.hls.startLoad();
         if (this.active) {
-          this.syncMute();
-          video?.play().catch((e: any) => console.warn('[VideoCard] Play failed on priority high:', e));
+          this.play();
         }
         break;
 
@@ -359,7 +356,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       video.currentTime = 0;
       // Only auto-loop if this card is still the active one
       if (this.active) {
-        video.play().catch(() => {});
+        this.play();
       }
     });
   }
@@ -376,7 +373,23 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.hls.startLoad();
     }
 
-    video.play().catch((err: any) => console.warn('[VideoCard] Play failed:', err));
+    video.play().catch((err: any) => {
+      console.warn('[VideoCard] Play failed:', err);
+      // Check if it was blocked by autoplay/interaction policy
+      if (
+        err.name === 'NotAllowedError' || 
+        err.message?.includes('allowed') || 
+        err.message?.includes('user gesture') || 
+        err.message?.includes('play() failed')
+      ) {
+        console.log('[VideoCard] Autoplay blocked by browser policy, retrying muted...');
+        this.isMuted = true;
+        this.syncMute();
+        this.muteChanged.emit(true);
+        this.cdr.detectChanges();
+        video.play().catch((err2: any) => console.error('[VideoCard] Muted play also failed:', err2));
+      }
+    });
   }
 
   pause() {
@@ -417,7 +430,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (!video) return;
 
     if (video.paused) {
-      video.play().catch(() => {});
+      this.play();
     }
 
     this.isMuted = !this.isMuted;
