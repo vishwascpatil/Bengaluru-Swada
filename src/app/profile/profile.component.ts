@@ -4,13 +4,15 @@ import { Auth } from '@angular/fire/auth';
 import { Router, RouterModule } from '@angular/router';
 import { FavoritesComponent } from '../favorites/favorites.component';
 import { LegalViewComponent } from '../legal/legal-view.component';
+import { ContactModalComponent } from '../shared/components/contact-modal/contact-modal.component';
 import { ReelsService } from '../services/reels.service';
+import { AdminService } from '../services/admin.service';
 import { Reel } from '../models/reel.model';
 
 @Component({
     selector: 'app-profile',
     standalone: true,
-    imports: [CommonModule, FavoritesComponent, RouterModule, LegalViewComponent],
+    imports: [CommonModule, FavoritesComponent, RouterModule, LegalViewComponent, ContactModalComponent],
     templateUrl: './profile.component.html',
     styleUrls: ['./profile.component.scss']
 })
@@ -22,6 +24,7 @@ export class ProfileComponent implements OnInit {
     fullName: string = '';
 
     isExiting = false;
+    showContactModal = false;
 
     activeTab: 'bookmarks' | 'settings' = 'bookmarks';
     activeLegalTab: 'terms' | 'privacy' | 'help' | null = null;
@@ -40,7 +43,8 @@ export class ProfileComponent implements OnInit {
     constructor(
         private auth: Auth,
         private router: Router,
-        private reelsService: ReelsService
+        private reelsService: ReelsService,
+        private adminService: AdminService
     ) {
         const user = this.auth.currentUser;
         if (user) {
@@ -124,7 +128,13 @@ export class ProfileComponent implements OnInit {
     }
 
     goToUpload() {
-        this.router.navigate(['/upload-reel']);
+        this.adminService.isCurrentUserAdmin().subscribe(isAdmin => {
+            if (isAdmin) {
+                this.router.navigate(['/upload-reel']);
+            } else {
+                this.showContactModal = true;
+            }
+        });
     }
 
     async logout() {
@@ -156,6 +166,10 @@ export class ProfileComponent implements OnInit {
     handleTouchEnd(event: any) {
         this.touchendX = event.changedTouches[0].screenX;
         this.handleSwipeGesture();
+    }
+
+    closeContactModal() {
+        this.showContactModal = false;
     }
 
     private handleSwipeGesture() {

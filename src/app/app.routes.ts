@@ -9,6 +9,7 @@ import { UploadReelComponent } from './upload-reel/upload-reel';
 import { authGuard } from './guards/auth.guard';
 import { noAuthGuard } from './guards/no-auth.guard';
 import { splashGuard } from './guards/splash.guard';
+import { adminGuard } from './guards/admin.guard';
 
 import { SearchComponent } from './search/search.component';
 import { ProfileComponent } from './profile/profile.component';
@@ -22,7 +23,7 @@ export const routes: Routes = [
 	{ path: 'location-permission', component: LocationPermissionComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'main-app', component: MainAppComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'video-feed', component: VideoFeedComponent, canActivate: [authGuard, splashGuard] },
-	{ path: 'upload-reel', component: UploadReelComponent, canActivate: [authGuard, splashGuard] },
+	{ path: 'upload-reel', component: UploadReelComponent, canActivate: [authGuard, adminGuard, splashGuard] },
 	{ path: 'search', component: SearchComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'profile', component: ProfileComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'trending', component: TrendingComponent, canActivate: [authGuard, splashGuard] },

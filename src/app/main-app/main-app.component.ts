@@ -3,6 +3,7 @@ import { Auth } from '@angular/fire/auth';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import { VideoFeedComponent } from '../video-feed/video-feed';
 import { FavoritesComponent } from '../favorites/favorites.component';
 import { UploadReelComponent } from '../upload-reel/upload-reel';
@@ -13,6 +14,7 @@ import { LocationService } from '../services/location.service';
 import { NavigationService } from '../services/navigation.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal';
 import { AudioMutexService } from '../services/audio-mutex.service';
+import { AdminService } from '../services/admin.service';
 
 @Component({
   selector: 'app-main-app',
@@ -37,6 +39,7 @@ export class MainAppComponent implements OnInit {
 
   activeTab = 'feed';
   showProfileMenu = false;
+  isAdmin$!: Observable<boolean>;
 
   // Modal State
   showConfirmModal = false;
@@ -54,7 +57,8 @@ export class MainAppComponent implements OnInit {
     private locationService: LocationService,
     private navigationService: NavigationService,
     private audioMutex: AudioMutexService,
-    private auth: Auth
+    private auth: Auth,
+    private adminService: AdminService
   ) {
     // Check if location was passed via navigation state
     const navigation = this.router.getCurrentNavigation();
@@ -93,6 +97,9 @@ export class MainAppComponent implements OnInit {
   }
 
   async ngOnInit() {
+    // Initialize admin status observable
+    this.isAdmin$ = this.adminService.isCurrentUserAdmin();
+
     // If location wasn't set via navigation, try to get it from LocationService
     if (this.location === 'Koramangala, Bangalore') {
       try {

@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to read their own user document
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ⭐ ADMIN-ONLY REEL CREATION
+    // Only admins can create reels
+    match /reels/{document=**} {
+      // Read: All authenticated users can read reels
+      allow read: if request.auth != null;
+
+      // Create: Only admins can create reels
+      allow create: if request.auth != null &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+
+      // Update: Only the reel owner can update their own reel
+      allow update: if request.auth != null &&
+                       document.data.uploadedBy == request.auth.uid;
+
+      // Delete: Only the reel owner can delete their reel
+      allow delete: if request.auth != null &&
+                       document.data.uploadedBy == request.auth.uid;
+    }
+
+    // Collection: Store likes
+    match /reels/{reelId}/likes/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Collection: Store bookmarks
+    match /reels/{reelId}/bookmarks/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Default: Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

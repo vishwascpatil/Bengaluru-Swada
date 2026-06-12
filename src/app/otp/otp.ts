@@ -6,6 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ConfirmationResult, Auth, RecaptchaVerifier } from '@angular/fire/auth';
 import { PhoneAuthService } from '../services/phone-auth.service';
+import { Firestore, doc, getDoc, setDoc, serverTimestamp } from '@angular/fire/firestore';
+import { User } from '../models/user.model';
 
 @Component({
   selector: 'app-otp',
@@ -38,6 +40,7 @@ export class OtpComponent implements OnInit, AfterViewInit {
     private cdr: ChangeDetectorRef,
     private phoneAuthService: PhoneAuthService,
     private auth: Auth,
+    private firestore: Firestore,
     @Inject(DOCUMENT) private document: any
   ) {
     this.phone = this.phoneAuthService.getPhoneNumber();
@@ -128,6 +131,9 @@ export class OtpComponent implements OnInit, AfterViewInit {
 
       console.log('User signed in successfully:', result.user);
 
+      // Create or update user record in Firestore
+      await this.initializeUserRecord(result.user.uid, result.user.phoneNumber!);
+
       // Show success state
       this.isVerified = true;
       this.loading = false;
@@ -191,5 +197,35 @@ export class OtpComponent implements OnInit, AfterViewInit {
 
   change() {
     this.router.navigate(['/phone-input']);
+  }
+
+  /**
+   * Initialize user record in Firestore on first login
+   * Creates new user with isAdmin: false, or updates lastLogin if user already exists
+   */
+  private async initializeUserRecord(uid: string, phoneNumber: string): Promise<void> {
+    try {
+      const userDocRef = doc(this.firestore, 'users', uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        // User already exists, just update lastLogin
+        await setDoc(userDocRef, { lastLogin: serverTimestamp() }, { merge: true });
+      } else {
+        // New user - create record with isAdmin: false
+        const newUser: User = {
+          uid,
+          phoneNumber,
+          isAdmin: false,  // ⭐ Default to false - only flag admins manually
+          createdAt: serverTimestamp() as any,
+          lastLogin: serverTimestamp() as any
+        };
+        await setDoc(userDocRef, newUser);
+        console.log('New user record created:', uid);
+      }
+    } catch (error) {
+      console.error('Error initializing user record:', error);
+      // Don't block login even if Firestore write fails
+    }
   }
 }

@@ -119,4 +119,7 @@
     <!-- Legal Overlays -->
     <app-legal-view [visible]="!!activeLegalTab" [type]="activeLegalTab" (close)="activeLegalTab = null">
     </app-legal-view>
+
+    <!-- Contact Modal for Non-Admins -->
+    <app-contact-modal [isVisible]="showContactModal" (closed)="closeContactModal()"></app-contact-modal>
 </div>
