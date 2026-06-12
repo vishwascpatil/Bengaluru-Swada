@@ -10,36 +10,36 @@
       <div class="pulse-ring ring-2"></div>
       <div class="pulse-ring ring-3"></div>
     </div>
-    
+
     <div class="text-content">
       <h1>Find Food Near You</h1>
       <p>Allow location access to discover the best local dishes, street food, and hidden gems around your area.</p>
     </div>
-  </div>
 
-  <!-- Action Area -->
-  <div class="action-area">
-    <button class="primary-btn" (click)="allow()" [disabled]="isFetchingLocation">
-      <div class="btn-content">
-        <svg *ngIf="!isFetchingLocation" width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 21L12 11M12 21C11.2998 21 9.99153 19.0057 9.5 18.5M12 21C12.7002 21 14.0085 19.0057 14.5 18.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="2"/>
-        </svg>
-        <span *ngIf="!isFetchingLocation">Allow Location Access</span>
-        
-        <ng-container *ngIf="isFetchingLocation">
-          <div class="spinner-small"></div>
-          <span>Locating...</span>
-        </ng-container>
-      </div>
-    </button>
-    
-    <button class="secondary-btn" (click)="manual()" [disabled]="isFetchingLocation">Select Location Manually</button>
+    <!-- Action Area (Below Text) -->
+    <div class="action-area">
+      <button class="primary-btn" (click)="allow()" [disabled]="isFetchingLocation">
+        <div class="btn-content">
+          <svg *ngIf="!isFetchingLocation" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 21L12 11M12 21C11.2998 21 9.99153 19.0057 9.5 18.5M12 21C12.7002 21 14.0085 19.0057 14.5 18.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span *ngIf="!isFetchingLocation">Allow Location Access</span>
+
+          <ng-container *ngIf="isFetchingLocation">
+            <div class="spinner-small"></div>
+            <span>Locating...</span>
+          </ng-container>
+        </div>
+      </button>
+
+      <button class="secondary-btn" (click)="manual()" [disabled]="isFetchingLocation">Select Location Manually</button>
+    </div>
   </div>
 
   <!-- Location Search Sheet -->
-  <app-location-search-sheet 
-    *ngIf="showLocationModal" 
+  <app-location-search-sheet
+    *ngIf="showLocationModal"
     (closeSheet)="closeLocationModal()"
     (locationSelected)="onLocationSelected()">
   </app-location-search-sheet>

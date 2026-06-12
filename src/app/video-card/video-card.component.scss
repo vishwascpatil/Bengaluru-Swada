@@ -32,39 +32,45 @@
 
 .view-count-badge {
     position: absolute;
-    bottom: 25px;
+    bottom: 30px;
     right: 20px;
     z-index: 100;
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    background: rgba(0, 0, 0, 0.85);
-    /* Darker for better contrast */
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border-radius: 12px;
-    /* Slightly less rounded than full pill for "box" feel */
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: #ffffff;
-    font-size: 0.7rem;
-    font-weight: 500;
+    font-size: 0.85rem;
+    font-weight: 600;
     pointer-events: none;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 
     svg {
-        opacity: 0.9;
-        stroke-width: 2.2px;
-        width: 14px;
-        height: 14px;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        opacity: 1;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
     }
 
     .count-text {
-        letter-spacing: 0.2px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        letter-spacing: 0.3px;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        font-variant-numeric: tabular-nums;
+        min-width: 20px;
     }
+}
+
+.view-count-badge:hover {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.15);
 }
 
 .profile-overlay-btn {
@@ -577,4 +583,4 @@
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.8);
     }
-}
+}
