@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { Capacitor } from '@capacitor/core';
+import FusedLocation from '../plugins/fused-location.plugin';
 
 @Injectable({
     providedIn: 'root'
@@ -23,7 +25,8 @@ export class LocationService {
     private readonly DEFAULT_LOCATION_DATA = { name: 'Koramangala', lat: 12.9352, lng: 77.6245 };
 
     /**
-     * Get user's current location with singleton promise, caching, and hard timeout
+     * Get user's current location with singleton promise, caching, and hard timeout.
+     * Uses FusedLocationProviderClient on native Android, falls back to navigator.geolocation on web.
      */
     getUserLocation(): Promise<{ latitude: number; longitude: number }> {
         // Return cached location if available
@@ -36,8 +39,45 @@ export class LocationService {
             return this.locationPromise;
         }
 
-        // Create new location request
-        this.locationPromise = new Promise<{ latitude: number; longitude: number }>((resolve) => {
+        // Use native FusedLocation plugin on Android
+        if (Capacitor.isNativePlatform()) {
+            this.locationPromise = this.getNativeLocation();
+            return this.locationPromise;
+        }
+
+        // Fallback: Web browser geolocation
+        this.locationPromise = this.getWebLocation();
+        return this.locationPromise;
+    }
+
+    /**
+     * Get location using native FusedLocationProviderClient via Capacitor plugin
+     */
+    private async getNativeLocation(): Promise<{ latitude: number; longitude: number }> {
+        try {
+            const result = await FusedLocation.getCurrentLocation({
+                enableHighAccuracy: true,
+                timeout: 10000
+            });
+            this.userLocation = {
+                latitude: result.latitude,
+                longitude: result.longitude
+            };
+            console.log('[LocationService] Native FusedLocation:', this.userLocation);
+            return this.userLocation;
+        } catch (error) {
+            console.warn('[LocationService] Native location failed, using default:', error);
+            this.userLocation = this.DEFAULT_LOCATION;
+            this.locationPromise = null;
+            return this.DEFAULT_LOCATION;
+        }
+    }
+
+    /**
+     * Get location using browser navigator.geolocation (web fallback)
+     */
+    private getWebLocation(): Promise<{ latitude: number; longitude: number }> {
+        return new Promise<{ latitude: number; longitude: number }>((resolve) => {
             let resolved = false;
 
             // Hard fallback timeout
@@ -85,8 +125,6 @@ export class LocationService {
                 { enableHighAccuracy: false, timeout: 4000, maximumAge: 600000 } // Low accuracy for speed, 4s internal timeout
             );
         });
-
-        return this.locationPromise;
     }
 
     /**

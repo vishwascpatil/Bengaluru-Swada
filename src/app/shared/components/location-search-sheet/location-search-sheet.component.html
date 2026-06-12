@@ -1,0 +1,125 @@
+  <div class="modal-backdrop" (click)="close()">
+    <div class="ios-sheet" (click)="$event.stopPropagation()">
+      <div class="drag-handle"></div>
+
+      <div class="sheet-header">
+        <h2>Search Location</h2>
+        <button class="close-icon-btn" (click)="close()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-container">
+        <div class="search-bar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()" placeholder="Search for area, street..."
+            #searchInput autocomplete="off">
+          <button class="clear-search-btn" *ngIf="searchQuery" (click)="clearSearch()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#8E8E93">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" stroke="white" stroke-width="2" />
+              <line x1="9" y1="9" x2="15" y2="15" stroke="white" stroke-width="2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="locations-scroll">
+
+        <!-- Google Places Autocomplete Results (shown when typing) -->
+        <ng-container *ngIf="searchQuery.trim()">
+          <div class="searching-indicator" *ngIf="isSearching">
+            <svg class="spinner small" viewBox="0 0 50 50">
+              <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+            </svg>
+            <span>Searching...</span>
+          </div>
+
+          <div class="autocomplete-results" *ngIf="!isSearching">
+            <div class="location-row" *ngFor="let prediction of searchResults" (click)="selectPrediction(prediction)">
+              <div class="loc-icon-bg">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#0D7D63">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                  <circle cx="12" cy="9" r="2.5" fill="white" />
+                </svg>
+              </div>
+              <div class="loc-details">
+                <span class="loc-name">{{prediction.mainText}}</span>
+                <span class="loc-sub">{{prediction.secondaryText}}</span>
+              </div>
+            </div>
+
+            <div class="empty-state" *ngIf="searchResults.length === 0 && !isSearching">
+              <p>No locations found in Bangalore</p>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Default State (no search query) -->
+        <ng-container *ngIf="!searchQuery.trim()">
+
+          <!-- Use Current Location -->
+          <div class="use-current-location" (click)="useCurrentLocation()">
+            <div class="gps-icon-bg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="8" stroke="#0D7D63" stroke-width="2" />
+                <circle cx="12" cy="12" r="3" fill="#0D7D63" />
+                <line x1="12" y1="2" x2="12" y2="6" stroke="#0D7D63" stroke-width="2" />
+                <line x1="12" y1="18" x2="12" y2="22" stroke="#0D7D63" stroke-width="2" />
+                <line x1="2" y1="12" x2="6" y2="12" stroke="#0D7D63" stroke-width="2" />
+                <line x1="18" y1="12" x2="22" y2="12" stroke="#0D7D63" stroke-width="2" />
+              </svg>
+            </div>
+            <div class="gps-details">
+              <span class="gps-title">Use current location</span>
+              <span class="gps-sub">Using GPS</span>
+            </div>
+          </div>
+
+          <!-- Recent Searches -->
+          <div class="section-block" *ngIf="recentSearches.length > 0">
+            <div class="section-header">
+              <span class="section-title">Recent Searches</span>
+              <button class="clear-btn" (click)="clearRecentSearches()">CLEAR</button>
+            </div>
+
+            <div class="recent-row" *ngFor="let recent of recentSearches" (click)="selectRecentSearch(recent)">
+              <div class="recent-icon-bg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <div class="loc-details">
+                <span class="loc-name">{{recent.name}}</span>
+                <span class="loc-sub">Bengaluru, Karnataka</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Popular in Bangalore -->
+          <div class="section-block popular-section">
+            <div class="section-header">
+              <span class="section-title">Popular in Bangalore</span>
+            </div>
+
+            <div class="popular-card" *ngFor="let popular of popularLocations" (click)="selectPopularLocation(popular)">
+              <img [src]="popular.image" [alt]="popular.name" class="popular-img" loading="lazy">
+              <div class="popular-info">
+                <span class="popular-name">{{popular.name}}</span>
+                <span class="popular-desc">{{popular.description}}</span>
+              </div>
+            </div>
+          </div>
+
+        </ng-container>
+      </div>
+    </div>
+  </div>

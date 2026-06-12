@@ -1,4 +1,4 @@
-/* Modern iOS 26 Standards - OTP Page */
+/* Modern iOS Standards - OTP Page */
 
 :host {
     display: block;
@@ -11,9 +11,11 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 0 32px;
+    padding: env(safe-area-inset-top, 24px) 24px env(safe-area-inset-bottom, 24px);
     box-sizing: border-box;
     position: relative;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 .otp-content {
@@ -23,8 +25,7 @@
     max-width: 480px;
     margin: 0 auto;
     width: 100%;
-    padding-top: 20px;
-    /* Safe area top */
+    align-items: stretch;
 }
 
 /* --- Top Bar --- */
@@ -47,8 +48,9 @@
 
 /* --- Header --- */
 .header-section {
-    margin-top: 40px;
+    margin-top: 20px;
     margin-bottom: 40px;
+    text-align: center;
     animation: slideDown 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -77,17 +79,16 @@
 /* --- OTP Inputs --- */
 .otp-wrapper {
     display: flex;
-    gap: 8px;
-    /* Default gap */
-    justify-content: space-between;
+    gap: 12px;
+    justify-content: center;
     margin-bottom: 16px;
     animation: fadeIn 0.8s ease backwards 0.2s;
+    width: 100%;
 }
 
 .digit-box {
-    flex: 1;
-    aspect-ratio: 0.85;
-    /* Taller boxes */
+    width: 45px;
+    height: 55px;
     background: #F2F2F7;
     border-radius: 12px;
     position: relative;
@@ -128,22 +129,26 @@
 .error-feedback {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    color: var(--primary-color);
+    color: #FF3B30;
     font-size: 14px;
     font-weight: 500;
+    margin-top: 12px;
     animation: shake 0.4s ease;
 }
 
 /* --- Action Area --- */
 
 .action-area {
-    margin-top: 32px;
-    margin-bottom: 32px;
+    margin-top: auto;
+    padding-top: 32px;
+    padding-bottom: 24px;
     display: flex;
     flex-direction: column;
     gap: 24px;
     animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s backwards;
+    width: 100%;
 }
 
 .resend-wrapper {

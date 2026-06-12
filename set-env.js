@@ -20,7 +20,8 @@ const envConfigFile = `export const environment = {
         workerUrl: '${process.env.CLOUDFLARE_WORKER_URL}',
         cdnUrl: '${process.env.CLOUDFLARE_CDN_URL}',
         bucketName: '${process.env.CLOUDFLARE_BUCKET_NAME}'
-    }
+    },
+    googleMapsApiKey: '${process.env.GOOGLE_MAPS_API_KEY}'
 };
 `;
 
@@ -39,7 +40,8 @@ const prodEnvConfigFile = `export const environment = {
         workerUrl: '${process.env.CLOUDFLARE_WORKER_URL}',
         cdnUrl: '${process.env.CLOUDFLARE_CDN_URL}',
         bucketName: '${process.env.CLOUDFLARE_BUCKET_NAME}'
-    }
+    },
+    googleMapsApiKey: '${process.env.GOOGLE_MAPS_API_KEY}'
 };
 `;
 

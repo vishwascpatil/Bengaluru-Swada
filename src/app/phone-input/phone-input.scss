@@ -1,4 +1,4 @@
-/* Modern iOS 26 Standards - Login Page */
+/* Modern iOS Standards - Login Page */
 
 :host {
     display: block;
@@ -11,7 +11,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 24px 24px;
+    padding: env(safe-area-inset-top, 24px) 24px env(safe-area-inset-bottom, 24px);
     box-sizing: border-box;
     overflow-x: hidden;
     width: 100%;
@@ -24,14 +24,30 @@
     max-width: 480px;
     margin: 0 auto;
     width: 100%;
+    align-items: stretch; // Ensure children take full width
+}
+
+/* --- Logo Section --- */
+.logo-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.8s ease backwards;
+}
+
+.app-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* --- Header --- */
 .header-section {
-    margin-top: 40px;
-    /* Reduced from 80 */
     margin-bottom: 32px;
-    /* Reduced from 48 */
+    text-align: center;
     animation: slideDown 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -53,6 +69,7 @@
 
 /* --- Input --- */
 .input-wrapper {
+    width: 100%;
     animation: fadeIn 0.8s ease backwards;
     animation-delay: 0.2s;
 }
@@ -66,6 +83,7 @@
     height: 64px;
     transition: background 0.2s, box-shadow 0.2s;
     border: 2px solid transparent;
+    width: 100%;
 
     &.focused {
         background: #ffffff;
@@ -78,6 +96,7 @@
     font-size: 20px;
     font-weight: 600;
     color: #1c1c1e;
+    min-width: 40px;
 }
 
 .vertical-divider {
@@ -98,6 +117,7 @@ input {
     padding: 0;
     letter-spacing: 0.5px;
     height: 100%;
+    width: 100%;
 
     &::placeholder {
         color: #AEAEB2;
@@ -108,21 +128,23 @@ input {
     margin-top: 12px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    color: var(--primary-color);
+    color: #FF3B30; // iOS Red for error
     font-size: 13px;
     font-weight: 500;
-    padding-left: 8px;
     animation: shake 0.4s ease;
 }
 
 /* --- Bottom Actions --- */
 
 .bottom-actions {
-    margin-top: 32px;
-    margin-bottom: 24px;
+    margin-top: auto; // Push to bottom
+    padding-top: 32px;
+    padding-bottom: 24px;
     animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
     animation-delay: 0.3s;
+    width: 100%;
 }
 
 .privacy-note {
