@@ -1,8 +1,11 @@
-import { Component, EventEmitter, Output, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, AfterViewInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import * as L from 'leaflet';
 import { LocationService } from '../services/location.service';
+import { environment } from '../../environments/environment';
+
+declare const google: any;
+declare const document: any;
 
 @Component({
     selector: 'app-location-picker',
@@ -15,128 +18,294 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnDestroy
     @Output() locationSelected = new EventEmitter<{ lat: number, lng: number, address?: string }>();
     @Output() cancel = new EventEmitter<void>();
 
-    private map: L.Map | undefined;
-    private marker: L.Marker | undefined;
+    private map: any;
+    private marker: any;
+    private autocompleteService: any;
+    private placesService: any;
+    private geocoder: any;
+    private searchDebounceTimer: any;
 
     searchQuery = '';
     searchResults: any[] = [];
     isSearching = false;
     isConfirming = false;
+    googleMapsLoaded = false;
+    selectedAddress = '';
 
     // Default to Bangalore
     selectedLat = 12.9716;
     selectedLng = 77.5946;
 
-    constructor(private locationService: LocationService) { }
+    constructor(
+        private locationService: LocationService,
+        private ngZone: NgZone
+    ) { }
 
     ngOnInit(): void { }
 
     ngAfterViewInit(): void {
-        this.initMap();
+        this.loadGoogleMaps();
     }
 
     ngOnDestroy(): void {
-        if (this.map) {
-            this.map.remove();
+        if (this.searchDebounceTimer) {
+            clearTimeout(this.searchDebounceTimer);
         }
     }
 
+    /**
+     * Load Google Maps JS SDK (reuse if already loaded)
+     */
+    private loadGoogleMaps(): void {
+        if (typeof google !== 'undefined' && google.maps) {
+            this.onGoogleMapsReady();
+            return;
+        }
+
+        const apiKey = environment.googleMapsApiKey;
+        if (!apiKey) {
+            console.error('[LocationPicker] Google Maps API Key not found');
+            return;
+        }
+
+        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+        if (existingScript) {
+            // Script tag exists — wait for it to load
+            if (typeof google !== 'undefined' && google.maps) {
+                this.onGoogleMapsReady();
+            } else {
+                existingScript.addEventListener('load', () => this.onGoogleMapsReady());
+            }
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => this.onGoogleMapsReady();
+        script.onerror = () => console.error('[LocationPicker] Failed to load Google Maps');
+        document.head.appendChild(script);
+    }
+
+    /**
+     * Called when Google Maps SDK is ready
+     */
+    private onGoogleMapsReady(): void {
+        this.ngZone.run(() => {
+            this.googleMapsLoaded = true;
+            this.autocompleteService = new google.maps.places.AutocompleteService();
+            const dummyDiv = document.createElement('div');
+            this.placesService = new google.maps.places.PlacesService(dummyDiv);
+            this.geocoder = new google.maps.Geocoder();
+            this.initMap();
+        });
+    }
+
+    /**
+     * Initialize Google Map
+     */
     private initMap(): void {
-        this.map = L.map('map').setView([this.selectedLat, this.selectedLng], 13);
+        const mapElement = document.getElementById('google-map');
+        if (!mapElement) return;
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(this.map);
-
-        // Add initial marker
-        this.addMarker(this.selectedLat, this.selectedLng);
-
-        // Handle map clicks
-        this.map.on('click', (e: L.LeafletMouseEvent) => {
-            this.updateLocation(e.latlng.lat, e.latlng.lng);
+        this.map = new google.maps.Map(mapElement, {
+            center: { lat: this.selectedLat, lng: this.selectedLng },
+            zoom: 14,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            zoomControl: true,
+            styles: [
+                {
+                    featureType: 'poi',
+                    elementType: 'labels',
+                    stylers: [{ visibility: 'off' }]
+                }
+            ]
         });
 
-        // Fix map sizing issues
-        setTimeout(() => {
-            this.map?.invalidateSize();
-        }, 100);
+        // Add draggable marker
+        this.marker = new google.maps.Marker({
+            position: { lat: this.selectedLat, lng: this.selectedLng },
+            map: this.map,
+            draggable: true,
+            animation: google.maps.Animation.DROP
+        });
+
+        // Handle marker drag
+        this.marker.addListener('dragend', () => {
+            const pos = this.marker.getPosition();
+            this.ngZone.run(() => {
+                this.selectedLat = pos.lat();
+                this.selectedLng = pos.lng();
+                this.reverseGeocode(this.selectedLat, this.selectedLng);
+            });
+        });
+
+        // Handle map click
+        this.map.addListener('click', (e: any) => {
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+            this.ngZone.run(() => {
+                this.updateMarker(lat, lng);
+                this.reverseGeocode(lat, lng);
+            });
+        });
+
+        // Try to get user's current location
+        this.tryGetCurrentLocation();
     }
 
-    private addMarker(lat: number, lng: number): void {
-        if (this.marker) {
-            this.marker.setLatLng([lat, lng]);
-        } else {
-            // Create a custom icon to avoid 404s for default markers in some setups
-            const icon = L.divIcon({
-                className: 'custom-pin',
-                html: `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ff4757" stroke="white" stroke-width="2"/>
-               </svg>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 30]
-            });
-
-            this.marker = L.marker([lat, lng], { icon: icon, draggable: true }).addTo(this.map!);
-
-            this.marker.on('dragend', () => {
-                const position = this.marker!.getLatLng();
-                this.updateLocation(position.lat, position.lng, false);
-            });
+    /**
+     * Try to center map on user's current location
+     */
+    private async tryGetCurrentLocation(): Promise<void> {
+        try {
+            const loc = await this.locationService.getUserLocation();
+            this.updateMarker(loc.latitude, loc.longitude);
+            this.map.setCenter({ lat: loc.latitude, lng: loc.longitude });
+            this.reverseGeocode(loc.latitude, loc.longitude);
+        } catch (e) {
+            console.warn('[LocationPicker] Could not get current location, using default');
         }
     }
 
-    private updateLocation(lat: number, lng: number, moveMap = false): void {
+    /**
+     * Update marker position
+     */
+    private updateMarker(lat: number, lng: number): void {
         this.selectedLat = lat;
         this.selectedLng = lng;
-
         if (this.marker) {
-            this.marker.setLatLng([lat, lng]);
-        } else {
-            this.addMarker(lat, lng);
-        }
-
-        if (moveMap && this.map) {
-            this.map.panTo([lat, lng]);
+            this.marker.setPosition({ lat, lng });
         }
     }
 
-    async searchLocation(): Promise<void> {
-        if (!this.searchQuery.trim()) return;
+    /**
+     * Reverse geocode to get address from coords
+     */
+    private reverseGeocode(lat: number, lng: number): void {
+        if (!this.geocoder) return;
+
+        this.geocoder.geocode({ location: { lat, lng } }, (results: any[], status: string) => {
+            this.ngZone.run(() => {
+                if (status === 'OK' && results && results.length > 0) {
+                    this.selectedAddress = results[0].formatted_address;
+                } else {
+                    this.selectedAddress = '';
+                }
+            });
+        });
+    }
+
+    /**
+     * Search for locations using Google Places Autocomplete
+     */
+    onSearchInput(): void {
+        if (this.searchDebounceTimer) {
+            clearTimeout(this.searchDebounceTimer);
+        }
+
+        const query = this.searchQuery.trim();
+        if (!query) {
+            this.searchResults = [];
+            this.isSearching = false;
+            return;
+        }
+
+        if (!this.googleMapsLoaded || !this.autocompleteService) return;
 
         this.isSearching = true;
-        this.searchResults = [];
 
+        this.searchDebounceTimer = setTimeout(() => {
+            this.fetchAutocomplete(query);
+        }, 300);
+    }
+
+    private fetchAutocomplete(query: string): void {
+        const request = {
+            input: query,
+            componentRestrictions: { country: 'in' },
+            location: new google.maps.LatLng(12.9716, 77.5946),
+            radius: 50000 // 50km around Bangalore
+        };
+
+        this.autocompleteService.getPlacePredictions(request, (predictions: any[], status: string) => {
+            this.ngZone.run(() => {
+                this.isSearching = false;
+                if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+                    this.searchResults = [];
+                    return;
+                }
+
+                this.searchResults = predictions.map((p: any) => ({
+                    placeId: p.place_id,
+                    mainText: p.structured_formatting?.main_text || p.description.split(',')[0],
+                    secondaryText: p.structured_formatting?.secondary_text || '',
+                    description: p.description
+                }));
+            });
+        });
+    }
+
+    /**
+     * Select a search result and move the map
+     */
+    selectSearchResult(result: any): void {
+        if (!this.placesService) return;
+
+        this.placesService.getDetails({
+            placeId: result.placeId,
+            fields: ['name', 'geometry', 'formatted_address']
+        }, (place: any, status: string) => {
+            this.ngZone.run(() => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && place.geometry?.location) {
+                    const lat = place.geometry.location.lat();
+                    const lng = place.geometry.location.lng();
+
+                    this.updateMarker(lat, lng);
+                    this.map.setCenter({ lat, lng });
+                    this.map.setZoom(16);
+
+                    this.selectedAddress = place.formatted_address || result.description;
+                    this.searchQuery = result.mainText;
+                    this.searchResults = [];
+                }
+            });
+        });
+    }
+
+    /**
+     * Center on current location
+     */
+    async centerOnCurrentLocation(): Promise<void> {
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.searchQuery)}`);
-            const data = await response.json();
-            this.searchResults = data;
-        } catch (error) {
-            console.error('Error searching location:', error);
-        } finally {
-            this.isSearching = false;
+            const loc = await this.locationService.getUserLocation();
+            this.updateMarker(loc.latitude, loc.longitude);
+            this.map.setCenter({ lat: loc.latitude, lng: loc.longitude });
+            this.map.setZoom(16);
+            this.reverseGeocode(loc.latitude, loc.longitude);
+        } catch (e) {
+            console.error('[LocationPicker] Error getting current location:', e);
         }
     }
 
-    selectSearchResult(result: any): void {
-        const lat = parseFloat(result.lat);
-        const lng = parseFloat(result.lon);
-
-        this.updateLocation(lat, lng, true);
-        this.searchResults = []; // Clear results
-        this.searchQuery = result.display_name.split(',')[0]; // Update search box with simple name
-    }
-
+    /**
+     * Confirm the selected location
+     */
     async confirmSelection(): Promise<void> {
         this.isConfirming = true;
         try {
-            const address = await this.locationService.getExactAddress(this.selectedLat, this.selectedLng);
+            const address = this.selectedAddress ||
+                await this.locationService.getExactAddress(this.selectedLat, this.selectedLng);
             this.locationSelected.emit({
                 lat: this.selectedLat,
                 lng: this.selectedLng,
                 address: address
             });
         } catch (e) {
-            console.error('Error in confirmSelection getting address:', e);
+            console.error('[LocationPicker] Error confirming selection:', e);
             this.locationSelected.emit({
                 lat: this.selectedLat,
                 lng: this.selectedLng

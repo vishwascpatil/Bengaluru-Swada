@@ -1,4 +1,4 @@
-<div class="search-container">
+<div class="search-container" [class.exiting]="isExiting">
     <!-- Search Header -->
     <div class="search-header">
         <div class="header-top">
@@ -22,89 +22,163 @@
             </div>
         </div>
 
-        <div class="search-bar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                class="search-icon">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" placeholder="Search dosa, vada pav, biryani..." [(ngModel)]="searchQuery"
-                (ngModelChange)="applyFilters()">
+        <div class="search-bar-wrapper">
+            <div class="search-bar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    class="search-icon">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" placeholder="Search dosa, vada pav, biryani..." [(ngModel)]="searchQuery"
+                    (ngModelChange)="applyFilters()" #searchInput>
+                <button class="clear-btn" *ngIf="searchQuery" (click)="reset()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Location Selector Modal -->
-    <app-location-search-sheet 
-        *ngIf="showLocationModal" 
-        (closeSheet)="closeLocationModal()"
+    <app-location-search-sheet *ngIf="showLocationModal" (closeSheet)="closeLocationModal()"
         (locationSelected)="onLocationSelected()">
     </app-location-search-sheet>
 
-    <!-- Filters Section -->
-    <!-- Compact Filters -->
-    <div class="filters-compact" *ngIf="hasSearchMatches">
-        <div class="filter-row">
-            <!-- Sort Options -->
-            <button *ngFor="let sort of sortOptions" class="chip" [class.active]="selectedSort === sort"
-                (click)="selectSort(sort)">
-                <span *ngIf="selectedSort === sort" class="check">✓</span>
-                {{sort}}
-            </button>
+    <div class="search-body">
 
-            <div class="vertical-divider"></div>
+        <!-- EXPLORE MODE: Shown when the user has NOT typed anything -->
+        <ng-container *ngIf="!isSearchingMode">
 
-            <!-- Distance Options -->
-            <button *ngFor="let dist of distances" class="chip" [class.active]="selectedDistance === dist"
-                (click)="selectDistance(dist)">
-                {{dist.label}}
-            </button>
-        </div>
-
-        <div class="filter-row">
-            <!-- Price Options -->
-            <button *ngFor="let range of priceRanges" class="chip" [class.active]="selectedPriceRange === range"
-                (click)="selectPrice(range)">
-                {{range.label}}
-            </button>
-        </div>
-    </div>
-
-    <!-- Results Grid -->
-    <div class="results-grid">
-        <div class="loading-spinner" *ngIf="isLoading">
-            <div class="spinner"></div>
-        </div>
-
-        <div class="empty-state" *ngIf="!isLoading && filteredReels.length === 0">
-            <div *ngIf="reels.length === 0; else noResults">
-                <p>Search for your favorite food or browse categories!</p>
-            </div>
-            <ng-template #noResults>
-                <p>No tasty bites found matching your search.</p>
-            </ng-template>
-        </div>
-
-        <div class="food-card" *ngFor="let reel of filteredReels" (click)="openReel(reel)">
-            <div class="card-image">
-                <video [src]="reel.videoUrl" muted playsinline preload="metadata" #videoThumb
-                    [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0" (loadeddata)="onThumbLoad(reel.id!)"
-                    (loadedmetadata)="videoThumb.currentTime=0.1"></video>
-                <!-- <img [src]="reel.thumbnailUrl" alt="Food"> -->
-                <div class="distance-badge">{{reel.distanceStr}}</div>
-            </div>
-            <div class="card-details">
-                <div class="header-row">
-                    <h3 class="dish-name">{{reel.title}}</h3>
-                    <!-- <span class="rating">
-                        {{reel.rating}} <span class="star">★</span>
-                    </span> -->
-                </div>
-                <p class="vendor-name">{{reel.vendor}}</p>
-                <div class="price-row">
-                    <span class="price">₹{{reel.price}}</span>
-                    <!-- <span class="offer">20% OFF</span> -->
+            <!-- Trending Searches Panel -->
+            <div class="section-container trending-container">
+                <h4 class="section-title">
+                    <span class="fire-icon">🔥</span> Popular Searches
+                </h4>
+                <div class="trending-pills">
+                    <button *ngFor="let term of trendingSearches" class="trend-pill"
+                        (click)="selectTrendingSearch(term)">
+                        {{term}}
+                    </button>
                 </div>
             </div>
+
+            <!-- Categories panel: "What's on your mind?" -->
+            <div class="section-container categories-container">
+                <h4 class="section-title">What's on your mind?</h4>
+                <div class="category-grid">
+                    <div *ngFor="let cat of categories" class="category-card" [class.active]="selectedCategory === cat"
+                        (click)="selectCategory(cat)">
+                        <div class="category-icon-bg">
+                            <span class="category-emoji">{{ getCategoryEmoji(cat) }}</span>
+                        </div>
+                        <span class="category-name">{{cat === 'All' ? 'Explore All' : cat}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Section (Explore Mode) -->
+            <div class="explore-filters">
+                <div class="filter-header">
+                    <h4 class="section-title">Filter by Vibe</h4>
+                </div>
+                <div class="filter-row">
+                    <!-- Sort Options -->
+                    <button *ngFor="let sort of sortOptions" class="chip" [class.active]="selectedSort === sort"
+                        (click)="selectSort(sort)">
+                        {{sort}}
+                    </button>
+                </div>
+                <div class="filter-row">
+                    <!-- Price Options -->
+                    <button *ngFor="let range of priceRanges" class="chip" [class.active]="selectedPriceRange === range"
+                        (click)="selectPrice(range)">
+                        {{range.label}}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feed Heading -->
+            <div class="section-header-row">
+                <h4 class="section-title">Trending Food Videos</h4>
+
+            </div>
+
+        </ng-container>
+
+        <!-- SEARCH MODE: Filters Active -->
+        <ng-container *ngIf="isSearchingMode">
+
+            <!-- Active Filters Panel -->
+            <div class="search-filters-row">
+                <div class="filter-scroller">
+                    <button *ngFor="let sort of sortOptions" class="chip active-chip"
+                        [class.active]="selectedSort === sort" (click)="selectSort(sort)">
+                        {{sort}}
+                    </button>
+                    <div class="scroller-divider"></div>
+                    <button *ngFor="let range of priceRanges" class="chip active-chip"
+                        [class.active]="selectedPriceRange === range" (click)="selectPrice(range)">
+                        {{range.label}}
+                    </button>
+                    <div class="scroller-divider"></div>
+                    <button *ngFor="let dist of distances" class="chip active-chip"
+                        [class.active]="selectedDistance === dist" (click)="selectDistance(dist)">
+                        {{dist.label}}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results status/fallback banner -->
+            <div class="results-banner" *ngIf="!hasSearchMatches && !isLoading">
+                <div class="no-matches-emoji">🔍😞</div>
+                <h4>No exact matches found for "{{searchQuery}}"</h4>
+                <p>Don't worry! Here are some trending local dishes you'll love instead:</p>
+            </div>
+
+            <div class="results-banner success-banner" *ngIf="hasSearchMatches && !isLoading">
+                <p>Showing matching street food options near you</p>
+            </div>
+
+        </ng-container>
+
+        <!-- Dynamic Results Grid (loaded with videos) -->
+        <div class="results-grid">
+            <div class="loading-spinner" *ngIf="isLoading">
+                <div class="spinner"></div>
+                <p class="loading-text">Loading delicious updates...</p>
+            </div>
+
+            <div class="food-card video-card" *ngFor="let reel of filteredReels" (click)="openReel(reel)">
+                <div class="card-image">
+                    <!-- HTML5 video autoplaying in loop, muted -->
+                    <video [src]="reel.videoUrl" autoplay loop muted playsinline preload="auto" #videoThumb
+                        [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0" (loadeddata)="onThumbLoad(reel.id!)">
+                    </video>
+
+                    <div class="card-badges">
+                        <div class="distance-badge">{{reel.distanceStr}}</div>
+                        <div class="rating-badge" *ngIf="reel.rating">
+                            {{reel.rating}} <span class="star-mini">★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-details">
+                    <div class="header-row">
+                        <h3 class="dish-name">{{reel.title}}</h3>
+                    </div>
+                    <p class="vendor-name">📍 {{reel.vendor}}</p>
+                    <div class="price-row">
+                        <span class="price">₹{{reel.price}}</span>
+                        <span class="taste-tag" *ngIf="reel.categories && reel.categories.length > 0">
+                            {{reel.categories[0]}}
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
+
     </div>
 </div>

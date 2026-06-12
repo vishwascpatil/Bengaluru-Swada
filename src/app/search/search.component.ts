@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,7 +7,6 @@ import { Reel } from '../models/reel.model';
 import { LocationService } from '../services/location.service';
 import { NavigationService } from '../services/navigation.service';
 import { AdmobService } from '../services/admob.service';
-import { OnDestroy } from '@angular/core';
 import { LocationSearchSheetComponent } from '../shared/components/location-search-sheet/location-search-sheet.component';
 
 @Component({
@@ -17,7 +16,9 @@ import { LocationSearchSheetComponent } from '../shared/components/location-sear
     templateUrl: './search.component.html',
     styleUrls: ['./search.component.scss']
 })
-export class SearchComponent implements OnInit, OnDestroy {
+export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
+    @ViewChild('searchInput') searchInput!: ElementRef;
+    isExiting = false;
     searchQuery = '';
     reels: any[] = [];
     filteredReels: any[] = [];
@@ -64,14 +65,34 @@ export class SearchComponent implements OnInit, OnDestroy {
         private router: Router
     ) { }
 
+    hasSearchMatches = false;
+    isSearchingMode = false;
+    trendingSearches = ['Dosa', 'Biryani', 'Vada Pav', 'Idli', 'Filter Coffee', 'Samosa'];
+
+    selectTrendingSearch(term: string) {
+        this.searchQuery = term;
+        this.applyFilters();
+    }
+
+    getCategoryEmoji(category: string): string {
+        const emojis: { [key: string]: string } = {
+            'All': '🌟',
+            'South Indian': '🍛',
+            'North Indian': '🍲',
+            'Street Food': '🍢',
+            'Desserts': '🍨',
+            'Beverages': '🍹'
+        };
+        return emojis[category] || '🍔';
+    }
+
     async ngOnInit() {
         // Subscribe to global location changes
         this.locationService.currentLocation$.subscribe(loc => {
             if (loc) {
                 this.locationName = `${loc.name}, Bangalore`;
-                // Don't auto-reload here, wait for user action
                 if (this.reels.length > 0) {
-                    this.loadReels();
+                    this.loadReels().then(() => this.applyFilters());
                 }
             }
         });
@@ -91,6 +112,10 @@ export class SearchComponent implements OnInit, OnDestroy {
             this.locationName = `${currentLocValue.name}, Bangalore`;
         }
 
+        // Preload reels immediately on page entry
+        await this.loadReels();
+        await this.applyFilters();
+
         this.admobService.showBanner();
     }
 
@@ -107,7 +132,6 @@ export class SearchComponent implements OnInit, OnDestroy {
 
                 if (reel.latitude && reel.longitude) {
                     try {
-                        // Get numeric distance for filtering
                         const userLoc = await this.locationService.getUserLocation();
                         distanceVal = this.locationService.calculateDistance(
                             userLoc.latitude, userLoc.longitude,
@@ -121,10 +145,9 @@ export class SearchComponent implements OnInit, OnDestroy {
 
                 return {
                     ...reel,
-                    distanceVal, // Numeric for logic
-                    distanceStr, // String for display
-                    // Mock rating for now as it's in the design
-                    rating: (4 + Math.random()).toFixed(1)
+                    distanceVal,
+                    distanceStr,
+                    rating: (4 + Math.random() * 0.9).toFixed(1)
                 };
             }));
 
@@ -135,25 +158,17 @@ export class SearchComponent implements OnInit, OnDestroy {
         }
     }
 
-    hasSearchMatches = false;
-
     async applyFilters() {
-        // Strict requirement: Don't show results if search query is empty
-        if (!this.searchQuery.trim()) {
-            this.filteredReels = [];
-            this.hasSearchMatches = false;
-            return;
-        }
-
         // Lazy load reels if needed
         if (this.reels.length === 0 && !this.isLoading) {
             await this.loadReels();
         }
 
+        this.isSearchingMode = this.searchQuery.trim().length > 0;
         let result = this.reels;
 
         // 1. Text Search
-        if (this.searchQuery.trim()) {
+        if (this.isSearchingMode) {
             const q = this.searchQuery.toLowerCase();
             result = result.filter(r =>
                 r.title?.toLowerCase().includes(q) ||
@@ -162,7 +177,12 @@ export class SearchComponent implements OnInit, OnDestroy {
         }
 
         // Logic check: Do we have matches relevant to the text query?
-        this.hasSearchMatches = result.length > 0;
+        this.hasSearchMatches = this.isSearchingMode && result.length > 0;
+
+        // If in search mode but no matches, we keep the original result set as trending/popular fallback
+        if (this.isSearchingMode && result.length === 0) {
+            result = this.reels; // Fallback to all reels (popular)
+        }
 
         // 2. Category 
         if (this.selectedCategory !== 'All') {
@@ -182,10 +202,7 @@ export class SearchComponent implements OnInit, OnDestroy {
             } else if (this.selectedDistance.label === '< 1 km') {
                 result = result.filter(r => r.distanceVal < 1);
             } else {
-                // Range handling for 1-3, 3-5
                 const max = this.selectedDistance.max;
-                const min = this.distances[this.distances.indexOf(this.selectedDistance) - 1]?.max || 0;
-                // Re-logic for range:
                 if (this.selectedDistance.label === '1-3 km') {
                     result = result.filter(r => r.distanceVal >= 1 && r.distanceVal <= 3);
                 } else if (this.selectedDistance.label === '3-5 km') {
@@ -227,9 +244,12 @@ export class SearchComponent implements OnInit, OnDestroy {
     }
 
     openReel(reel: any) {
-        // Navigate to feed with this reel
         console.log('[Search] Opening reel:', reel.id);
         this.navigationService.selectReel(reel.id);
+        this.isExiting = true;
+        setTimeout(() => {
+            this.router.navigate(['/main-app']);
+        }, 350);
     }
 
     // Location Modal methods
@@ -263,8 +283,19 @@ export class SearchComponent implements OnInit, OnDestroy {
         this.selectedSort = 'Nearest First';
     }
 
+    ngAfterViewInit() {
+        // Automatically focus search input after slide-up page transition completes
+        setTimeout(() => {
+            this.searchInput?.nativeElement?.focus();
+        }, 500);
+    }
+
     goBack() {
-        this.router.navigate(['/main-app']);
+        this.isExiting = true;
+        // Wait for slide-down animation to complete before route change
+        setTimeout(() => {
+            this.router.navigate(['/main-app']);
+        }, 350);
     }
 
     onThumbLoad(reelId: string) {

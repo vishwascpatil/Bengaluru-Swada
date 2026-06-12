@@ -75,7 +75,8 @@ export class FavoritesComponent implements OnInit {
                 }
                 return {
                     ...reel,
-                    distanceStr
+                    distanceStr,
+                    rating: (4 + Math.random() * 0.9).toFixed(1)
                 };
             }));
 

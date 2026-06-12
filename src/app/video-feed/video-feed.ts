@@ -117,6 +117,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   async reloadReelsForNewLocation() {
     console.log('[VideoFeed] Reloading reels for new location...');
     const currentReels = [...this.reels];
+    const activeReelId = this.reels[this.currentIndex]?.id;
 
     // Recalculate distances for current reels
     const reelsWithUpdatedDistances = await Promise.all(
@@ -139,13 +140,20 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       })
     );
 
-    // Sort reels if on 'explore' tab (actually, explore is random, so maybe we don't resort by distance?)
-    // But if we want to update distances, we just did that.
-    // Let's keep the existing order for explore (random) to avoid jarring reorders on location update.
-    // If 'new', it's sorted by date.
-
     this.reels = reelsWithUpdatedDistances;
-    this.currentIndex = 0;
+    
+    // Find the previously active reel in the updated list and preserve its index
+    if (activeReelId) {
+      const newIndex = this.reels.findIndex(r => r.id === activeReelId);
+      if (newIndex !== -1) {
+        this.currentIndex = newIndex;
+      } else {
+        this.currentIndex = 0;
+      }
+    } else {
+      this.currentIndex = 0;
+    }
+    
     this.cdr.detectChanges();
   }
 
@@ -603,7 +611,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
    * Navigate to a specific reel by ID
    * @param reelId The ID of the reel to navigate to
    */
-  navigateToReel(reelId: string) {
+  async navigateToReel(reelId: string) {
     console.log(`[VideoFeed] Attempting to navigate to reel: ${reelId}`);
     console.log(`[VideoFeed] Total reels loaded: ${this.reels.length}`);
 
@@ -612,7 +620,43 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
       return;
     }
 
-    const index = this.reels.findIndex(r => r.id === reelId);
+    let index = this.reels.findIndex(r => r.id === reelId);
+    
+    // Fallback: If the reel is not found in the current loaded list, fetch it and insert it!
+    if (index === -1) {
+      console.log(`[VideoFeed] Reel ${reelId} not found in feed list. Fetching from Firestore...`);
+      try {
+        const reel = await this.reelsService.getReelById(reelId);
+        if (reel) {
+          let distance = '-- km';
+          if (reel.latitude && reel.longitude) {
+            try {
+              distance = await this.locationService.getDistanceFromUser(
+                reel.latitude,
+                reel.longitude
+              );
+            } catch (error) {
+              console.error('[VideoFeed] Error calculating distance for fetched reel:', error);
+            }
+          }
+          const currentUser = this.auth.currentUser;
+          const fullReel: Reel = {
+            ...reel,
+            distance,
+            isLiked: currentUser ? this.reelsService.isLikedByUser(reel, currentUser.uid) : false,
+            isBookmarked: currentUser ? this.reelsService.isBookmarkedByUser(reel, currentUser.uid) : false
+          };
+          
+          // Insert the reel at the current index position so it plays next/immediately
+          this.reels.splice(this.currentIndex, 0, fullReel);
+          index = this.currentIndex;
+          console.log(`[VideoFeed] Inserted fetched reel at index ${index}`);
+        }
+      } catch (error) {
+        console.error('[VideoFeed] Error fetching specific reel:', error);
+      }
+    }
+
     if (index !== -1) {
       console.log(`[VideoFeed] Found reel at index ${index}, navigating...`);
       this.isGlobalMuted = true;
@@ -621,6 +665,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         // Playback driven by [active]
         this.trackView();
       }, 100);
+      this.cdr.detectChanges();
       console.log(`[VideoFeed] Successfully navigated to reel: ${reelId}`);
     } else {
       console.warn(`[VideoFeed] Reel not found in loaded reels: ${reelId}`);

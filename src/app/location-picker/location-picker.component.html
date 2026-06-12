@@ -1,44 +1,117 @@
 <div class="picker-overlay">
     <div class="picker-container">
+
+        <!-- Header -->
         <div class="picker-header">
-            <h3>Pick Location</h3>
+            <div class="header-left">
+                <div class="header-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="currentColor"/>
+                        <circle cx="12" cy="9" r="2.5" fill="white"/>
+                    </svg>
+                </div>
+                <h3>Pick Location</h3>
+            </div>
             <button class="close-btn" (click)="onCancel()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
             </button>
         </div>
 
-        <div class="search-bar">
-            <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="searchLocation()"
-                placeholder="Search for a place...">
-            <button class="search-btn" (click)="searchLocation()" [disabled]="isSearching">
-                <span *ngIf="!isSearching">Search</span>
-                <span *ngIf="isSearching">...</span>
-            </button>
-        </div>
+        <!-- Search Bar -->
+        <div class="search-section">
+            <div class="search-wrapper">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                    <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <input
+                    type="text"
+                    [(ngModel)]="searchQuery"
+                    (ngModelChange)="onSearchInput()"
+                    placeholder="Search for a place in Bengaluru..."
+                    autocomplete="off"
+                />
+                <button class="locate-btn" (click)="centerOnCurrentLocation()" title="Use my location">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
 
-        <div class="search-results" *ngIf="searchResults.length > 0">
-            <div class="result-item" *ngFor="let result of searchResults" (click)="selectSearchResult(result)">
-                {{ result.display_name }}
+            <!-- Autocomplete Dropdown -->
+            <div class="autocomplete-dropdown" *ngIf="searchResults.length > 0">
+                <div
+                    class="autocomplete-item"
+                    *ngFor="let result of searchResults"
+                    (click)="selectSearchResult(result)"
+                >
+                    <div class="place-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="place-details">
+                        <span class="place-main">{{ result.mainText }}</span>
+                        <span class="place-secondary">{{ result.secondaryText }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Searching spinner -->
+            <div class="searching-indicator" *ngIf="isSearching">
+                <div class="spinner"></div>
+                <span>Searching...</span>
             </div>
         </div>
 
-        <div class="map-container">
-            <div id="map"></div>
+        <!-- Loading state -->
+        <div class="map-loading" *ngIf="!googleMapsLoaded">
+            <div class="loading-spinner"></div>
+            <p>Loading Google Maps...</p>
         </div>
 
+        <!-- Google Map -->
+        <div class="map-container" [class.map-hidden]="!googleMapsLoaded">
+            <div id="google-map"></div>
+            <div class="map-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Tap the map or drag the pin to pick a location
+            </div>
+        </div>
+
+        <!-- Footer -->
         <div class="picker-footer">
-            <div class="coords">
-                <small>{{ selectedLat | number:'1.4-4' }}, {{ selectedLng | number:'1.4-4' }}</small>
+            <div class="selected-location" *ngIf="selectedAddress">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="currentColor"/>
+                </svg>
+                <span>{{ selectedAddress }}</span>
             </div>
-            <div class="actions">
+            <div class="selected-location coords-fallback" *ngIf="!selectedAddress">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>{{ selectedLat | number:'1.4-4' }}, {{ selectedLng | number:'1.4-4' }}</span>
+            </div>
+
+            <div class="footer-actions">
                 <button class="cancel-btn" (click)="onCancel()" [disabled]="isConfirming">Cancel</button>
-                <button class="confirm-btn" (click)="confirmSelection()" [disabled]="isConfirming">
-                    <span *ngIf="!isConfirming">Confirm Location</span>
-                    <span *ngIf="isConfirming">Confirming...</span>
+                <button class="confirm-btn" (click)="confirmSelection()" [disabled]="isConfirming || !googleMapsLoaded">
+                    <svg *ngIf="!isConfirming" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div *ngIf="isConfirming" class="btn-spinner"></div>
+                    <span>{{ isConfirming ? 'Confirming...' : 'Confirm Location' }}</span>
                 </button>
             </div>
         </div>
+
     </div>
 </div>

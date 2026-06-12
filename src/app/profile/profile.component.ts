@@ -22,6 +22,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     userName: string = '';
     fullName: string = '';
 
+    isExiting = false;
+
     activeTab: 'bookmarks' | 'settings' = 'bookmarks';
     activeLegalTab: 'terms' | 'privacy' | 'help' | null = null;
     userReels: Reel[] = [];
@@ -144,7 +146,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
 
     goBack() {
-        this.router.navigate(['/main-app']);
+        this.isExiting = true;
+        setTimeout(() => {
+            this.router.navigate(['/main-app']);
+        }, 350);
     }
 
     handleTouchStart(event: any) {
