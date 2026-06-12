@@ -24,15 +24,32 @@
 
     <!-- Results Grid -->
     <div class="results-grid" *ngIf="!isLoading && bookmarkedReels.length > 0">
-        <div class="food-card video-card" *ngFor="let reel of bookmarkedReels" (click)="playReel(reel)">
+        <div class="food-card video-card"
+            *ngFor="let reel of bookmarkedReels; trackBy: trackByReelId"
+            (click)="playReel(reel)">
+
             <div class="card-image">
-                <!-- Autoplay looping video like search page -->
-                <video [src]="reel.videoUrl" autoplay loop muted playsinline preload="auto" #videoThumb
-                    [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0" (loadeddata)="onThumbLoad(reel.id!)">
+                <!--
+                  IMPORTANT: muted is set as both an HTML attribute AND enforced
+                  via (loadeddata) callback at the DOM property level.
+                  autoplay alone is NOT enough on Android WebView — the browser
+                  requires muted=true at the property level before play() is called.
+                  The IntersectionObserver in the TS controls which video actually plays.
+                -->
+                <video
+                    #videoThumb
+                    [src]="reel.videoUrl"
+                    muted
+                    playsinline
+                    webkit-playsinline
+                    preload="none"
+                    loop
+                    [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0"
+                    (loadeddata)="onThumbLoad(reel.id!, $any($event.target))">
                 </video>
 
                 <div class="card-badges">
-                    <div class="distance-badge">{{reel.distanceStr}}</div>
+                    <div class="distance-badge" *ngIf="reel.distanceStr">{{reel.distanceStr}}</div>
                     <div class="rating-badge" *ngIf="reel.rating">
                         {{reel.rating}} <span class="star-mini">★</span>
                     </div>

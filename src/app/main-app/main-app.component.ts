@@ -12,6 +12,7 @@ import { ProfileComponent } from '../profile/profile.component';
 import { LocationService } from '../services/location.service';
 import { NavigationService } from '../services/navigation.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal';
+import { AudioMutexService } from '../services/audio-mutex.service';
 
 @Component({
   selector: 'app-main-app',
@@ -52,6 +53,7 @@ export class MainAppComponent implements OnInit {
     private router: Router,
     private locationService: LocationService,
     private navigationService: NavigationService,
+    private audioMutex: AudioMutexService,
     private auth: Auth
   ) {
     // Check if location was passed via navigation state
@@ -173,6 +175,19 @@ export class MainAppComponent implements OnInit {
   }
 
   private executeTabChange(tab: string) {
+    // ─── AUDIO SAFETY ─────────────────────────────────────────────────
+    // Force-silence EVERYTHING before any tab switch.
+    // On Android, CSS [class.hidden] does NOT pause video elements —
+    // the WebView keeps playing audio even when a div is display:none.
+    // The mutex signals each holder to pause itself immediately.
+    this.audioMutex.silenceAll();
+
+    // Belt-and-suspenders: also directly pause the video feed cards
+    // in case the mutex callback hasn't fired yet.
+    if (this.videoFeedComponent) {
+      this.videoFeedComponent.pauseActiveCard();
+    }
+
     // Reset search if leaving search tab
     if (this.activeTab === 'search' && tab !== 'search' && this.searchComponent) {
       this.searchComponent.reset();

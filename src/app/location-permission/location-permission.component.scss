@@ -16,7 +16,7 @@
     justify-content: space-between;
     height: 100%;
     width: 100%;
-    padding: 24px;
+    padding: 100px;
     overflow: hidden;
     background: linear-gradient(180deg, #ffffff 0%, #f4fbf9 100%);
 }
@@ -29,7 +29,7 @@
     right: 0;
     bottom: 0;
     opacity: 0.05;
-    background-image: 
+    background-image:
         radial-gradient(var(--primary-color) 1.5px, transparent 1.5px),
         radial-gradient(var(--primary-color) 1.5px, transparent 1.5px);
     background-size: 28px 28px;
@@ -80,17 +80,17 @@
     height: 120px;
     z-index: 2;
     pointer-events: none;
-    
+
     &.ring-1 {
         animation: pulse-ring-anim 4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
         animation-delay: 0s;
     }
-    
+
     &.ring-2 {
         animation: pulse-ring-anim 4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
         animation-delay: 1.33s;
     }
-    
+
     &.ring-3 {
         animation: pulse-ring-anim 4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
         animation-delay: 2.66s;
@@ -102,9 +102,11 @@
         transform: scale(0.8);
         opacity: 0.5;
     }
+
     50% {
         opacity: 0.25;
     }
+
     100% {
         transform: scale(2.4);
         opacity: 0;
@@ -112,9 +114,12 @@
 }
 
 @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-12px);
     }
@@ -125,7 +130,7 @@
     text-align: center;
     padding: 0 20px;
     max-width: 320px;
-    
+
     h1 {
         font-size: 26px;
         font-weight: 800;
@@ -134,7 +139,7 @@
         letter-spacing: -0.5px;
         line-height: 1.25;
     }
-    
+
     p {
         font-size: 15px;
         color: #636366;
@@ -191,7 +196,7 @@
     justify-content: center;
     gap: 10px;
     width: 100%;
-    
+
     svg {
         flex-shrink: 0;
     }

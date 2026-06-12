@@ -19,6 +19,7 @@ import { AdmobService } from '../services/admob.service';
 import { VideoFeedSkeletonComponent } from './video-feed-skeleton.component';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { AudioMutexService } from '../services/audio-mutex.service';
 
 @Component({
   selector: 'app-video-feed',
@@ -86,6 +87,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     private router: Router,
     private admobService: AdmobService,
     private ngZone: NgZone,
+    private audioMutex: AudioMutexService,
     @Inject(DOCUMENT) private document: any
   ) { }
 
@@ -110,7 +112,23 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    // isActive propagates to children via [active] binding automatically
+    if (changes['isActive']) {
+      if (this.isActive) {
+        // Acquire the audio mutex — this silences any other tab playing audio
+        this.audioMutex.acquire('feed', () => {
+          // We were silenced by another component — mute all our cards
+          this.isGlobalMuted = true;
+          this.pauseActiveCard();
+          this.cdr.markForCheck();
+        });
+      } else {
+        // We are being hidden — immediately silence everything
+        this.isGlobalMuted = true;
+        this.pauseActiveCard();
+        this.audioMutex.release('feed');
+        this.cdr.markForCheck();
+      }
+    }
   }
 
   ngOnDestroy() {
@@ -160,14 +178,14 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
   }
 
-  private pauseActiveCard() {
+  pauseActiveCard() {
     const activeCards = this.cards?.toArray();
     if (activeCards) {
       activeCards.forEach(card => card.pause());
     }
   }
 
-  private resumeActiveCard() {
+  resumeActiveCard() {
     const activeCards = this.cards?.toArray();
     const active = activeCards?.find(c => (c as any).active);
     active?.play();
