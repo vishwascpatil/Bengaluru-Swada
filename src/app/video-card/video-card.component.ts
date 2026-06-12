@@ -444,7 +444,6 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     event.stopPropagation();
     this.deleted.emit();
   }
-
   openGoogleMaps(): void {
     if (!this.isBrowser) return;
     if (this.reel?.latitude && this.reel?.longitude) {

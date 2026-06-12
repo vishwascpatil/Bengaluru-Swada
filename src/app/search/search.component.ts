@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,7 +6,6 @@ import { ReelsService } from '../services/reels.service';
 import { Reel } from '../models/reel.model';
 import { LocationService } from '../services/location.service';
 import { NavigationService } from '../services/navigation.service';
-import { AdmobService } from '../services/admob.service';
 import { LocationSearchSheetComponent } from '../shared/components/location-search-sheet/location-search-sheet.component';
 
 @Component({
@@ -16,7 +15,7 @@ import { LocationSearchSheetComponent } from '../shared/components/location-sear
     templateUrl: './search.component.html',
     styleUrls: ['./search.component.scss']
 })
-export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
+export class SearchComponent implements OnInit, AfterViewInit {
     @ViewChild('searchInput') searchInput!: ElementRef;
     isExiting = false;
     searchQuery = '';
@@ -61,7 +60,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         private reelsService: ReelsService,
         private locationService: LocationService,
         private navigationService: NavigationService,
-        private admobService: AdmobService,
         private router: Router
     ) { }
 
@@ -115,8 +113,6 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         // Preload reels immediately on page entry
         await this.loadReels();
         await this.applyFilters();
-
-        this.admobService.showBanner();
     }
 
     async loadReels() {
@@ -303,7 +299,5 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
         this.loadedThumbs.add(reelId);
     }
 
-    ngOnDestroy() {
-        this.admobService.hideBanner();
-    }
+
 }

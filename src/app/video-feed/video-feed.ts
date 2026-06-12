@@ -15,7 +15,7 @@ import { LocationService } from '../services/location.service';
 import { Reel } from '../models/reel.model';
 import { Auth } from '@angular/fire/auth';
 import { Timestamp } from '@angular/fire/firestore';
-import { AdmobService } from '../services/admob.service';
+
 import { VideoFeedSkeletonComponent } from './video-feed-skeleton.component';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
@@ -36,6 +36,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   isGlobalMuted = true;
   reels: Reel[] = [];
   currentIndex = 0;
+
+
 
   /**
    * Virtual window: only the 3 visible cards (prev, current, next) are rendered.
@@ -71,8 +73,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   private viewedReels = new Set<string>();
   private viewTrackingTimeout?: number;
-  private adsViewed = 0;
-  private readonly INTERSTITIAL_THRESHOLD = 7;
+
 
   @ViewChildren(VideoCardComponent) cards!: QueryList<VideoCardComponent>;
 
@@ -85,7 +86,6 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     private cdr: ChangeDetectorRef,
     private locationService: LocationService,
     private router: Router,
-    private admobService: AdmobService,
     private ngZone: NgZone,
     private audioMutex: AudioMutexService,
     @Inject(DOCUMENT) private document: any
@@ -100,7 +100,6 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   async ngOnInit() {
     await this.loadReels();
-    this.admobService.showBanner();
     this.setupAppLifecycle();
   }
 
@@ -133,7 +132,6 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   ngOnDestroy() {
     if (this.viewTrackingTimeout) clearTimeout(this.viewTrackingTimeout);
-    this.admobService.hideBanner();
     // Remove app lifecycle listeners
     if (this.appStateListener) {
       this.appStateListener.remove();
@@ -295,11 +293,7 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         this.reelsService.incrementViewCount(reel.id);
         this.viewedReels.add(reel.id);
         reel.viewCount = (reel.viewCount || 0) + 1;
-        this.adsViewed++;
-        if (this.adsViewed >= this.INTERSTITIAL_THRESHOLD) {
-          this.admobService.showInterstitial();
-          this.adsViewed = 0;
-        }
+
       }
     }, 3000);
   }
