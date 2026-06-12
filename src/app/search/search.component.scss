@@ -26,7 +26,7 @@
 /* Header Section */
 .search-header {
     background: #ffffff;
-    padding: 16px;
+    padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 16px;
     display: flex;
     flex-direction: column;
     gap: 14px;

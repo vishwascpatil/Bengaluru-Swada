@@ -195,6 +195,10 @@ export class MainAppComponent implements OnInit {
       this.videoFeedComponent.pauseActiveCard();
     }
 
+    // NUCLEAR OPTION: Pause ALL <video> elements in the entire DOM.
+    // Android WebView ignores CSS visibility — only pause() truly stops audio.
+    this.silenceAllVideosInDOM();
+
     // Reset search if leaving search tab
     if (this.activeTab === 'search' && tab !== 'search' && this.searchComponent) {
       this.searchComponent.reset();
@@ -212,6 +216,24 @@ export class MainAppComponent implements OnInit {
     if (tab === 'favorites' && this.favoritesComponent) {
       this.favoritesComponent.loadBookmarkedReels();
     }
+  }
+
+  /**
+   * Emergency silence: pause + mute every <video> in the entire page.
+   * This is the last line of defense for Android WebView where CSS
+   * opacity:0 / display:none does NOT stop audio playback.
+   */
+  private silenceAllVideosInDOM() {
+    try {
+      const doc = (globalThis as any).document;
+      if (doc) {
+        const allVideos = doc.querySelectorAll('video');
+        allVideos.forEach((v: any) => {
+          v.pause();
+          v.muted = true;
+        });
+      }
+    } catch { }
   }
 
   onConfirmLeave() {

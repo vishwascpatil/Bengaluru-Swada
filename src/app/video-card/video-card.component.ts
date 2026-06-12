@@ -225,7 +225,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
       });
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (this.priority === 'high') {
+        if (this.priority === 'high' && this.active) {
           this.syncMute();
           video.play().catch((e: any) => console.warn('[VideoCard] Play failed:', e));
         }
@@ -271,8 +271,10 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
           return;
         }
         this.hls.startLoad();
-        this.syncMute();
-        video?.play().catch((e: any) => console.warn('[VideoCard] Play failed on priority high:', e));
+        if (this.active) {
+          this.syncMute();
+          video?.play().catch((e: any) => console.warn('[VideoCard] Play failed on priority high:', e));
+        }
         break;
 
       case 'auto':
@@ -346,13 +348,17 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     video.addEventListener('ended', () => {
       this.progress = 0;
       video.currentTime = 0;
-      video.play().catch(() => {});
+      // Only auto-loop if this card is still the active one
+      if (this.active) {
+        video.play().catch(() => {});
+      }
     });
   }
 
   play() {
     const video = this.videoEl?.nativeElement;
     if (!video) return;
+    if (!this.active) return; // Only the active card should play — prevents overlapping audio on Android
     if (!video.paused) return; // Already playing
 
     this.syncMute();
@@ -365,7 +371,11 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   pause() {
-    this.videoEl?.nativeElement?.pause();
+    const video = this.videoEl?.nativeElement;
+    if (video) {
+      video.pause();
+      video.muted = true; // Force mute as safety net for Android WebView
+    }
   }
 
   // ─── Interaction ─────────────────────────────────────────────────────────

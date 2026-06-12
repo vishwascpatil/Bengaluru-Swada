@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ViewChildren, ElementRef, AfterViewInit, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,6 +8,8 @@ import { LocationService } from '../services/location.service';
 import { NavigationService } from '../services/navigation.service';
 import { LocationSearchSheetComponent } from '../shared/components/location-search-sheet/location-search-sheet.component';
 
+declare const window: any;
+
 @Component({
     selector: 'app-search',
     standalone: true,
@@ -15,14 +17,18 @@ import { LocationSearchSheetComponent } from '../shared/components/location-sear
     templateUrl: './search.component.html',
     styleUrls: ['./search.component.scss']
 })
-export class SearchComponent implements OnInit, AfterViewInit {
+export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('searchInput') searchInput!: ElementRef;
+    @ViewChildren('videoThumb') videoEls!: QueryList<ElementRef<any>>;
     isExiting = false;
     searchQuery = '';
     reels: any[] = [];
     filteredReels: any[] = [];
     isLoading = false;
     loadedThumbs: Set<string> = new Set();
+
+    // IntersectionObserver for thumbnail videos
+    private intersectionObserver?: any;
 
     // Location selection
     locationName = 'Koramangala, Bangalore';
@@ -217,6 +223,9 @@ export class SearchComponent implements OnInit, AfterViewInit {
         }
 
         this.filteredReels = result;
+
+        // Re-observe videos after filter change
+        setTimeout(() => this.setupIntersectionObserver(), 100);
     }
 
     selectCategory(cat: string) {
@@ -285,6 +294,72 @@ export class SearchComponent implements OnInit, AfterViewInit {
         setTimeout(() => {
             this.searchInput?.nativeElement?.focus();
         }, 500);
+
+        // Setup IntersectionObserver for video thumbnails
+        this.setupIntersectionObserver();
+        this.videoEls?.changes?.subscribe(() => {
+            this.setupIntersectionObserver();
+        });
+    }
+
+    ngOnDestroy() {
+        this.disconnectObserver();
+        // Pause & mute all videos on destroy to prevent background audio
+        this.videoEls?.forEach(el => {
+            const v = el.nativeElement;
+            v.pause();
+            v.muted = true;
+            v.src = '';
+        });
+    }
+
+    /**
+     * IntersectionObserver: only play thumb videos that are visible on screen.
+     * Videos are always muted. This prevents all N videos from playing
+     * simultaneously on Android WebView.
+     */
+    private setupIntersectionObserver() {
+        this.disconnectObserver();
+
+        const videos = this.videoEls?.toArray();
+        if (!videos?.length) return;
+
+        this.intersectionObserver = new (window as any).IntersectionObserver(
+            (entries: any[]) => {
+                entries.forEach((entry: any) => {
+                    const videoEl = entry.target as any;
+                    // Force muted always — never allow audio on thumbnail grid
+                    videoEl.muted = true;
+
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+                        if (videoEl.paused) {
+                            videoEl.play().catch(() => {});
+                        }
+                    } else {
+                        if (!videoEl.paused) {
+                            videoEl.pause();
+                        }
+                    }
+                });
+            },
+            {
+                threshold: [0, 0.3, 1.0],
+                rootMargin: '0px'
+            }
+        );
+
+        videos.forEach(ref => {
+            const v = ref.nativeElement;
+            v.muted = true;
+            this.intersectionObserver!.observe(v);
+        });
+    }
+
+    private disconnectObserver() {
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+            this.intersectionObserver = undefined;
+        }
     }
 
     goBack() {

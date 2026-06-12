@@ -66,7 +66,9 @@ export class AudioMutexService {
     }
 
     /**
-     * Forcefully silence everything. Call on app background.
+     * Forcefully silence everything. Call on app background or tab switch.
+     * Also pauses ALL <video> elements in the DOM as a safety net for
+     * Android WebView where CSS visibility doesn't stop audio playback.
      */
     silenceAll(): void {
         const current = this.currentHolder.value;
@@ -77,5 +79,17 @@ export class AudioMutexService {
             }
         }
         this.currentHolder.next(null);
+
+        // Nuclear: pause + mute every <video> in the DOM
+        try {
+            const doc = (globalThis as any).document;
+            if (doc) {
+                const allVideos = doc.querySelectorAll('video');
+                allVideos.forEach((v: any) => {
+                    v.pause();
+                    v.muted = true;
+                });
+            }
+        } catch { }
     }
 }

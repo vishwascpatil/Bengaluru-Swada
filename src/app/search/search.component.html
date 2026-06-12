@@ -160,8 +160,8 @@
 
             <div class="food-card video-card" *ngFor="let reel of filteredReels" (click)="openReel(reel)">
                 <div class="card-image">
-                    <!-- HTML5 video autoplaying in loop, muted -->
-                    <video [src]="reel.videoUrl" autoplay loop muted playsinline preload="auto" #videoThumb
+                    <!-- HTML5 video in loop, muted — NO autoplay to prevent all audios playing together -->
+                    <video [src]="reel.videoUrl" loop muted playsinline preload="metadata" #videoThumb
                         [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0" (loadeddata)="onThumbLoad(reel.id!)">
                     </video>
 
