@@ -1,4 +1,7 @@
-import { Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy, ChangeDetectorRef, Input, OnChanges, SimpleChanges, Inject } from '@angular/core';
+import {
+  Component, AfterViewInit, ViewChildren, QueryList, OnInit, OnDestroy,
+  ChangeDetectorRef, Input, OnChanges, SimpleChanges, Inject, ChangeDetectionStrategy, NgZone
+} from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
 declare const window: any;
@@ -13,15 +16,17 @@ import { Reel } from '../models/reel.model';
 import { Auth } from '@angular/fire/auth';
 import { Timestamp } from '@angular/fire/firestore';
 import { AdmobService } from '../services/admob.service';
-
 import { VideoFeedSkeletonComponent } from './video-feed-skeleton.component';
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 @Component({
   selector: 'app-video-feed',
   standalone: true,
   imports: [CommonModule, VideoCardComponent, RouterModule, VideoFeedSkeletonComponent],
   templateUrl: './video-feed.html',
-  styleUrls: ['./video-feed.scss']
+  styleUrls: ['./video-feed.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @Input() isActive: boolean = true;
@@ -30,6 +35,24 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   isGlobalMuted = true;
   reels: Reel[] = [];
   currentIndex = 0;
+
+  /**
+   * Virtual window: only the 3 visible cards (prev, current, next) are rendered.
+   * This is the CRITICAL fix for stutter — Angular never has to manage 50 video elements.
+   */
+  get visibleReels(): Array<{ reel: Reel; index: number; relativeIndex: number }> {
+    const result: Array<{ reel: Reel; index: number; relativeIndex: number }> = [];
+    const lo = Math.max(0, this.currentIndex - 1);
+    const hi = Math.min(this.reels.length - 1, this.currentIndex + 1);
+    for (let i = lo; i <= hi; i++) {
+      result.push({
+        reel: this.reels[i],
+        index: i,
+        relativeIndex: i - this.currentIndex
+      });
+    }
+    return result;
+  }
 
   // Touch Handling
   touchStartY = 0;
@@ -40,18 +63,20 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   swipeDeltaY = 0;
   isSwiping = false;
   private hasTriggeredHaptic = false;
-  readonly pullThreshold = 80; // Lowered from 150 for easier trigger
-  readonly swipeThresholdX = 50; // Horizontal swipe threshold
+  readonly pullThreshold = 80;
+  readonly swipeThresholdX = 50;
 
-  isLoading = true; // Start true for skeleton
+  isLoading = true;
 
-  // Track which videos have been viewed
   private viewedReels = new Set<string>();
   private viewTrackingTimeout?: number;
   private adsViewed = 0;
   private readonly INTERSTITIAL_THRESHOLD = 7;
 
   @ViewChildren(VideoCardComponent) cards!: QueryList<VideoCardComponent>;
+
+  private appStateListener: any;
+  private visibilityChangeHandler: any;
 
   constructor(
     private reelsService: ReelsService,
@@ -60,101 +85,96 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     private locationService: LocationService,
     private router: Router,
     private admobService: AdmobService,
+    private ngZone: NgZone,
     @Inject(DOCUMENT) private document: any
   ) { }
 
   private centerActiveTab() {
     setTimeout(() => {
       const activeTabEl = this.document.querySelector('.tab-item.active');
-      if (activeTabEl) {
-        activeTabEl.scrollIntoView({
-          behavior: 'smooth',
-          inline: 'center',
-          block: 'nearest'
-        });
-      }
+      activeTabEl?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }, 100);
   }
 
   async ngOnInit() {
-    // 2. NETWORK UPDATE: Fetch fresh content silently
     await this.loadReels();
     this.admobService.showBanner();
+    this.setupAppLifecycle();
   }
 
-  goToSearch() {
-    this.router.navigate(['/search']);
-  }
-
-  goToProfile() {
-    this.router.navigate(['/profile']);
-  }
+  goToSearch() { this.router.navigate(['/search']); }
+  goToProfile() { this.router.navigate(['/profile']); }
 
   ngAfterViewInit() {
     this.centerActiveTab();
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['isActive']) {
-      // Logic handled by [active] input propagation to children
+    // isActive propagates to children via [active] binding automatically
+  }
+
+  ngOnDestroy() {
+    if (this.viewTrackingTimeout) clearTimeout(this.viewTrackingTimeout);
+    this.admobService.hideBanner();
+    // Remove app lifecycle listeners
+    if (this.appStateListener) {
+      this.appStateListener.remove();
     }
+    if (this.visibilityChangeHandler) {
+      this.document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+    }
+  }
+
+  /**
+   * Android/iOS: pause video when app goes to background, resume on foreground.
+   * This prevents audio playing after the user presses the home button.
+   */
+  private setupAppLifecycle() {
+    if (Capacitor.isNativePlatform()) {
+      // Native Capacitor: use App plugin for reliable foreground/background detection
+      App.addListener('appStateChange', (state: { isActive: boolean }) => {
+        this.ngZone.run(() => {
+          if (!state.isActive) {
+            // App went to background — pause the active card
+            this.pauseActiveCard();
+          } else {
+            // App came back to foreground — resume if feed is visible
+            if (this.isActive) {
+              this.resumeActiveCard();
+            }
+          }
+        });
+      }).then(listener => {
+        this.appStateListener = listener;
+      });
+    } else {
+      // Web fallback: visibilitychange (also works in Capacitor for some cases)
+      this.visibilityChangeHandler = () => {
+        if (this.document.hidden) {
+          this.pauseActiveCard();
+        } else if (this.isActive) {
+          this.resumeActiveCard();
+        }
+      };
+      this.document.addEventListener('visibilitychange', this.visibilityChangeHandler);
+    }
+  }
+
+  private pauseActiveCard() {
+    const activeCards = this.cards?.toArray();
+    if (activeCards) {
+      activeCards.forEach(card => card.pause());
+    }
+  }
+
+  private resumeActiveCard() {
+    const activeCards = this.cards?.toArray();
+    const active = activeCards?.find(c => (c as any).active);
+    active?.play();
   }
 
   onMuteChanged(muted: boolean) {
     this.isGlobalMuted = muted;
-  }
-
-  ngOnDestroy() {
-    if (this.viewTrackingTimeout) {
-      clearTimeout(this.viewTrackingTimeout);
-    }
-    this.admobService.hideBanner();
-  }
-
-  /**
-   * Reload reels when location changes
-   */
-  async reloadReelsForNewLocation() {
-    console.log('[VideoFeed] Reloading reels for new location...');
-    const currentReels = [...this.reels];
-    const activeReelId = this.reels[this.currentIndex]?.id;
-
-    // Recalculate distances for current reels
-    const reelsWithUpdatedDistances = await Promise.all(
-      currentReels.map(async (reel) => {
-        let distance = '-- km';
-        if (reel.latitude && reel.longitude) {
-          try {
-            distance = await this.locationService.getDistanceFromUser(
-              reel.latitude,
-              reel.longitude
-            );
-          } catch (error) {
-            console.error('[VideoFeed] Error calculating distance:', error);
-          }
-        }
-        return {
-          ...reel,
-          distance
-        };
-      })
-    );
-
-    this.reels = reelsWithUpdatedDistances;
-    
-    // Find the previously active reel in the updated list and preserve its index
-    if (activeReelId) {
-      const newIndex = this.reels.findIndex(r => r.id === activeReelId);
-      if (newIndex !== -1) {
-        this.currentIndex = newIndex;
-      } else {
-        this.currentIndex = 0;
-      }
-    } else {
-      this.currentIndex = 0;
-    }
-    
-    this.cdr.detectChanges();
   }
 
   isOwner(reel: Reel): boolean {
@@ -162,77 +182,61 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   }
 
   async onReelDeleted(reel: Reel) {
-    if (!confirm('Are you sure you want to delete this reel permanently?')) return;
-
+    if (!confirm('Delete this reel permanently?')) return;
     try {
       await this.reelsService.deleteReel(reel.id!);
-      // Remove from local list
       this.reels = this.reels.filter(r => r.id !== reel.id);
-
-      // Adjust index if needed
       if (this.currentIndex >= this.reels.length) {
         this.currentIndex = Math.max(0, this.reels.length - 1);
       }
-    } catch (error) {
-      console.error('Failed to delete reel:', error);
+      this.cdr.markForCheck();
+    } catch {
       alert('Failed to delete reel. Please try again.');
     }
   }
 
   async switchTab(tab: 'explore' | 'new' | 'near') {
     if (this.activeTab === tab) return;
-
     this.activeTab = tab;
-    this.reels = []; // Clear current list to triggers skeleton
+    this.reels = [];
     this.currentIndex = 0;
     this.isLoading = true;
-
+    this.cdr.markForCheck();
     this.centerActiveTab();
     await this.loadReels();
   }
 
   async loadReels() {
-    console.log(`[VideoFeed] Loading ${this.activeTab} reels...`);
     this.isLoading = true;
+    this.cdr.markForCheck();
+
     try {
       let fetchedReels: Reel[] = [];
 
       if (this.activeTab === 'new') {
         fetchedReels = await this.reelsService.getNewArrivals(20);
-      } else if (this.activeTab === 'near') {
-        // Fetch a larger sample to find nearby ones
-        fetchedReels = await this.reelsService.getReels(50);
       } else {
-        // 'explore' tab - fetch all and shuffle
         fetchedReels = await this.reelsService.getReels(50);
-        // Fisher-Yates Shuffle
-        for (let i = fetchedReels.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [fetchedReels[i], fetchedReels[j]] = [fetchedReels[j], fetchedReels[i]];
+        if (this.activeTab === 'explore') {
+          // Fisher-Yates shuffle
+          for (let i = fetchedReels.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [fetchedReels[i], fetchedReels[j]] = [fetchedReels[j], fetchedReels[i]];
+          }
         }
       }
 
-      console.log('[VideoFeed] Fetched reels:', fetchedReels.length);
-
-      // Set client-side like/bookmark state based on current user
       const currentUser = this.auth.currentUser;
-      console.log('[VideoFeed] Current user:', currentUser?.uid || 'Not logged in');
 
-      // Calculate distances for all reels
+      // Calculate distances in parallel — but don't block UI
       const reelsWithDistance = await Promise.all(
         fetchedReels.map(async (reel) => {
-          let distance = '-- km';
+          let distance = '';
           if (reel.latitude && reel.longitude) {
             try {
-              distance = await this.locationService.getDistanceFromUser(
-                reel.latitude,
-                reel.longitude
-              );
-            } catch (error) {
-              console.error('[VideoFeed] Error calculating distance:', error);
-            }
+              distance = await this.locationService.getDistanceFromUser(reel.latitude, reel.longitude);
+            } catch { }
           }
-
           return {
             ...reel,
             distance,
@@ -242,70 +246,52 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         })
       );
 
-      // Explore is random, New is sorted by date.
-      // Near is sorted by distance.
       if (this.activeTab === 'near') {
         reelsWithDistance.sort((a, b) => {
-          const distA = parseFloat((a.distance || '9999').replace(/[^\d.]/g, '')) || 9999;
-          const distB = parseFloat((b.distance || '9999').replace(/[^\d.]/g, '')) || 9999;
-          return distA - distB;
+          const da = parseFloat((a.distance || '9999').replace(/[^\d.]/g, '')) || 9999;
+          const db = parseFloat((b.distance || '9999').replace(/[^\d.]/g, '')) || 9999;
+          return da - db;
         });
       }
 
       this.reels = reelsWithDistance;
-      console.log('[VideoFeed] Final reels count:', this.reels.length);
     } catch (error) {
       console.error('[VideoFeed] Error loading reels:', error);
     } finally {
-      setTimeout(() => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
+      this.isLoading = false;
+      this.cdr.markForCheck();
 
-        if (this.reels.length > 0) {
-          this.trackView();
-        }
-      }, 50);
+      if (this.reels.length > 0) {
+        setTimeout(() => this.trackView(), 100);
+      }
     }
   }
 
-  /**
-   * Track video view after 3 seconds
-   */
   private trackView() {
-    if (this.viewTrackingTimeout) {
-      clearTimeout(this.viewTrackingTimeout);
-    }
+    if (this.viewTrackingTimeout) clearTimeout(this.viewTrackingTimeout);
+    const reel = this.reels[this.currentIndex];
+    if (!reel?.id || this.viewedReels.has(reel.id)) return;
 
-    const currentReel = this.reels[this.currentIndex];
-    if (!currentReel || !currentReel.id) return;
-
-    // Only track if not already viewed
-    if (!this.viewedReels.has(currentReel.id)) {
-      this.viewTrackingTimeout = window.setTimeout(() => {
-        if (currentReel.id) {
-          this.reelsService.incrementViewCount(currentReel.id);
-          this.viewedReels.add(currentReel.id);
-          // Update local view count
-          currentReel.viewCount = (currentReel.viewCount || 0) + 1;
-
-          // Interstitial Logic
-          this.adsViewed++;
-          if (this.adsViewed >= this.INTERSTITIAL_THRESHOLD) {
-            this.admobService.showInterstitial();
-            this.adsViewed = 0;
-          }
+    this.viewTrackingTimeout = window.setTimeout(() => {
+      if (reel.id) {
+        this.reelsService.incrementViewCount(reel.id);
+        this.viewedReels.add(reel.id);
+        reel.viewCount = (reel.viewCount || 0) + 1;
+        this.adsViewed++;
+        if (this.adsViewed >= this.INTERSTITIAL_THRESHOLD) {
+          this.admobService.showInterstitial();
+          this.adsViewed = 0;
         }
-      }, 3000); // Track view after 3 seconds
-    }
+      }
+    }, 3000);
   }
 
-  // Pull to refresh variables are already defined above
+  // ─── Touch Handling ─────────────────────────────────────────────────────
 
   onTouchStart(e: any) {
     this.touchStartY = e.touches[0].clientY;
     this.touchStartX = e.touches[0].clientX;
 
-    // Pull to refresh logic (vertical)
     if (this.currentIndex === 0 && !this.isRefreshing) {
       this.pullStartY = e.touches[0].clientY;
       this.hasTriggeredHaptic = false;
@@ -316,151 +302,93 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   }
 
   onTouchMove(e: any) {
-    // Vertical / Pull Logic
     const currentY = e.touches[0].clientY;
     const diffY = currentY - this.touchStartY;
 
+    // Pull-to-refresh
     if (this.currentIndex === 0 && !this.isRefreshing && this.pullStartY > 0) {
       const diff = currentY - this.pullStartY;
       if (diff > 0) {
         this.pullMoveY = diff * 0.5;
-        if (diff > 10 && e.cancelable) e.preventDefault(); // Lock scroll for PTR
+        if (diff > 10 && e.cancelable) e.preventDefault();
 
-        // Instagram-style tactile feedback when threshold is reached
         if (this.pullMoveY >= this.pullThreshold && !this.hasTriggeredHaptic) {
           this.hasTriggeredHaptic = true;
-          if ((navigator as any).vibrate) {
-            (navigator as any).vibrate(15); // Light tactile tick
-          }
+          (navigator as any).vibrate?.(15);
         } else if (this.pullMoveY < this.pullThreshold && this.hasTriggeredHaptic) {
-          // Reset if they pull back up
           this.hasTriggeredHaptic = false;
         }
-        return; // Exit pull to refresh early
+        // Only update PTR indicator — no cdr.detectChanges() needed for just pullMoveY
+        return;
       }
     }
 
-    // Interactive Swipe Handling
+    // Vertical swipe
     const diffX = e.touches[0].clientX - this.touchStartX;
-    const threshold = 10;
-
-    // Only start swiping if mostly vertical and beyond threshold
-    if (!this.isSwiping && Math.abs(diffY) > threshold && Math.abs(diffY) > Math.abs(diffX)) {
+    if (!this.isSwiping && Math.abs(diffY) > 10 && Math.abs(diffY) > Math.abs(diffX)) {
       this.isSwiping = true;
     }
 
     if (this.isSwiping) {
-      // Boundary Clamping: Resist swiping above first or below last
-      let clampedDiffY = diffY;
-      if (this.currentIndex === 0 && diffY > 0) {
-        clampedDiffY = diffY * 0.3; // Resistance
-      } else if (this.currentIndex === this.reels.length - 1 && diffY < 0) {
-        clampedDiffY = diffY * 0.3; // Resistance
-      }
+      let clamped = diffY;
+      if (this.currentIndex === 0 && diffY > 0) clamped = diffY * 0.3;
+      else if (this.currentIndex === this.reels.length - 1 && diffY < 0) clamped = diffY * 0.3;
 
-      this.swipeDeltaY = clampedDiffY;
+      this.swipeDeltaY = clamped;
       if (e.cancelable) e.preventDefault();
-      this.cdr.detectChanges();
+      // Use requestAnimationFrame to batch the DOM style update — prevents jank
+      requestAnimationFrame(() => this.cdr.markForCheck());
     }
   }
 
   async onTouchEnd(e: any) {
     const endY = e.changedTouches[0].clientY;
     const endX = e.changedTouches[0].clientX;
-
     const deltaY = this.touchStartY - endY;
-    const deltaX = this.touchStartX - endX; // Positive = Swipe Left, Negative = Swipe Right
+    const deltaX = this.touchStartX - endX;
 
-    // Horizontal Swipe (Tab Switch)
+    // Horizontal swipe → tab change
     if (Math.abs(deltaX) > this.swipeThresholdX && Math.abs(deltaX) > Math.abs(deltaY)) {
       if (deltaX > 0) {
-        // Swipe Left -> Go Right
         if (this.activeTab === 'explore') this.switchTab('near');
         else if (this.activeTab === 'near') this.switchTab('new');
       } else {
-        // Swipe Right -> Go Left
         if (this.activeTab === 'new') this.switchTab('near');
         else if (this.activeTab === 'near') this.switchTab('explore');
       }
-      return; // Exit if handled as swipe
+      this.resetSwipeState();
+      return;
     }
 
-    // Decision for Swipe
-    const thresholdY = 100; // Require 100px swipe to commit
-    const velocity = Math.abs(deltaY);
-
+    // Vertical swipe → navigate
     if (this.isSwiping) {
-      if (deltaY > thresholdY) {
-        this.next();
-      } else if (deltaY < -thresholdY) {
-        // Only prev if not PTR
-        if (this.pullMoveY < this.pullThreshold) {
-          this.prev();
-        }
-      }
+      if (deltaY > 80) this.next();
+      else if (deltaY < -80 && this.pullMoveY < this.pullThreshold) this.prev();
     }
 
-    // Handle pull-to-refresh
+    // Pull to refresh
     if (this.pullMoveY >= this.pullThreshold && !this.isRefreshing) {
-      console.log('[VideoFeed] Refresh triggered!');
       await this.refresh();
     }
 
-    // Reset pull and swipe state
+    this.resetSwipeState();
+  }
+
+  private resetSwipeState() {
     this.pullStartY = 0;
     this.pullMoveY = 0;
     this.swipeDeltaY = 0;
     this.isSwiping = false;
     this.hasTriggeredHaptic = false;
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
-
-  /**
-   * Public method to scroll to the first reel and refresh the feed with an animation
-   */
-  async scrollToTopAndRefresh() {
-    console.log('[VideoFeed] Animated scroll to top and refreshing...');
-
-    this.isGlobalMuted = true;
-    if (this.currentIndex > 0) {
-      const steps = this.currentIndex;
-      // Faster animation if user scrolled deep
-      const delay = Math.max(30, 80 - (steps * 2));
-
-      for (let i = steps - 1; i >= 0; i--) {
-        this.currentIndex = i;
-        this.cdr.detectChanges();
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-
-    await this.refresh();
-  }
-
-  async refresh() {
-    this.isRefreshing = true;
-    // Haptic feedback if available
-    if ((navigator as any).vibrate) {
-      (navigator as any).vibrate(50);
-    }
-
-    try {
-      await this.loadReels();
-    } finally {
-      // Small delay to show completion state
-      setTimeout(() => {
-        this.isRefreshing = false;
-      }, 500);
-    }
-  }
-
-  // Removed playCurrent/pauseCurrent/next/prev calls that manually triggered playback
-  // Playback is now driven by [active] input binding in the template
 
   next() {
     if (this.currentIndex < this.reels.length - 1) {
+      // Pause all audio immediately to prevent overlap
       this.isGlobalMuted = true;
       this.currentIndex++;
+      this.cdr.markForCheck();
       this.trackView();
     }
   }
@@ -469,235 +397,179 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     if (this.currentIndex > 0) {
       this.isGlobalMuted = true;
       this.currentIndex--;
+      this.cdr.markForCheck();
       this.trackView();
     }
   }
 
-  /**
-   * Handle like action
-   */
+  async scrollToTopAndRefresh() {
+    this.isGlobalMuted = true;
+    if (this.currentIndex > 0) {
+      const steps = this.currentIndex;
+      const delay = Math.max(30, 80 - (steps * 2));
+      for (let i = steps - 1; i >= 0; i--) {
+        this.currentIndex = i;
+        this.cdr.markForCheck();
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    await this.refresh();
+  }
+
+  async refresh() {
+    this.isRefreshing = true;
+    (navigator as any).vibrate?.(50);
+    try {
+      await this.loadReels();
+    } finally {
+      setTimeout(() => {
+        this.isRefreshing = false;
+        this.cdr.markForCheck();
+      }, 500);
+    }
+  }
+
+  async reloadReelsForNewLocation() {
+    const activeReelId = this.reels[this.currentIndex]?.id;
+    const reelsWithDistance = await Promise.all(
+      this.reels.map(async (reel) => {
+        let distance = '';
+        if (reel.latitude && reel.longitude) {
+          try { distance = await this.locationService.getDistanceFromUser(reel.latitude, reel.longitude); } catch { }
+        }
+        return { ...reel, distance };
+      })
+    );
+    this.reels = reelsWithDistance;
+    if (activeReelId) {
+      const idx = this.reels.findIndex(r => r.id === activeReelId);
+      this.currentIndex = idx !== -1 ? idx : 0;
+    } else {
+      this.currentIndex = 0;
+    }
+    this.cdr.markForCheck();
+  }
+
+  // ─── Like / Bookmark / Share ─────────────────────────────────────────────
+
   async onLike(index: number) {
     const reel = this.reels[index];
-    if (!reel || !reel.id) return;
-
-    const currentUser = this.auth.currentUser;
-    if (!currentUser) {
-      console.warn('User must be logged in to like');
-      return;
-    }
+    if (!reel?.id) return;
+    const user = this.auth.currentUser;
+    if (!user) return;
 
     const wasLiked = reel.isLiked || false;
-
-    // Optimistic update
     reel.isLiked = !wasLiked;
     reel.likes = (reel.likes || 0) + (wasLiked ? -1 : 1);
+    this.cdr.markForCheck();
 
     try {
-      await this.reelsService.toggleLike(reel.id, currentUser.uid, wasLiked);
-    } catch (error) {
-      // Revert on error
+      await this.reelsService.toggleLike(reel.id, user.uid, wasLiked);
+    } catch {
       reel.isLiked = wasLiked;
       reel.likes = (reel.likes || 0) + (wasLiked ? 1 : -1);
-      console.error('Error toggling like:', error);
+      this.cdr.markForCheck();
     }
   }
 
-  /**
-   * Handle bookmark action
-   */
   async onBookmark(index: number) {
     const reel = this.reels[index];
-    if (!reel || !reel.id) return;
-
-    const currentUser = this.auth.currentUser;
-    if (!currentUser) {
-      console.warn('User must be logged in to bookmark');
-      return;
-    }
+    if (!reel?.id) return;
+    const user = this.auth.currentUser;
+    if (!user) return;
 
     const wasBookmarked = reel.isBookmarked || false;
-
-    // Optimistic update
     reel.isBookmarked = !wasBookmarked;
+    this.cdr.markForCheck();
 
     try {
-      await this.reelsService.toggleBookmark(reel.id, currentUser.uid, wasBookmarked);
-    } catch (error) {
-      // Revert on error
+      await this.reelsService.toggleBookmark(reel.id, user.uid, wasBookmarked);
+    } catch {
       reel.isBookmarked = wasBookmarked;
-      console.error('Error toggling bookmark:', error);
+      this.cdr.markForCheck();
     }
   }
 
-  /**
-   * Handle share action
-   */
   onShare(index: number) {
     const reel = this.reels[index];
     if (!reel) return;
-
-    // Use Web Share API if available
-    if ((navigator as any).share) {
-      (navigator as any).share({
+    const nav = window.navigator as any;
+    if (nav?.share) {
+      nav.share({
         title: reel.title,
         text: `Check out ${reel.title} from ${reel.vendor}!`,
         url: window.location.href
-      }).catch((err: any) => console.log('Error sharing:', err));
-    } else {
-      // Fallback: copy to clipboard
-      const shareText = `Check out ${reel.title} from ${reel.vendor}! ₹${reel.price}`;
-      (navigator as any).clipboard.writeText(shareText)
-        .then(() => console.log('Link copied to clipboard!'))
-        .catch((err: any) => console.error('Error copying:', err));
-    }
-  }
-  /**
-   * Seed sample data for testing
-   */
-  async seedData() {
-    this.isLoading = true;
-    const sampleReels = [
-      {
-        title: 'Masala Dosa',
-        vendor: 'CTR',
-        videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=2070&auto=format&fit=crop',
-        price: 120,
-        categories: ['South Indian', 'Breakfast'],
-        latitude: 12.9352, // Kormangala, Bangalore
-        longitude: 77.6245,
-        uploadedBy: this.auth.currentUser?.uid || 'system',
-        cloudflareVideoId: 'sample-id-1',
-        duration: 596,
-        createdAt: Timestamp.now(),
-        viewCount: 0,
-        likes: 0,
-        likedBy: [],
-        bookmarkedBy: []
-      },
-      {
-        title: 'Filter Coffee',
-        vendor: 'Brahmins Coffee Bar',
-        videoUrl: 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
-        thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Idli_Sambar.JPG/1200px-Idli_Sambar.JPG',
-        price: 80,
-        categories: ['South Indian', 'Beverages'],
-        latitude: 12.9716, // Indiranagar, Bangalore
-        longitude: 77.6412,
-        uploadedBy: this.auth.currentUser?.uid || 'system',
-        cloudflareVideoId: 'sample-id-2',
-        duration: 600,
-        createdAt: Timestamp.now(),
-        viewCount: 0,
-        likes: 0,
-        likedBy: [],
-        bookmarkedBy: []
-      }
-    ];
-
-    try {
-      for (const reel of sampleReels) {
-        await this.reelsService.createReel(reel as any);
-      }
-      await this.loadReels();
-    } catch (error) {
-      console.error('Error seeding data:', error);
-    } finally {
-      this.isLoading = false;
+      }).catch(() => {});
     }
   }
 
+  // ─── Priority ─────────────────────────────────────────────────────────────
+
   /**
-   * Navigate to a specific reel by ID
-   * @param reelId The ID of the reel to navigate to
-   */
-  async navigateToReel(reelId: string) {
-    console.log(`[VideoFeed] Attempting to navigate to reel: ${reelId}`);
-    console.log(`[VideoFeed] Total reels loaded: ${this.reels.length}`);
-
-    if (this.reels.length === 0) {
-      console.warn(`[VideoFeed] No reels loaded yet, cannot navigate to ${reelId}`);
-      return;
-    }
-
-    let index = this.reels.findIndex(r => r.id === reelId);
-    
-    // Fallback: If the reel is not found in the current loaded list, fetch it and insert it!
-    if (index === -1) {
-      console.log(`[VideoFeed] Reel ${reelId} not found in feed list. Fetching from Firestore...`);
-      try {
-        const reel = await this.reelsService.getReelById(reelId);
-        if (reel) {
-          let distance = '-- km';
-          if (reel.latitude && reel.longitude) {
-            try {
-              distance = await this.locationService.getDistanceFromUser(
-                reel.latitude,
-                reel.longitude
-              );
-            } catch (error) {
-              console.error('[VideoFeed] Error calculating distance for fetched reel:', error);
-            }
-          }
-          const currentUser = this.auth.currentUser;
-          const fullReel: Reel = {
-            ...reel,
-            distance,
-            isLiked: currentUser ? this.reelsService.isLikedByUser(reel, currentUser.uid) : false,
-            isBookmarked: currentUser ? this.reelsService.isBookmarkedByUser(reel, currentUser.uid) : false
-          };
-          
-          // Insert the reel at the current index position so it plays next/immediately
-          this.reels.splice(this.currentIndex, 0, fullReel);
-          index = this.currentIndex;
-          console.log(`[VideoFeed] Inserted fetched reel at index ${index}`);
-        }
-      } catch (error) {
-        console.error('[VideoFeed] Error fetching specific reel:', error);
-      }
-    }
-
-    if (index !== -1) {
-      console.log(`[VideoFeed] Found reel at index ${index}, navigating...`);
-      this.isGlobalMuted = true;
-      this.currentIndex = index;
-      setTimeout(() => {
-        // Playback driven by [active]
-        this.trackView();
-      }, 100);
-      this.cdr.detectChanges();
-      console.log(`[VideoFeed] Successfully navigated to reel: ${reelId}`);
-    } else {
-      console.warn(`[VideoFeed] Reel not found in loaded reels: ${reelId}`);
-      console.log('[VideoFeed] Available reel IDs:', this.reels.map(r => r.id));
-    }
-  }
-  /**
-   * Get priority for video loading/preloading
-   * @param index Index of the reel
+   * Only prev-1, current, next+1 get high/auto priority.
+   * Everything else gets 'low' so HLS destroys and frees memory.
    */
   getPriority(index: number): 'high' | 'auto' | 'low' {
-    const diff = Math.abs(index - this.currentIndex);
+    const diff = index - this.currentIndex;
     if (diff === 0) return 'high';
-    if (diff <= 2) return 'auto'; // Preload next 2 videos (Aggressive)
+    if (diff === 1 || diff === -1) return 'auto';
     return 'low';
   }
 
-  /**
-   * Get total views across all reels
-   */
-  getTotalViews(): string {
-    const total = this.reels.reduce((sum, reel) => sum + (reel.viewCount || 0), 0);
-    if (total >= 1000) {
-      return `${(total / 1000).toFixed(1)}k`;
-    }
-    return total.toString();
+  trackByReelId(_index: number, item: { reel: Reel }): string {
+    return item.reel.id || '';
   }
 
-  /**
-   * TrackBy function for ngFor
-   */
-  trackByReelId(index: number, reel: Reel): string {
-    return reel.id || index.toString();
+  navigateToReel(reelId: string) {
+    const index = this.reels.findIndex(r => r.id === reelId);
+    if (index !== -1) {
+      this.isGlobalMuted = true;
+      this.currentIndex = index;
+      this.cdr.markForCheck();
+      this.trackView();
+    }
+  }
+
+  getTotalViews(): string {
+    const total = this.reels.reduce((s, r) => s + (r.viewCount || 0), 0);
+    return total >= 1000 ? `${(total / 1000).toFixed(1)}k` : total.toString();
+  }
+
+  // ─── Seed Data ─────────────────────────────────────────────────────────────
+
+  async seedData() {
+    this.isLoading = true;
+    this.cdr.markForCheck();
+    const sample: any[] = [
+      {
+        title: 'Masala Dosa', vendor: 'CTR',
+        videoUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?q=80&w=2070',
+        price: 120, categories: ['South Indian', 'Breakfast'],
+        latitude: 12.9352, longitude: 77.6245,
+        uploadedBy: this.auth.currentUser?.uid || 'system',
+        cloudflareVideoId: '', duration: 0,
+        createdAt: Timestamp.now(), viewCount: 0, likes: 0, likedBy: [], bookmarkedBy: [], isPublic: true
+      },
+      {
+        title: 'Filter Coffee', vendor: 'Brahmins Coffee Bar',
+        videoUrl: 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+        thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Idli_Sambar.JPG/1200px-Idli_Sambar.JPG',
+        price: 80, categories: ['South Indian', 'Beverages'],
+        latitude: 12.9716, longitude: 77.6412,
+        uploadedBy: this.auth.currentUser?.uid || 'system',
+        cloudflareVideoId: '', duration: 0,
+        createdAt: Timestamp.now(), viewCount: 0, likes: 0, likedBy: [], bookmarkedBy: [], isPublic: true
+      }
+    ];
+    try {
+      for (const reel of sample) await this.reelsService.createReel(reel);
+      await this.loadReels();
+    } catch (e) {
+      console.error('Error seeding:', e);
+    } finally {
+      this.isLoading = false;
+      this.cdr.markForCheck();
+    }
   }
 }

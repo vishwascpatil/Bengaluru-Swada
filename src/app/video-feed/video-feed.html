@@ -1,8 +1,10 @@
-<!-- Video Feed Template -->
-<div class="video-feed" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)"
+<!-- Video Feed -->
+<div class="video-feed"
+  (touchstart)="onTouchStart($event)"
+  (touchmove)="onTouchMove($event)"
   (touchend)="onTouchEnd($event)">
 
-  <!-- New Header Design -->
+  <!-- Header -->
   <div class="feed-header">
     <button class="header-icon-btn" (click)="goToSearch()">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -31,9 +33,11 @@
     </button>
   </div>
 
-  <!-- Premium Pull to Refresh Indicator -->
-  <div class="refresh-indicator" [style.transform]="'translateY(' + (isRefreshing ? 70 : pullMoveY) + 'px)'"
-    [class.refreshing]="isRefreshing" [class.visible]="pullMoveY > 10">
+  <!-- Pull-to-Refresh Indicator -->
+  <div class="refresh-indicator"
+    [style.transform]="'translateY(' + (isRefreshing ? 70 : pullMoveY) + 'px)'"
+    [class.refreshing]="isRefreshing"
+    [class.visible]="pullMoveY > 10">
     <div class="spinner-container">
       <svg class="instagram-spinner" viewBox="0 0 50 50">
         <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
@@ -56,13 +60,24 @@
     </div>
   </div>
 
-  <!-- Video Reel Grid -->
+  <!-- Reels Container — only renders 3 cards maximum (prev, current, next) -->
   <div class="reels-container" *ngIf="!isLoading && reels.length > 0">
-    <app-video-card *ngFor="let reel of reels; let i = index; trackBy: trackByReelId" [reel]="reel"
-      [active]="i === currentIndex && isActive" [relativeIndex]="i - currentIndex" [priority]="getPriority(i)"
-      [isMuted]="i !== currentIndex" [canDelete]="isOwner(reel)" [swipeDeltaY]="swipeDeltaY" [isSwiping]="isSwiping"
-      (muteChanged)="onMuteChanged($event)" (deleted)="onReelDeleted(reel)" (liked)="onLike(i)"
-      (bookmarked)="onBookmark(i)" (shared)="onShare(i)">
+    <app-video-card
+      *ngFor="let item of visibleReels; trackBy: trackByReelId"
+      [reel]="item.reel"
+      [active]="item.relativeIndex === 0 && isActive"
+      [relativeIndex]="item.relativeIndex"
+      [priority]="getPriority(item.index)"
+      [isMuted]="isGlobalMuted"
+      [canDelete]="isOwner(item.reel)"
+      [swipeDeltaY]="swipeDeltaY"
+      [isSwiping]="isSwiping"
+      (muteChanged)="onMuteChanged($event)"
+      (deleted)="onReelDeleted(item.reel)"
+      (liked)="onLike(item.index)"
+      (bookmarked)="onBookmark(item.index)"
+      (shared)="onShare(item.index)">
     </app-video-card>
   </div>
+
 </div>

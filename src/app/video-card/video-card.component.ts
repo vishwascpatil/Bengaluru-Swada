@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, Inject, PLATFORM_ID, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 
 declare const window: any;
@@ -12,10 +12,10 @@ import Hls from 'hls.js';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './video-card.component.html',
-  styleUrls: ['./video-card.component.scss']
+  styleUrls: ['./video-card.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
-  // Accept full Reel object or individual properties for backward compatibility
   @Input() reel?: Reel;
   @Input() src = '';
   @Input() poster = '';
@@ -39,77 +39,49 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Output() bookmarked = new EventEmitter<void>();
   @Output() shared = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
+  @Output() muteChanged = new EventEmitter<boolean>();
 
   @Input() canDelete = false;
+  @Input() isMuted = true;
 
   @ViewChild('videoEl') videoEl!: ElementRef<any>;
 
-  // Double-tap to mute/unmute
+  // Double-tap to like
   private lastTapTime = 0;
   showLikeAnimation = false;
+  showMuteIcon = false;
   isProgressBarVisible = false;
   private progressBarHideTimeout: any;
   private singleTapTimeout?: any;
+
   private hls: Hls | null = null;
   private isBrowser = false;
   private currentInitSrc = '';
 
-  // Get display values from reel or fallback to individual inputs
+  isLoading = true;
+  isVideoInitialized = false;
+  isVideoReady = false;
+  hasError = false;
+  progress = 0;
+  isSeeking = false;
+
+  // --- Display getters ---
   get displaySrc(): string {
     let url = this.reel?.videoUrl || this.src;
-    // Cloudflare Worker replacement if needed, though best done at service level
     if (url && url.includes('videos.bengaluru-swada.com')) {
       url = url.replace('https://videos.bengaluru-swada.com', 'https://r2-video-uploader.bengaluru-swada.workers.dev');
     }
     return url;
   }
-
-  get displayPoster(): string {
-    return this.reel?.thumbnailUrl || this.poster;
-  }
-
-  get displayTitle(): string {
-    return this.reel?.title || this.title;
-  }
-
-  get displayVendor(): string {
-    return this.reel?.vendor || this.vendor;
-  }
-
-  get displayPrice(): number | string {
-    return this.reel?.price || this.price;
-  }
-
-  get displayDistance(): string {
-    return this.reel?.distance || this.distance;
-  }
-
-  get displayLikes(): number {
-    return this.reel?.likes || this.likes;
-  }
-
-  get displayViewCount(): number {
-    return this.reel?.viewCount || this.viewCount;
-  }
-
-  get displayIsLiked(): boolean {
-    return this.reel ? (this.reel.isLiked || false) : this.isLiked;
-  }
-
-  get displayIsBookmarked(): boolean {
-    return this.reel ? (this.reel.isBookmarked || false) : this.isBookmarked;
-  }
-
-  isLoading = true;
-  isVideoInitialized = false; // Prevent flash of unstyled video element
-  isVideoReady = false; // Opacity control: only show when truly passing frames
-  hasError = false; // Thumbnail error state
-  progress = 0;
-  isSeeking = false;
-  @Input() isMuted = true;
-  @Output() muteChanged = new EventEmitter<boolean>();
-  showMuteIcon = false;
-  private progressInterval: any;
+  get displayPoster(): string { return this.reel?.thumbnailUrl || this.poster; }
+  get displayTitle(): string { return this.reel?.title || this.title; }
+  get displayVendor(): string { return this.reel?.vendor || this.vendor; }
+  get displayPrice(): number | string { return this.reel?.price || this.price; }
+  get displayDistance(): string { return this.reel?.distance || this.distance; }
+  get displayLikes(): number { return this.reel?.likes || this.likes; }
+  get displayViewCount(): number { return this.reel?.viewCount || this.viewCount; }
+  get displayIsLiked(): boolean { return this.reel ? (this.reel.isLiked || false) : this.isLiked; }
+  get displayIsBookmarked(): boolean { return this.reel ? (this.reel.isBookmarked || false) : this.isBookmarked; }
 
   constructor(
     @Inject(PLATFORM_ID) platformId: Object,
@@ -119,157 +91,147 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
-  goToProfile(event: Event) {
-    event.stopPropagation();
-    this.router.navigate(['/profile']);
-  }
-
   ngOnChanges(changes: SimpleChanges) {
     if (!this.isBrowser) return;
 
-    // 1. Handle Source Changes
+    // Source changed → reinit
     if (changes['reel'] || changes['src']) {
-      const currentSrc = this.displaySrc;
-      console.log('[VideoCard] Source Changed. ID:', this.reel?.id, 'Src:', currentSrc, 'Poster:', this.displayPoster);
+      const newSrc = this.displaySrc;
       const prevSrc = changes['reel']?.previousValue?.videoUrl || changes['src']?.previousValue;
-
-      if (currentSrc !== prevSrc) {
-        // removed this.isLoading = true; to prevent stuck state
+      if (newSrc !== prevSrc) {
         this.isVideoReady = false;
         this.hasError = false;
-        this.initVideo();
+        if (this.isVideoInitialized) {
+          this.initVideo();
+        }
       }
     }
 
-    // 2. Handle Priority Changes (Preloading logic)
-    if (changes['priority']) {
-      this.updateHlsPriority();
+    // Priority changed
+    if (changes['priority'] && !changes['priority'].firstChange) {
+      this.handlePriorityChange(changes['priority'].currentValue, changes['priority'].previousValue);
     }
 
-    // 3. Handle Active State (Play/Pause)
+    // Active changed → play or pause, and sync mute
     if (changes['active']) {
       if (this.active) {
+        this.syncMute();
         this.play();
       } else {
         this.pause();
-        // If we dropping from active to specific priority handled in updateHlsPriority
-        // But ensures we don't keep playing
       }
     }
 
-    // 4. Mute State
-    if (this.videoEl?.nativeElement) {
-      this.videoEl.nativeElement.muted = !this.active || this.isMuted;
+    // Mute changed externally while active
+    if (changes['isMuted'] && !changes['isMuted'].firstChange && this.active) {
+      this.syncMute();
+    }
+  }
+
+  /** Sync the video element's muted state with component state */
+  private syncMute() {
+    const video = this.videoEl?.nativeElement;
+    if (video) {
+      // Only unmute if this card is the active one
+      video.muted = !this.active || this.isMuted;
     }
   }
 
   ngOnDestroy() {
     this.destroyHls();
-    if (this.progressInterval) {
-      clearInterval(this.progressInterval);
-    }
-    if (this.progressBarHideTimeout) {
-      clearTimeout(this.progressBarHideTimeout);
-    }
+    if (this.progressBarHideTimeout) clearTimeout(this.progressBarHideTimeout);
+    if (this.singleTapTimeout) clearTimeout(this.singleTapTimeout);
   }
 
   ngAfterViewInit() {
-    if (this.isBrowser) {
-      // Delay video creation to prevent flash of default icon
-      setTimeout(() => {
-        this.isVideoInitialized = true;
-        this.cdr.detectChanges(); // Ensure DOM is updated with <video> element
+    if (!this.isBrowser) return;
 
-        console.log('[VideoCard] ngAfterViewInit (Delayed)', this.reel?.id);
-        this.initVideo();
-        this.setupNativeListeners();
-
-        // Safety check: verify init happened
-        setTimeout(() => {
-          if (!this.hls && (this.priority === 'high' || this.priority === 'auto')) {
-            console.warn('[VideoCard] Safety Retry Init for', this.reel?.id);
-            this.initVideo();
-          }
-        }, 500);
-      }, 50); // Short delay allows skeleton to render first
-    }
+    // Short delay so DOM is painted before HLS attaches
+    setTimeout(() => {
+      this.isVideoInitialized = true;
+      this.cdr.detectChanges();
+      this.initVideo();
+    }, 30);
   }
+
+  // ─── HLS & Playback ────────────────────────────────────────────────────────
 
   private initVideo() {
     const video = this.videoEl?.nativeElement;
     const src = this.displaySrc;
 
-    if (!video) {
-      // Expected during early ngOnChanges
-      console.warn('[VideoCard] initVideo skipped: No video element for', this.reel?.id);
-      return;
-    }
-    if (!src) {
-      console.warn('[VideoCard] initVideo skipped: No src available for', this.reel?.id);
-      this.isLoading = false; // Ensure we don't show spinner if no content
+    if (!video || !src) {
+      this.isLoading = false;
       return;
     }
 
-    // Now we are actually starting
-    this.isLoading = (this.priority === 'high'); // Only show spinner for active video
-
-    console.log('[VideoCard] InitVideo V2 for:', this.reel?.id, 'Idx:', this.relativeIndex, 'Priority:', this.priority);
-
-    // RULE 4: Initial HLS only if priority is not low
+    // Only init for high/auto priority; skip low
     if (this.priority === 'low') {
-      // console.log('[VideoCard] Skipping init due to low priority');
-      this.isLoading = false; // Don't show spinner for low priority background items
+      this.isLoading = false;
       return;
     }
 
-    // Prevent redundant initialization
+    // Prevent double-init for same src
     if (this.hls && this.currentInitSrc === src) {
-      console.log('[VideoCard] Skipping HLS init (already active for src)');
-      this.updateHlsPriority(); // Just update state
+      this.handlePriorityChange(this.priority, this.priority);
       return;
     }
 
-    // Cleanup existing
     this.destroyHls();
     this.currentInitSrc = src;
+    this.isLoading = (this.priority === 'high');
 
-    // CACHE BUSTING: Force fresh network fetch to avoid stale disk cache black screen
-    const uniqueSrc = src.includes('?') ? `${src}&t=${Date.now()}` : `${src}?t=${Date.now()}`;
-    console.log('[VideoCard] Loading Source:', uniqueSrc);
-
-    // RULE 6: Strict Format Enforcement
     if (!src.endsWith('.m3u8')) {
-      throw new Error('[VideoCard] MP4 playback is forbidden');
+      console.error('[VideoCard] Non-HLS src not supported:', src);
+      this.isLoading = false;
+      return;
     }
 
     if (Hls.isSupported()) {
-      // RULE 1: BUFFER INFLATION BUG FIX
       const config: Partial<any> = {
         debug: false,
-        enableWorker: true,
-        startLevel: 0, // RULE 2: PRELOAD BITRATE BUG FIX
-        autoStartLoad: true, // Enabled for faster start (initVideo only runs for high/auto)
-        maxBufferLength: 6, // Reverted to 6s for stability
-        maxMaxBufferLength: 12, // Reverted to 12s
-        backBufferLength: 3, // Reverted to 3s
-        startFragPrefetch: true, // Enabled prefetch to reduce startup delay
-        fragLoadingTimeOut: 2000,
-        fragLoadingMaxRetry: 3,
+        // Disable worker — Capacitor Android WebView blocks SharedArrayBuffer
+        // (requires COOP/COEP headers which aren't set in a Capacitor app)
+        enableWorker: false,
+        // Let HLS auto-pick quality based on bandwidth (good for 4G/5G variance)
+        startLevel: -1,
+        autoStartLoad: true,
+        // Mobile-conservative buffer: 5s ahead is enough, saves RAM
+        maxBufferLength: 5,
+        maxMaxBufferLength: 15,
+        // Don't keep old segments — on Android with 2-3GB RAM this matters
+        backBufferLength: 0,
+        // Prefetch the next fragment while current is playing
+        startFragPrefetch: true,
+        // Generous timeouts for 4G networks in India
+        fragLoadingTimeOut: 10000,
+        fragLoadingMaxRetry: 4,
+        fragLoadingRetryDelay: 500,
+        manifestLoadingTimeOut: 10000,
+        manifestLoadingMaxRetry: 3,
+        levelLoadingTimeOut: 10000,
+        levelLoadingMaxRetry: 3,
+        lowLatencyMode: false,
+        // Prevent ABR from switching to higher quality on slow connections mid-segment
+        abrEwmaFastLive: 3,
+        abrEwmaSlowLive: 9,
       };
 
       this.hls = new Hls(config);
       this.hls.attachMedia(video);
 
       this.hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-        this.hls?.loadSource(uniqueSrc);
-        // Loading handled in updateHlsPriority
+        this.hls?.loadSource(src); // Use original src WITHOUT cache-buster for caching
       });
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        this.updateHlsPriority();
+        if (this.priority === 'high') {
+          this.syncMute();
+          video.play().catch((e: any) => console.warn('[VideoCard] Play failed:', e));
+        }
       });
 
-      this.hls.on(Hls.Events.ERROR, (event, data) => {
+      this.hls.on(Hls.Events.ERROR, (_event: any, data: any) => {
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
@@ -284,41 +246,59 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
           }
         }
       });
+
+      this.setupNativeListeners();
+
     } else if (video.canPlayType('application/vnd.apple.mpegurl') === 'probably') {
-      // RULE 5: NATIVE SAFARI HLS SAFETY
-      video.src = uniqueSrc;
+      // Native Safari HLS (iOS)
+      video.src = src;
+      this.setupNativeListeners();
+      if (this.priority === 'high') {
+        this.syncMute();
+        video.play().catch((e: any) => console.warn('[VideoCard] iOS play failed:', e));
+      }
     }
   }
 
-  private updateHlsPriority() {
-    // If HLS instance doesn't exist and we moved to high/auto, we must init
-    if (!this.hls && (this.priority === 'high' || this.priority === 'auto')) {
-      this.initVideo();
-      return;
-    }
+  private handlePriorityChange(newPriority: string, _oldPriority: string) {
+    const video = this.videoEl?.nativeElement;
 
-    if (!this.hls) return;
-
-    switch (this.priority) {
+    switch (newPriority) {
       case 'high':
-        // FIX 1: HIGH vs AUTO PLAYBACK DETERMINISM
-        // console.log('[VideoCard] Priority HIGH -> Playing', this.reel?.id);
-        this.hls.startLoad(0);
-        this.videoEl?.nativeElement.play().catch((err: any) => console.warn('[VideoCard] Autoplay blocked?', err));
+        // Must have HLS running
+        if (!this.hls) {
+          this.initVideo();
+          return;
+        }
+        this.hls.startLoad();
+        this.syncMute();
+        video?.play().catch((e: any) => console.warn('[VideoCard] Play failed on priority high:', e));
         break;
 
       case 'auto':
-        this.hls.startLoad(0);
-        this.videoEl?.nativeElement.pause();
+        // Preload only — load manifest so we know total duration, but don't
+        // fetch segments yet. Segments start fetching when priority becomes 'high'.
+        // This saves mobile data on 4G connections.
+        if (!this.hls) {
+          this.initVideo();
+          // After init, immediately pause segment loading
+          setTimeout(() => this.hls?.stopLoad(), 100);
+          return;
+        }
+        this.hls.startLoad(-1); // Load manifest only (startPosition = -1 means don't seek)
+        setTimeout(() => this.hls?.stopLoad(), 500); // Stop after manifest is fetched
+        video?.pause();
         break;
 
       case 'low':
-        // RULE 3: MEMORY LEAK ON LOW PRIORITY
+        // Destroy & free memory — only keep active ± 1 in memory
         this.destroyHls();
-        if (this.videoEl?.nativeElement) {
-          this.videoEl.nativeElement.src = '';
-          this.videoEl.nativeElement.load();
+        if (video) {
+          video.src = '';
+          video.load();
         }
+        this.currentInitSrc = '';
+        this.isVideoReady = false;
         break;
     }
   }
@@ -331,90 +311,132 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private setupNativeListeners() {
-    const video = this.videoEl.nativeElement;
-    const events = ['error', 'ended', 'timeupdate', 'waiting', 'playing', 'loadeddata'];
+    const video = this.videoEl?.nativeElement;
+    if (!video) return;
 
-    events.forEach(event => {
-      video.addEventListener(event, () => {
-        if (event === 'loadeddata') {
-          // Reveal video as soon as the first frame is ready
-          this.isVideoReady = true;
-          this.cdr.detectChanges();
-        }
-        if (event === 'timeupdate') {
-          if (!this.isSeeking && video.duration) {
-            this.progress = (video.currentTime / video.duration) * 100;
-          }
-          // Fallback: if loadeddata missed, ensure visibility on playback
-          if (video.currentTime > 0.05 && !this.isVideoReady) {
-            this.isVideoReady = true;
-            this.cdr.detectChanges();
-          }
-          this.isLoading = false; // Playing implies loaded
-        }
-        if (event === 'waiting') {
-          this.isLoading = true;
-        }
-        if (event === 'playing') {
-          this.isLoading = false;
-        }
-        if (event === 'ended') {
-          this.progress = 0;
-          this.play(); // Loop
-        }
-      });
+    video.addEventListener('loadeddata', () => {
+      this.isVideoReady = true;
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    });
+
+    video.addEventListener('timeupdate', () => {
+      if (!this.isSeeking && video.duration) {
+        this.progress = (video.currentTime / video.duration) * 100;
+      }
+      if (video.currentTime > 0.05 && !this.isVideoReady) {
+        this.isVideoReady = true;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+
+    video.addEventListener('waiting', () => {
+      if (this.active) {
+        this.isLoading = true;
+        this.cdr.detectChanges();
+      }
+    });
+
+    video.addEventListener('playing', () => {
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    });
+
+    video.addEventListener('ended', () => {
+      this.progress = 0;
+      video.currentTime = 0;
+      video.play().catch(() => {});
     });
   }
-
 
   play() {
     const video = this.videoEl?.nativeElement;
     if (!video) return;
+    if (!video.paused) return; // Already playing
 
-    if (!video.paused) {
-      // Already playing, ignore to prevent AbortErrors
-      return;
-    }
+    this.syncMute();
 
-    this.videoEl.nativeElement.muted = !this.active || this.isMuted;
-
-    // Ensure HLS is loading if we try to play
     if (this.hls) {
       this.hls.startLoad();
-      // Ramp up buffer potential if it was low
-      //this.hls.config.maxBufferLength = 30;
     }
 
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.catch((err: any) => {
-        console.warn('[VideoCard] Play failed:', err);
-      });
-    }
+    video.play().catch((err: any) => console.warn('[VideoCard] Play failed:', err));
   }
 
   pause() {
-    this.videoEl?.nativeElement.pause();
+    this.videoEl?.nativeElement?.pause();
   }
 
-  resetVideo() {
-    const video = this.videoEl?.nativeElement;
-    if (video) {
-      video.pause();
-      // Optional: video.currentTime = 0; 
+  // ─── Interaction ─────────────────────────────────────────────────────────
+
+  onVideoTap(event: any): void {
+    if (event.cancelable) event.preventDefault();
+
+    const now = Date.now();
+    const gap = now - this.lastTapTime;
+
+    if (gap < 300 && gap > 0) {
+      // Double tap
+      if (this.singleTapTimeout) {
+        clearTimeout(this.singleTapTimeout);
+        this.singleTapTimeout = undefined;
+      }
+      this.doubleTapLike();
+      this.lastTapTime = 0;
+    } else {
+      this.lastTapTime = now;
+      this.singleTapTimeout = setTimeout(() => {
+        this.toggleMute();
+        this.singleTapTimeout = undefined;
+      }, 300);
     }
   }
 
-  preload() {
-    // Handled via updateHlsPriority
+  toggleMute() {
+    const video = this.videoEl?.nativeElement;
+    if (!video) return;
+
+    if (video.paused) {
+      video.play().catch(() => {});
+    }
+
+    this.isMuted = !this.isMuted;
+    video.muted = !this.active || this.isMuted;
+    this.muteChanged.emit(this.isMuted);
+    this.showMuteAnimation();
+
+    this.isProgressBarVisible = true;
+    if (this.progressBarHideTimeout) clearTimeout(this.progressBarHideTimeout);
+    this.progressBarHideTimeout = setTimeout(() => {
+      this.isProgressBarVisible = false;
+      this.cdr.detectChanges();
+    }, 2000);
   }
 
-  // --- SOCIAL & UI METHODS (Unchanged logic mostly) ---
+  private showMuteAnimation() {
+    this.showMuteIcon = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.showMuteIcon = false;
+      this.cdr.detectChanges();
+    }, 900);
+  }
+
+  doubleTapLike() {
+    if (!this.displayIsLiked) {
+      this.toggleLike();
+    }
+    this.showLikeAnimationEffect();
+  }
+
+  toggleLike() {
+    if (!this.reel) this.isLiked = !this.isLiked;
+    this.liked.emit();
+  }
 
   bookmark(): void {
-    if (!this.reel) {
-      this.isBookmarked = !this.isBookmarked;
-    }
+    if (!this.reel) this.isBookmarked = !this.isBookmarked;
     this.bookmarked.emit();
   }
 
@@ -425,108 +447,59 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   openGoogleMaps(): void {
     if (!this.isBrowser) return;
-
     if (this.reel?.latitude && this.reel?.longitude) {
-      const { latitude, longitude } = this.reel;
-      const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-      window.open(url, '_blank');
+      window.open(`https://www.google.com/maps?q=${this.reel.latitude},${this.reel.longitude}`, '_blank');
     } else {
-      const vendor = this.displayVendor;
-      const title = this.displayTitle;
-      const searchQuery = encodeURIComponent(`${vendor} ${title} Bangalore`);
-      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
-      window.open(mapsUrl, '_blank');
+      const q = encodeURIComponent(`${this.displayVendor} ${this.displayTitle} Bangalore`);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank');
     }
   }
 
-  share(): void {
-    this.shareApp();
-  }
-
-  toggleLike() {
-    if (!this.reel) {
-      this.isLiked = !this.isLiked;
-    }
-    this.liked.emit();
-    if (this.isLiked) {
-      this.showLikeAnimationEffect();
-    }
-  }
-
-  toggleMute() {
-    const video = this.videoEl?.nativeElement;
-    if (video) {
-      if (video.paused) {
-        video.play().catch((err: any) => console.error('[VideoCard] Error playing on tap:', err));
-      }
-      const newMutedState = !this.isMuted;
-      video.muted = !this.active || newMutedState;
-      this.isMuted = newMutedState;
-      this.muteChanged.emit(newMutedState);
-      this.showMuteAnimation();
-      this.isProgressBarVisible = true;
-      if (this.progressBarHideTimeout) {
-        clearTimeout(this.progressBarHideTimeout);
-      }
-      this.progressBarHideTimeout = setTimeout(() => {
-        this.isProgressBarVisible = false;
-      }, 2000);
-    }
-  }
-
-  private showMuteAnimation() {
-    this.showMuteIcon = true;
-    setTimeout(() => {
-      this.showMuteIcon = false;
-    }, 1000);
-  }
-
-  doubleTapLike() {
-    if (!this.isLiked) {
-      this.toggleLike();
+  shareApp(): void {
+    if (!this.isBrowser) return;
+    this.shared.emit();
+    const nav = window.navigator as any;
+    const data = {
+      title: 'Bengaluru Swada',
+      text: `Check out ${this.displayTitle} from ${this.displayVendor}!`,
+      url: window.location.origin
+    };
+    if (nav?.share) {
+      nav.share(data).catch(() => this.fallbackShare());
     } else {
-      this.showLikeAnimationEffect();
+      this.fallbackShare();
     }
   }
 
-  onVideoTap(event: any): void {
-    if (event.cancelable) {
-      event.preventDefault();
-    }
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - this.lastTapTime;
-
-    if (tapLength < 300 && tapLength > 0) {
-      if (this.singleTapTimeout) {
-        clearTimeout(this.singleTapTimeout);
-        this.singleTapTimeout = undefined;
-      }
-      this.doubleTapLike();
-      this.lastTapTime = 0;
-    } else {
-      this.lastTapTime = currentTime;
-      this.singleTapTimeout = setTimeout(() => {
-        this.toggleMute();
-        this.singleTapTimeout = undefined;
-      }, 300);
+  private fallbackShare(): void {
+    const nav = window.navigator as any;
+    const text = `Check out Bengaluru Swada! ${window.location.origin}`;
+    if (nav?.clipboard) {
+      nav.clipboard.writeText(text).catch(() => {});
     }
   }
 
   private showLikeAnimationEffect(): void {
     this.showLikeAnimation = true;
+    this.cdr.detectChanges();
     setTimeout(() => {
       this.showLikeAnimation = false;
-    }, 1000);
+      this.cdr.detectChanges();
+    }, 800);
+  }
+
+  goToProfile(event: Event) {
+    event.stopPropagation();
+    this.router.navigate(['/profile']);
   }
 
   formatViewCount(count: number): string {
-    if (count >= 1000000) {
-      return (count / 1000000).toFixed(1) + 'M';
-    } else if (count >= 1000) {
-      return (count / 1000).toFixed(1) + 'K';
-    }
+    if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
     return count.toString();
   }
+
+  // ─── Progress Bar ─────────────────────────────────────────────────────────
 
   onProgressBarClick(event: any): void {
     event.stopPropagation();
@@ -539,9 +512,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   onProgressBarTouchMove(event: any): void {
-    if (this.isSeeking) {
-      this.seekToPosition(event);
-    }
+    if (this.isSeeking) this.seekToPosition(event);
   }
 
   onProgressBarTouchEnd(): void {
@@ -549,79 +520,16 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private seekToPosition(event: any): void {
-    const progressContainer = event.currentTarget;
-    const rect = progressContainer.getBoundingClientRect();
+    const rect = event.currentTarget.getBoundingClientRect();
+    let clientX = event.type.includes('touch')
+      ? (event.touches[0] || event.changedTouches[0])?.clientX ?? 0
+      : event.clientX;
 
-    let clientX: number;
-    if (event.type.indexOf('touch') === -1) {
-      clientX = event.clientX;
-    } else {
-      const touch = event.touches[0] || event.changedTouches[0];
-      if (!touch) return;
-      clientX = touch.clientX;
-    }
-
-    const clickPosition = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const percentage = clickPosition / rect.width;
-
+    const pct = Math.max(0, Math.min(clientX - rect.left, rect.width)) / rect.width;
     const video = this.videoEl?.nativeElement;
-    if (video && video.readyState > 0) {
-      video.currentTime = percentage * video.duration;
-      this.progress = percentage * 100;
+    if (video?.readyState > 0) {
+      video.currentTime = pct * video.duration;
+      this.progress = pct * 100;
     }
-  }
-
-
-
-  // Share the app with others
-  shareApp(): void {
-    if (!this.isBrowser) return;
-
-    this.shared.emit();
-
-    const shareData = {
-      title: 'Bengaluru Swada - Discover Street Food',
-      text: 'Check out this amazing street food discovery app! Find the best local food near you.',
-      url: window.location.origin
-    };
-
-    // Use Web Share API if available
-    const nav = window.navigator as any;
-    if (nav && nav.share) {
-      nav.share(shareData).catch((error: any) => {
-        console.log('Error sharing:', error);
-        this.fallbackShare();
-      });
-    } else {
-      this.fallbackShare();
-    }
-  }
-
-  // Fallback share method for browsers without Web Share API
-  private fallbackShare(): void {
-    const url = window.location.origin;
-    const text = `Check out Bengaluru Swada - Discover amazing street food near you! ${url}`;
-
-    // Copy to clipboard
-    const nav = window.navigator as any;
-    if (nav && nav.clipboard) {
-      nav.clipboard.writeText(text).then(() => {
-        window.alert('Link copied to clipboard! Share it with your friends.');
-      }).catch(() => {
-        this.showShareOptions(url);
-      });
-    } else {
-      this.showShareOptions(url);
-    }
-  }
-
-  // Show share options as fallback
-  private showShareOptions(url: string): void {
-    const message = encodeURIComponent('Check out Bengaluru Swada - Discover amazing street food!');
-    const encodedUrl = encodeURIComponent(url);
-
-    // Open WhatsApp share (most popular in India)
-    const whatsappUrl = `https://wa.me/?text=${message}%20${encodedUrl}`;
-    window.open(whatsappUrl, '_blank');
   }
 }
