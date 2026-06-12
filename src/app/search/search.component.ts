@@ -272,15 +272,16 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
     reset() {
         this.searchQuery = '';
-        this.reels = [];
-        this.filteredReels = [];
-        this.isLoading = false;
+        this.isSearchingMode = false;
+        this.hasSearchMatches = false;
 
         // Reset Filters
         this.selectedCategory = 'All';
         this.selectedPriceRange = this.priceRanges[0];
         this.selectedDistance = this.distances[0];
         this.selectedSort = 'Nearest First';
+
+        this.applyFilters();
     }
 
     ngAfterViewInit() {
