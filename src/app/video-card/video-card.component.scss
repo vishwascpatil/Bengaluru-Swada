@@ -30,48 +30,7 @@
     z-index: 2;
 }
 
-.view-count-badge {
-    position: absolute;
-    bottom: 30px;
-    right: 20px;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    font-size: 0.85rem;
-    font-weight: 600;
-    pointer-events: none;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 
-    svg {
-        opacity: 1;
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-    }
-
-    .count-text {
-        letter-spacing: 0.3px;
-        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-        font-variant-numeric: tabular-nums;
-        min-width: 20px;
-    }
-}
-
-.view-count-badge:hover {
-    background: rgba(0, 0, 0, 0.8);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.15);
-}
 
 .profile-overlay-btn {
     position: absolute;
@@ -249,12 +208,12 @@
         right: 16px;
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 26px; /* aligns centers with action-item center spacing */
         align-items: center;
 
         .skeleton-circle {
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
             position: relative;
@@ -411,7 +370,7 @@
 .action-buttons {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 8px; /* consistent small gap between action items */
     pointer-events: auto;
     padding-bottom: 100px;
     padding-right: 0px;
@@ -421,6 +380,16 @@
     z-index: 10;
 }
 
+.action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    width: 36px;
+    height: 54px; /* Fixed height ensures the buttons are always vertically aligned at the same distance, regardless of whether a count is visible or not */
+}
+
 .action-btn {
     background: rgba(20, 20, 20, 0.45);
     /* Dark Glass Circle */
@@ -428,8 +397,8 @@
     -webkit-backdrop-filter: blur(20px);
     border: 0.5px solid rgba(255, 255, 255, 0.15);
     border-radius: 50%;
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -438,6 +407,7 @@
     transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     position: relative;
+    flex-shrink: 0;
 
     &:active {
         transform: scale(0.92);
@@ -445,8 +415,8 @@
     }
 
     .action-icon {
-        width: 24px;
-        height: 24px;
+        width: 18px;
+        height: 18px;
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
         stroke-width: 2px;
         /* Ensure thin strokes */
@@ -480,7 +450,6 @@
 }
 
 /* Counts below buttons (optional, usually looks better inside or just hidden for minimal) */
-.like-count,
 .count-text {
     position: absolute;
     bottom: -18px;
@@ -489,6 +458,31 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     pointer-events: none;
     white-space: nowrap;
+}
+
+.like-count,
+.view-count {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    color: #ffffff;
+}
+
+.like-count {
+    cursor: pointer;
+}
+
+.view-count {
+    cursor: default;
+}
+
+.view-btn {
+    &:active {
+        transform: none !important;
+        background: rgba(20, 20, 20, 0.45) !important;
+    }
 }
 
 /* Like Animation */
