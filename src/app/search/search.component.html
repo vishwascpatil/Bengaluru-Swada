@@ -110,21 +110,29 @@
         <!-- SEARCH MODE: Filters Active -->
         <ng-container *ngIf="isSearchingMode">
 
-            <!-- Active Filters Panel -->
-            <div class="search-filters-row">
-                <div class="filter-scroller">
-                    <button *ngFor="let sort of sortOptions" class="chip active-chip"
-                        [class.active]="selectedSort === sort" (click)="selectSort(sort)">
+            <!-- Active Filters Panel (Filter by Vibe View) -->
+            <div class="explore-filters">
+                <div class="filter-header">
+                    <h4 class="section-title">Filter by Vibe</h4>
+                </div>
+                <div class="filter-row">
+                    <!-- Sort Options -->
+                    <button *ngFor="let sort of sortOptions" class="chip" [class.active]="selectedSort === sort"
+                        (click)="selectSort(sort)">
                         {{sort}}
                     </button>
-                    <div class="scroller-divider"></div>
-                    <button *ngFor="let range of priceRanges" class="chip active-chip"
-                        [class.active]="selectedPriceRange === range" (click)="selectPrice(range)">
+                </div>
+                <div class="filter-row">
+                    <!-- Price Options -->
+                    <button *ngFor="let range of priceRanges" class="chip" [class.active]="selectedPriceRange === range"
+                        (click)="selectPrice(range)">
                         {{range.label}}
                     </button>
-                    <div class="scroller-divider"></div>
-                    <button *ngFor="let dist of distances" class="chip active-chip"
-                        [class.active]="selectedDistance === dist" (click)="selectDistance(dist)">
+                </div>
+                <div class="filter-row">
+                    <!-- Distance Options -->
+                    <button *ngFor="let dist of distances" class="chip" [class.active]="selectedDistance === dist"
+                        (click)="selectDistance(dist)">
                         {{dist.label}}
                     </button>
                 </div>

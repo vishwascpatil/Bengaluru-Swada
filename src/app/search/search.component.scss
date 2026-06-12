@@ -378,31 +378,7 @@
     }
 }
 
-/* Search Filters Scroller */
-.search-filters-row {
-    background: #ffffff;
-    padding: 12px 16px;
-    border-bottom: 1px solid #f2f2f7;
 
-    .filter-scroller {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        overflow-x: auto;
-        scrollbar-width: none;
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
-    }
-
-    .scroller-divider {
-        width: 1px;
-        height: 16px;
-        background: #e5e5ea;
-        flex-shrink: 0;
-    }
-}
 
 /* Results Banners */
 .results-banner {
@@ -672,9 +648,6 @@
     animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
 }
 
-.search-filters-row {
-    animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
-}
 
 @keyframes fadeSlideUp {
     from {
