@@ -106,11 +106,47 @@
       <div class="images-grid">
         <div class="image-item" *ngFor="let img of allImages; let i = index"
           [class.expanded]="expandedImageIndex === i"
-          (click)="toggleExpandImage(i)">
+          (click)="openLightbox(i)">
           <img [src]="img" alt="Photo {{i + 1}}" loading="lazy"
             (error)="$event.target.classList.add('img-error')">
         </div>
       </div>
+    </div>
+
+    <!-- Lightbox: Full-screen image viewer -->
+    <div class="lightbox-overlay" *ngIf="lightboxIndex !== null" (click)="closeLightbox()">
+      <button class="lightbox-close" (click)="closeLightbox(); $event.stopPropagation()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <button class="lightbox-nav lightbox-prev" *ngIf="lightboxIndex! > 0"
+        (click)="lightboxPrev(); $event.stopPropagation()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <button class="lightbox-nav lightbox-next" *ngIf="lightboxIndex! < allImages.length - 1"
+        (click)="lightboxNext(); $event.stopPropagation()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="lightbox-image-wrapper"
+        (touchstart)="lightboxTouchStart($event); $event.stopPropagation()"
+        (touchmove)="lightboxTouchMove($event); $event.stopPropagation()"
+        (touchend)="lightboxTouchEnd(); $event.stopPropagation()"
+        (click)="$event.stopPropagation()">
+        <img [src]="allImages[lightboxIndex!]" alt="Photo {{lightboxIndex! + 1}}"
+          [style.transform]="lightboxIsSwiping ? 'translateX(' + lightboxOffset + 'px)' : 'translateX(0)'"
+          [style.transition]="lightboxIsSwiping ? 'none' : 'transform 0.25s ease'">
+      </div>
+
+      <div class="lightbox-counter">{{ lightboxIndex! + 1 }} / {{ allImages.length }}</div>
     </div>
 
     <!-- Bottom padding for safe area -->

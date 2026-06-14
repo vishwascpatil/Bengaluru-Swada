@@ -337,11 +337,6 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit() {
-        // Automatically focus search input after slide-up page transition completes
-        setTimeout(() => {
-            this.searchInput?.nativeElement?.focus();
-        }, 500);
-
         // Setup IntersectionObserver for video thumbnails
         this.setupIntersectionObserver();
         this.videoEls?.changes?.subscribe(() => {

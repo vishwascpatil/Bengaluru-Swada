@@ -18,6 +18,7 @@ export class VendorInfoComponent implements OnChanges {
 
     // Touch/drag state for pull-to-dismiss
     private touchStartY = 0;
+    private dragStartY = 0;
     private currentTranslateY = 0;
     private isDragging = false;
     private readonly dismissThreshold = 120;
@@ -27,14 +28,16 @@ export class VendorInfoComponent implements OnChanges {
     isDraggingClass = false;
     sheetOffset = 0;
 
-    // Track which image is expanded
-    expandedImageIndex: number | null = null;
+    // Lightbox state
+    lightboxIndex: number | null = null;
+    lightboxTouchStartX = 0;
+    lightboxOffset = 0;
+    lightboxIsSwiping = false;
 
     constructor(private cdr: ChangeDetectorRef) { }
 
     ngOnChanges(): void {
         if (this.visible && !this.sheetVisible) {
-            // Open: render element first, then on next tick add .visible class for slide-up
             this.sheetVisible = true;
             this.sheetEntered = false;
             setTimeout(() => {
@@ -58,19 +61,41 @@ export class VendorInfoComponent implements OnChanges {
         return this.allImages.length > 0;
     }
 
+    // ─── Sheet Touch Handling ───────────────────────────────────────────
+    // Critical: Don't start drag immediately — wait for enough downward movement
+    // to distinguish between scrolling and pull-to-dismiss.
     onTouchStart(event: any): void {
-        if (this.sheetContent?.nativeElement?.scrollTop > 0) return;
         this.touchStartY = event.touches[0].clientY;
-        this.isDragging = true;
-        this.isDraggingClass = true;
+        this.isDragging = false;
     }
 
     onTouchMove(event: any): void {
-        if (!this.isDragging) return;
         const deltaY = event.touches[0].clientY - this.touchStartY;
-        if (deltaY > 0) {
-            this.currentTranslateY = deltaY;
-            this.sheetOffset = deltaY;
+
+        // If we haven't started dragging yet, check if this is a pull-down gesture
+        if (!this.isDragging) {
+            const scrollTop = this.sheetContent?.nativeElement?.scrollTop || 0;
+            // Only start drag if: pulling down AND at top of scroll AND moved enough
+            if (deltaY > 10 && scrollTop <= 0) {
+                this.isDragging = true;
+                this.isDraggingClass = true;
+                this.dragStartY = this.touchStartY;
+            }
+            // Otherwise allow native scroll to work untouched
+            return;
+        }
+
+        // We're in drag mode — track the offset
+        const currentDelta = event.touches[0].clientY - this.dragStartY;
+        if (currentDelta > 0) {
+            this.currentTranslateY = currentDelta;
+            this.sheetOffset = currentDelta;
+            this.cdr.detectChanges();
+        } else {
+            // User moved finger back up during drag — cancel the drag
+            this.isDragging = false;
+            this.isDraggingClass = false;
+            this.sheetOffset = 0;
             this.cdr.detectChanges();
         }
     }
@@ -83,7 +108,6 @@ export class VendorInfoComponent implements OnChanges {
         if (this.currentTranslateY > this.dismissThreshold) {
             this.dismiss();
         } else {
-            // Snap back — transition re-enabled by removing dragging class
             this.sheetOffset = 0;
             this.cdr.detectChanges();
         }
@@ -97,13 +121,59 @@ export class VendorInfoComponent implements OnChanges {
     dismiss(): void {
         this.sheetOffset = 0;
         this.isDraggingClass = false;
-        this.expandedImageIndex = null;
+        this.lightboxIndex = null;
         this.sheetEntered = false;
         this.sheetVisible = false;
         this.dismissed.emit();
     }
 
-    toggleExpandImage(index: number): void {
-        this.expandedImageIndex = this.expandedImageIndex === index ? null : index;
+    // ─── Lightbox: Full-screen image viewer ────────────────────────────
+    openLightbox(index: number): void {
+        this.lightboxIndex = index;
+        this.lightboxOffset = 0;
+        this.lightboxIsSwiping = false;
+    }
+
+    closeLightbox(): void {
+        this.lightboxIndex = null;
+        this.lightboxOffset = 0;
+    }
+
+    lightboxPrev(): void {
+        if (this.lightboxIndex !== null && this.lightboxIndex > 0) {
+            this.lightboxIndex--;
+        }
+    }
+
+    lightboxNext(): void {
+        if (this.lightboxIndex !== null && this.lightboxIndex < this.allImages.length - 1) {
+            this.lightboxIndex++;
+        }
+    }
+
+    lightboxTouchStart(event: any): void {
+        this.lightboxTouchStartX = event.touches[0].clientX;
+        this.lightboxIsSwiping = false;
+    }
+
+    lightboxTouchMove(event: any): void {
+        const deltaX = event.touches[0].clientX - this.lightboxTouchStartX;
+        if (Math.abs(deltaX) > 10) {
+            this.lightboxIsSwiping = true;
+            this.lightboxOffset = deltaX;
+            this.cdr.detectChanges();
+        }
+    }
+
+    lightboxTouchEnd(): void {
+        if (!this.lightboxIsSwiping) return;
+        if (this.lightboxOffset < -60) {
+            this.lightboxNext();
+        } else if (this.lightboxOffset > 60) {
+            this.lightboxPrev();
+        }
+        this.lightboxOffset = 0;
+        this.lightboxIsSwiping = false;
+        this.cdr.detectChanges();
     }
 }
