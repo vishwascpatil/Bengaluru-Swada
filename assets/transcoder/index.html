@@ -63,7 +63,8 @@
                     // HLS Transcoding
                     await ffmpeg.exec([
                         '-i', inputName,
-                        '-profile:v', 'baseline',
+                        '-profile:v', 'high',
+                        '-pix_fmt', 'yuv420p',
                         '-level', '3.0',
                         '-s', '720x1280',
                         '-start_number', '0',
