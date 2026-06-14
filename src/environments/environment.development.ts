@@ -10,9 +10,9 @@ export const environment = {
         measurementId: ""
     },
     cloudflare: {
-        workerUrl: '',
-        cdnUrl: '',
-        bucketName: ''
+        workerUrl: 'https://r2-video-uploader.bengaluru-swada.workers.dev',
+        cdnUrl: 'https://r2-video-uploader.bengaluru-swada.workers.dev',
+        bucketName: 'bengaluru-swada-videos'
     },
     googleMapsApiKey: 'AIzaSyA9H-CYGk2kEsfzKyFMA6cdPQRRQMf750M'
 };

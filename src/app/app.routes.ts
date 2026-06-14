@@ -23,7 +23,7 @@ export const routes: Routes = [
 	{ path: 'location-permission', component: LocationPermissionComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'main-app', component: MainAppComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'video-feed', component: VideoFeedComponent, canActivate: [authGuard, splashGuard] },
-	{ path: 'upload-reel', component: UploadReelComponent, canActivate: [authGuard, adminGuard, splashGuard] },
+	{ path: 'upload-reel', component: UploadReelComponent },
 	{ path: 'search', component: SearchComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'profile', component: ProfileComponent, canActivate: [authGuard, splashGuard] },
 	{ path: 'trending', component: TrendingComponent, canActivate: [authGuard, splashGuard] },
