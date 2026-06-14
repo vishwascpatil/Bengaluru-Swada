@@ -561,13 +561,47 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     return item.reel.id || '';
   }
 
-  navigateToReel(reelId: string) {
+  navigateToReel(reelId: string, reelObj?: Reel) {
+    // First try to find the reel in the existing array by ID
     const index = this.reels.findIndex(r => r.id === reelId);
     if (index !== -1) {
       this.isGlobalMuted = true;
       this.currentIndex = index;
       this.cdr.markForCheck();
       this.trackView();
+      return;
+    }
+
+    // Reel not found in current array — this can happen when the search page
+    // and the video feed loaded reel data from separate getReels(50) calls at
+    // different times (e.g., a new reel was added in between).
+    // If we have the full reel object, insert it at the current position.
+    if (reelObj) {
+      console.log('[VideoFeed] Reel not found in array, inserting from object:', reelObj.id);
+      // Clone the reel object to avoid cross-contamination with search component's data
+      const reelForFeed = { ...reelObj } as any;
+      // Clean up search-only fields that shouldn't bleed into the feed
+      delete reelForFeed.rating;       // Search adds random rating; feed shouldn't display it
+      delete reelForFeed.distanceVal;  // Search-internal computed value, not in Reel model
+      // Map distance: search uses 'distanceStr', feed uses 'distance'
+      if (reelForFeed.distanceStr && !reelForFeed.distance) {
+        reelForFeed.distance = reelForFeed.distanceStr;
+      }
+      delete reelForFeed.distanceStr;
+      // Ensure client-side state fields are initialized
+      const currentUser = this.auth.currentUser;
+      if (currentUser && reelForFeed.isLiked === undefined && reelForFeed.isBookmarked === undefined) {
+        reelForFeed.isLiked = this.reelsService.isLikedByUser(reelObj as Reel, currentUser.uid);
+        reelForFeed.isBookmarked = this.reelsService.isBookmarkedByUser(reelObj as Reel, currentUser.uid);
+      }
+      // Insert at the front so it plays immediately
+      this.reels.unshift(reelForFeed);
+      this.currentIndex = 0;
+      this.isGlobalMuted = true;
+      this.cdr.markForCheck();
+      this.trackView();
+    } else {
+      console.warn('[VideoFeed] navigateToReel: reel not found and no object provided:', reelId);
     }
   }
 

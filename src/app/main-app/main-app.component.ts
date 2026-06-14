@@ -136,28 +136,36 @@ export class MainAppComponent implements OnInit {
       }
     });
 
-    // Subscribe to reel selection from favorites
+    // Subscribe to reel selection from search/favorites
     this.navigationService.selectedReelId$.subscribe(reelId => {
       if (reelId) {
-        console.log('[MainApp] Received reel selection:', reelId);
+        // Get the full reel object (may include extra fields like distanceVal, rating from search)
+        const reelObj = this.navigationService.getSelectedReelObject();
+        console.log('[MainApp] Received reel selection:', reelId, reelObj ? 'with full object' : 'id only');
         // Switch to feed tab
         this.activeTab = 'feed';
-        // Wait for video feed to load and navigate
-        const attemptNavigation = (attempts = 0) => {
-          setTimeout(() => {
-            if (this.videoFeedComponent && this.videoFeedComponent.reels && this.videoFeedComponent.reels.length > 0) {
-              console.log('[MainApp] Navigating to reel:', reelId);
-              this.videoFeedComponent.navigateToReel(reelId);
-              this.navigationService.clearSelection();
-            } else if (attempts < 15) {
-              console.log('[MainApp] Waiting for reels... attempt', attempts + 1);
-              attemptNavigation(attempts + 1);
-            } else {
-              console.error('[MainApp] Failed to navigate - reels not loaded');
-            }
-          }, 400);
-        };
-        attemptNavigation();
+
+        // Navigate to reel immediately if reels are already loaded
+        if (this.videoFeedComponent?.reels?.length > 0) {
+          console.log('[MainApp] Reels loaded, navigating immediately:', reelId);
+          this.videoFeedComponent.navigateToReel(reelId, reelObj || undefined);
+          this.navigationService.clearSelection();
+        } else {
+          const attemptNavigation = (attempts = 0) => {
+            setTimeout(() => {
+              if (this.videoFeedComponent && this.videoFeedComponent.reels && this.videoFeedComponent.reels.length > 0) {
+                console.log('[MainApp] Navigating to reel after load:', reelId);
+                this.videoFeedComponent.navigateToReel(reelId, reelObj || undefined);
+                this.navigationService.clearSelection();
+              } else if (attempts < 15) {
+                attemptNavigation(attempts + 1);
+              } else {
+                console.error('[MainApp] Failed to navigate - reels not loaded');
+              }
+            }, 400);
+          };
+          attemptNavigation();
+        }
       }
     });
   }

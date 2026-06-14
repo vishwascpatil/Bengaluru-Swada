@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Capacitor } from '@capacitor/core';
+import { Auth } from '@angular/fire/auth';
+import { Firestore, doc, setDoc } from '@angular/fire/firestore';
 import FusedLocation from '../plugins/fused-location.plugin';
 
 @Injectable({
     providedIn: 'root'
 })
 export class LocationService {
+    constructor(
+        private auth: Auth,
+        private firestore: Firestore
+    ) {}
     private userLocation: { latitude: number; longitude: number } | null = null;
     private locationPromise: Promise<{ latitude: number; longitude: number }> | null = null;
     private readonly LOCATION_TIMEOUT_MS = 5000; // 5s hard timeout
@@ -20,6 +26,29 @@ export class LocationService {
     updateLocation(name: string, lat: number, lng: number) {
         this.setUserLocation(lat, lng);
         this.locationSource.next({ name, lat, lng });
+
+        // Persist location to Firestore users/{uid}
+        this.persistLocationToFirestore(lat, lng, name);
+    }
+
+    /**
+     * Persist the user's location to Firestore users collection
+     * This ensures location is saved across sessions
+     */
+    private async persistLocationToFirestore(lat: number, lng: number, name: string): Promise<void> {
+        try {
+            const user = this.auth?.currentUser;
+            if (!user?.uid) return;
+
+            const userDocRef = doc(this.firestore, 'users', user.uid);
+            await setDoc(userDocRef, {
+                latitude: lat,
+                longitude: lng,
+                locationName: name
+            }, { merge: true });
+        } catch (error) {
+            console.warn('[LocationService] Failed to persist location to Firestore:', error);
+        }
     }
 
     private readonly DEFAULT_LOCATION_DATA = { name: 'Koramangala', lat: 12.9352, lng: 77.6245 };

@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, ViewChild, ViewChildren, ElementRef, Afte
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Auth } from '@angular/fire/auth';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { ReelsService } from '../services/reels.service';
 import { Reel } from '../models/reel.model';
 import { LocationService } from '../services/location.service';
@@ -66,7 +68,9 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
         private reelsService: ReelsService,
         private locationService: LocationService,
         private navigationService: NavigationService,
-        private router: Router
+        private router: Router,
+        private auth: Auth,
+        private firestore: Firestore
     ) { }
 
     hasSearchMatches = false;
@@ -106,11 +110,17 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
         this.locationService.currentLocation$.subscribe(val => currentLocValue = val).unsubscribe();
 
         if (!currentLocValue) {
-            try {
-                const userLoc = await this.locationService.getUserLocation();
-                this.locationName = (await this.locationService.getAreaName(userLoc.latitude, userLoc.longitude)) + ', Bangalore';
-            } catch (e) {
-                console.warn('Could not get initial location name', e);
+            // Try loading saved location from Firestore first
+            const saved = await this.loadSavedLocation();
+            if (saved) {
+                this.locationName = `${saved.name}, Bangalore`;
+            } else {
+                try {
+                    const userLoc = await this.locationService.getUserLocation();
+                    this.locationName = (await this.locationService.getAreaName(userLoc.latitude, userLoc.longitude)) + ', Bangalore';
+                } catch (e) {
+                    console.warn('Could not get initial location name', e);
+                }
             }
         } else {
             this.locationName = `${currentLocValue.name}, Bangalore`;
@@ -250,11 +260,48 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
 
     openReel(reel: any) {
         console.log('[Search] Opening reel:', reel.id);
-        this.navigationService.selectReel(reel.id);
+        // Pass the full reel object so the video feed can use it directly
+        // This avoids issues where the feed's reels array and search's reels array
+        // may have diverged due to separate async getReels(50) calls
+        this.navigationService.selectReel(reel.id, reel);
         this.isExiting = true;
         setTimeout(() => {
-            this.router.navigate(['/main-app']);
+            // Only navigate if not already on main-app (e.g., standalone /search route)
+            // When embedded as a tab within main-app, the NavigationService subscription handles switching
+            if (this.router.url !== '/main-app') {
+                this.router.navigate(['/main-app']);
+            }
         }, 350);
+    }
+
+    /**
+     * Load the user's saved location from Firestore users/{uid}
+     */
+    private async loadSavedLocation(): Promise<{ name: string; lat: number; lng: number } | null> {
+        try {
+            const user = this.auth.currentUser;
+            if (!user?.uid) return null;
+
+            const userDocRef = doc(this.firestore, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (!userDocSnap.exists()) return null;
+
+            const data = userDocSnap.data();
+            if (data['latitude'] && data['longitude'] && data['locationName']) {
+                // Set in-memory state so other components benefit (avoids redundant Firestore write)
+                this.locationService.setUserLocation(data['latitude'], data['longitude']);
+                return {
+                    name: data['locationName'],
+                    lat: data['latitude'],
+                    lng: data['longitude']
+                };
+            }
+            return null;
+        } catch (error) {
+            console.warn('[Search] Failed to load saved location from Firestore:', error);
+            return null;
+        }
     }
 
     // Location Modal methods

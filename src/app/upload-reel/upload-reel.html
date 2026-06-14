@@ -229,7 +229,10 @@
         </div>
     </div>
 
-    <app-location-picker *ngIf="showLocationPicker" (locationSelected)="onLocationSelected($event)"
+    <app-location-picker *ngIf="showLocationPicker"
+        [initialLat]="latitude"
+        [initialLng]="longitude"
+        (locationSelected)="onLocationSelected($event)"
         (cancel)="closeLocationPicker()">
     </app-location-picker>
 

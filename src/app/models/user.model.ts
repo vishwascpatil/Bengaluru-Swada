@@ -8,4 +8,9 @@ export interface User {
   isAdmin: boolean;             // ⭐ FLAG FOR ADMINS - controls upload access
   createdAt: Timestamp;
   lastLogin: Timestamp;
+
+  // Location fields — saved/updated when user grants location permission or changes location
+  latitude?: number;
+  longitude?: number;
+  locationName?: string;
 }

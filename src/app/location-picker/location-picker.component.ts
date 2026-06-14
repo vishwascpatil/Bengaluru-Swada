@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit, AfterViewInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, AfterViewInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LocationService } from '../services/location.service';
@@ -18,6 +18,9 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnDestroy
     @Output() locationSelected = new EventEmitter<{ lat: number, lng: number, address?: string }>();
     @Output() cancel = new EventEmitter<void>();
 
+    @Input() initialLat: number | null = null;
+    @Input() initialLng: number | null = null;
+
     private map: any;
     private marker: any;
     private autocompleteService: any;
@@ -32,7 +35,7 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnDestroy
     googleMapsLoaded = false;
     selectedAddress = '';
 
-    // Default to Bangalore
+    // Will be overridden by @Input() initialLat/initialLng or getCurrentLocation
     selectedLat = 12.9716;
     selectedLng = 77.5946;
 
@@ -41,7 +44,13 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnDestroy
         private ngZone: NgZone
     ) { }
 
-    ngOnInit(): void { }
+    ngOnInit(): void {
+        // Use initial coordinates if provided (e.g. from parent form)
+        if (this.initialLat !== null && this.initialLng !== null) {
+            this.selectedLat = this.initialLat;
+            this.selectedLng = this.initialLng;
+        }
+    }
 
     ngAfterViewInit(): void {
         this.loadGoogleMaps();
@@ -153,8 +162,10 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnDestroy
             });
         });
 
-        // Try to get user's current location
-        this.tryGetCurrentLocation();
+        // Try to get user's current location only if no initial coordinates were provided
+        if (this.initialLat === null || this.initialLng === null) {
+            this.tryGetCurrentLocation();
+        }
     }
 
     /**
