@@ -40,6 +40,7 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Output() shared = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
   @Output() muteChanged = new EventEmitter<boolean>();
+  @Output() infoRequested = new EventEmitter<void>();
 
   @Input() canDelete = false;
   @Input() isMuted = true;

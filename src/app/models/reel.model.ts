@@ -32,6 +32,13 @@ export interface Reel {
     likedBy: string[];              // Array of user IDs who liked this reel
     bookmarkedBy: string[];         // Array of user IDs who bookmarked this reel
 
+    // Vendor info (for info sheet)
+    openingHours?: string;          // e.g. "9:00 AM - 10:00 PM"
+    phoneNumber?: string;           // Contact number
+    description?: string;           // About the place
+    menuImages?: string[];          // URLs of menu images
+    foodImages?: string[];          // URLs of additional food photos
+
     // Client-side state (not stored in Firestore)
     isLiked?: boolean;              // Current user's look status
     isBookmarked?: boolean;         // Current user's bookmark status

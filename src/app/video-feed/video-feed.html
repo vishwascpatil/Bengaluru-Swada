@@ -76,8 +76,16 @@
       (deleted)="onReelDeleted(item.reel)"
       (liked)="onLike(item.index)"
       (bookmarked)="onBookmark(item.index)"
-      (shared)="onShare(item.index)">
+      (shared)="onShare(item.index)"
+      (infoRequested)="onInfoRequested(item.index)">
     </app-video-card>
   </div>
+
+  <!-- Vendor Info Sheet -->
+  <app-vendor-info
+    [reel]="vendorInfoReel"
+    [visible]="showVendorInfo"
+    (dismissed)="onInfoDismissed()">
+  </app-vendor-info>
 
 </div>

@@ -31,6 +31,15 @@ export class UploadReelComponent implements OnInit {
     latitude: number | null = null;
     longitude: number | null = null;
 
+    // Vendor info fields
+    openingHours = '';
+    phoneNumber = '';
+    description = '';
+    menuImageFiles: File[] = [];
+    menuImagePreviews: string[] = [];
+    foodImageFiles: File[] = [];
+    foodImagePreviews: string[] = [];
+
     @Output() uploadComplete = new EventEmitter<void>();
     @Output() canceled = new EventEmitter<void>();
 
@@ -52,6 +61,7 @@ export class UploadReelComponent implements OnInit {
     // Validation
     readonly maxFileSize = 200 * 1024 * 1024; // 100MB
     readonly acceptedFormats = ['video/mp4', 'video/quicktime', 'video/webm'];
+    readonly maxImageSize = 10 * 1024 * 1024; // 10MB per image
 
     constructor(
         private reelsService: ReelsService,
@@ -124,6 +134,48 @@ export class UploadReelComponent implements OnInit {
         this.uploadError = null;
     }
 
+    // ─── Image Handlers ────────────────────────────────────────────────
+
+    onMenuImagesSelected(event: Event): void {
+        const input = event.target as any;
+        if (input.files) {
+            for (let i = 0; i < input.files.length; i++) {
+                const file = input.files[i];
+                if (file.size <= this.maxImageSize) {
+                    this.menuImageFiles.push(file);
+                    this.menuImagePreviews.push(URL.createObjectURL(file));
+                }
+            }
+        }
+        input.value = '';
+    }
+
+    removeMenuImage(index: number): void {
+        URL.revokeObjectURL(this.menuImagePreviews[index]);
+        this.menuImageFiles.splice(index, 1);
+        this.menuImagePreviews.splice(index, 1);
+    }
+
+    onFoodImagesSelected(event: Event): void {
+        const input = event.target as any;
+        if (input.files) {
+            for (let i = 0; i < input.files.length; i++) {
+                const file = input.files[i];
+                if (file.size <= this.maxImageSize) {
+                    this.foodImageFiles.push(file);
+                    this.foodImagePreviews.push(URL.createObjectURL(file));
+                }
+            }
+        }
+        input.value = '';
+    }
+
+    removeFoodImage(index: number): void {
+        URL.revokeObjectURL(this.foodImagePreviews[index]);
+        this.foodImageFiles.splice(index, 1);
+        this.foodImagePreviews.splice(index, 1);
+    }
+
     resetForm(): void {
         this.removeFile();
         this.title = '';
@@ -136,6 +188,16 @@ export class UploadReelComponent implements OnInit {
         this.isUploading = false;
         this.latitude = null;
         this.longitude = null;
+        this.openingHours = '';
+        this.phoneNumber = '';
+        this.description = '';
+        // Clean up image previews
+        this.menuImagePreviews.forEach(u => URL.revokeObjectURL(u));
+        this.foodImagePreviews.forEach(u => URL.revokeObjectURL(u));
+        this.menuImageFiles = [];
+        this.menuImagePreviews = [];
+        this.foodImageFiles = [];
+        this.foodImagePreviews = [];
     }
 
     /**
@@ -329,9 +391,38 @@ export class UploadReelComponent implements OnInit {
             const playlistKey = `${prefix}index.m3u8`;
             const playlistUploadResp = await lastValueFrom(this.reelsService.getUploadUrl(playlistKey, hlsData.playlist.type));
             await lastValueFrom(this.reelsService.uploadToR2(playlistUploadResp.uploadUrl, hlsData.playlist as any));
-            this.uploadProgress = 100;
 
-            // 4. Create Firestore Record
+            // 4. Upload Menu Images to R2 (non-blocking - failures won't crash the upload)
+            const menuImageUrls: string[] = [];
+            for (let i = 0; i < this.menuImageFiles.length; i++) {
+                try {
+                    const imgFile = this.menuImageFiles[i];
+                    const ext = imgFile.name.includes('.') ? imgFile.name.substring(imgFile.name.lastIndexOf('.')) : '.jpg';
+                    const imgKey = `videos/${uid}/${timestamp}/menu_${i}${ext}`;
+                    const imgUploadResp = await lastValueFrom(this.reelsService.getUploadUrl(imgKey, imgFile.type));
+                    await lastValueFrom(this.reelsService.uploadToR2(imgUploadResp.uploadUrl, imgFile));
+                    menuImageUrls.push(`${environment.cloudflare.workerUrl}/${imgKey}`);
+                } catch (imgErr) {
+                    console.warn('Failed to upload menu image:', imgErr);
+                }
+            }
+
+            // 5. Upload Food Images to R2 (non-blocking)
+            const foodImageUrls: string[] = [];
+            for (let i = 0; i < this.foodImageFiles.length; i++) {
+                try {
+                    const imgFile = this.foodImageFiles[i];
+                    const ext = imgFile.name.includes('.') ? imgFile.name.substring(imgFile.name.lastIndexOf('.')) : '.jpg';
+                    const imgKey = `videos/${uid}/${timestamp}/food_${i}${ext}`;
+                    const imgUploadResp = await lastValueFrom(this.reelsService.getUploadUrl(imgKey, imgFile.type));
+                    await lastValueFrom(this.reelsService.uploadToR2(imgUploadResp.uploadUrl, imgFile));
+                    foodImageUrls.push(`${environment.cloudflare.workerUrl}/${imgKey}`);
+                } catch (imgErr) {
+                    console.warn('Failed to upload food image:', imgErr);
+                }
+            }
+
+            // 6. Create Firestore Record (after all uploads complete)
             const cdnUrl = `https://r2-video-uploader.bengaluru-swada.workers.dev/${playlistKey}`;
 
             await this.reelsService.createReel({
@@ -351,11 +442,17 @@ export class UploadReelComponent implements OnInit {
                 likes: 0,
                 likedBy: [],
                 bookmarkedBy: [],
-                isPublic: true
+                isPublic: true,
+                openingHours: this.openingHours || undefined,
+                phoneNumber: this.phoneNumber || undefined,
+                description: this.description || undefined,
+                menuImages: menuImageUrls.length > 0 ? menuImageUrls : undefined,
+                foodImages: foodImageUrls.length > 0 ? foodImageUrls : undefined
             });
 
             this.uploadSuccess = true;
             this.isUploading = false;
+            this.uploadProgress = 100;
             this.uploadComplete.emit();
 
             setTimeout(() => {
@@ -387,5 +484,7 @@ export class UploadReelComponent implements OnInit {
         if (this.videoPreviewUrl) {
             URL.revokeObjectURL(this.videoPreviewUrl);
         }
+        this.menuImagePreviews.forEach(u => URL.revokeObjectURL(u));
+        this.foodImagePreviews.forEach(u => URL.revokeObjectURL(u));
     }
 }

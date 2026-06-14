@@ -1,0 +1,120 @@
+<div class="vendor-info-backdrop" *ngIf="sheetVisible" (click)="onBackdropClick()"></div>
+
+<div class="vendor-info-sheet" *ngIf="sheetVisible"
+  [class.visible]="sheetEntered && !isDraggingClass"
+  [class.dragging]="isDraggingClass"
+  [style.transform]="isDraggingClass ? 'translateY(' + sheetOffset + 'px)' : null"
+  (touchstart)="onTouchStart($event)"
+  (touchmove)="onTouchMove($event)"
+  (touchend)="onTouchEnd($event)">
+
+  <!-- Drag Handle -->
+  <div class="drag-handle-container">
+    <div class="drag-handle"></div>
+  </div>
+
+  <!-- Scrollable Content -->
+  <div class="sheet-scroll" #sheetContent>
+
+    <!-- Header with Dismiss -->
+    <div class="sheet-header-row">
+      <div class="sheet-header">
+        <h2 class="vendor-title">{{ reel?.title }}</h2>
+        <p class="vendor-subtitle">{{ reel?.vendor }}</p>
+      </div>
+      <button class="dismiss-btn" (click)="dismiss()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Info Chips -->
+    <div class="info-chips" *ngIf="reel?.price || reel?.distance || reel?.categories?.length">
+      <div class="chip" *ngIf="reel?.price">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"></line>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+        ₹{{ reel?.price }}
+      </div>
+      <div class="chip" *ngIf="reel?.distance">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        {{ reel?.distance }} away
+      </div>
+      <div class="chip" *ngIf="reel?.categories?.length">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16v16H4z"></path>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+        </svg>
+        {{ reel?.categories?.join(', ') }}
+      </div>
+    </div>
+
+    <!-- Opening Hours -->
+    <div class="section" *ngIf="reel?.openingHours">
+      <div class="section-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Timings</span>
+      </div>
+      <p class="section-text">{{ reel?.openingHours }}</p>
+    </div>
+
+    <!-- Description -->
+    <div class="section" *ngIf="reel?.description">
+      <div class="section-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>About</span>
+      </div>
+      <p class="section-text">{{ reel?.description }}</p>
+    </div>
+
+    <!-- Phone -->
+    <div class="section" *ngIf="reel?.phoneNumber">
+      <div class="section-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+        </svg>
+        <span>Contact</span>
+      </div>
+      <a class="section-link" [href]="'tel:' + reel?.phoneNumber">{{ reel?.phoneNumber }}</a>
+    </div>
+
+    <!-- Images Gallery -->
+    <div class="section-images" *ngIf="hasImages">
+      <div class="section-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <span>Photos</span>
+      </div>
+      <div class="images-grid">
+        <div class="image-item" *ngFor="let img of allImages; let i = index"
+          [class.expanded]="expandedImageIndex === i"
+          (click)="toggleExpandImage(i)">
+          <img [src]="img" alt="Photo {{i + 1}}" loading="lazy"
+            (error)="$event.target.classList.add('img-error')">
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom padding for safe area -->
+    <div class="sheet-bottom-padding"></div>
+
+  </div>
+</div>

@@ -10,6 +10,7 @@ declare const alert: any;
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { VideoCardComponent } from '../video-card/video-card.component';
+import { VendorInfoComponent } from '../vendor-info/vendor-info.component';
 import { ReelsService } from '../services/reels.service';
 import { LocationService } from '../services/location.service';
 import { Reel } from '../models/reel.model';
@@ -24,7 +25,7 @@ import { AudioMutexService } from '../services/audio-mutex.service';
 @Component({
   selector: 'app-video-feed',
   standalone: true,
-  imports: [CommonModule, VideoCardComponent, RouterModule, VideoFeedSkeletonComponent],
+  imports: [CommonModule, VideoCardComponent, VendorInfoComponent, RouterModule, VideoFeedSkeletonComponent],
   templateUrl: './video-feed.html',
   styleUrls: ['./video-feed.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -36,6 +37,10 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   isGlobalMuted = false;
   reels: Reel[] = [];
   currentIndex = 0;
+
+  // Vendor info sheet
+  vendorInfoReel: Reel | null = null;
+  showVendorInfo = false;
 
 
 
@@ -195,6 +200,26 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   onMuteChanged(muted: boolean) {
     this.isGlobalMuted = muted;
+  }
+
+  // ─── Vendor Info Sheet ────────────────────────────────────────────────
+
+  onInfoRequested(index: number) {
+    const reel = this.reels[index];
+    if (!reel) return;
+    this.vendorInfoReel = reel;
+    this.showVendorInfo = true;
+    // Pause the video while info sheet is open
+    this.pauseActiveCard();
+    this.cdr.markForCheck();
+  }
+
+  onInfoDismissed() {
+    this.showVendorInfo = false;
+    this.vendorInfoReel = null;
+    // Resume the active card
+    this.resumeActiveCard();
+    this.cdr.markForCheck();
   }
 
   isOwner(reel: Reel): boolean {

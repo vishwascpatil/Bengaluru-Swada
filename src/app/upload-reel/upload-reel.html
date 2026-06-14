@@ -45,14 +45,14 @@
                     <input type="file" accept="video/mp4,video/quicktime,video/webm" (change)="onFileSelected($event)"
                         hidden>
                     <div class="icon-circle">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0D7D63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="17 8 12 3 7 8"></polyline>
                             <line x1="12" y1="3" x2="12" y2="15"></line>
                         </svg>
                     </div>
                     <span class="upload-label">Select Video for Reel</span>
-                    <span class="upload-sub">MP4, MOV (Max 100MB)</span>
+                    <span class="upload-sub">MP4, MOV, WebM (Up to 200MB)</span>
                 </label>
             </ng-template>
         </div>
@@ -61,13 +61,13 @@
         <div class="form-wrapper">
 
             <!-- Dish Name -->
-            <div class="input-group">
+            <div class="input-group anim-delay-1">
                 <label>Dish Name</label>
                 <input type="text" [(ngModel)]="title" placeholder="e.g. Masala Dosa" [disabled]="isUploading">
             </div>
 
             <!-- Categories -->
-            <div class="input-group">
+            <div class="input-group anim-delay-2">
                 <label>Categories</label>
                 <div class="tags-row">
                     <div class="tag-pill" *ngFor="let cat of categories; let i = index">
@@ -80,25 +80,82 @@
             </div>
 
             <!-- Vendor -->
-            <div class="input-group">
+            <div class="input-group anim-delay-3">
                 <label>Vendor Name</label>
                 <input type="text" [(ngModel)]="vendor" placeholder="e.g. CTR" [disabled]="isUploading">
             </div>
 
             <!-- Price -->
-            <div class="input-group">
+            <div class="input-group anim-delay-4">
                 <label>Price (₹)</label>
                 <input type="number" [(ngModel)]="price" placeholder="0" [disabled]="isUploading">
             </div>
 
+            <!-- Opening Hours -->
+            <div class="input-group anim-delay-5">
+                <label>Opening Hours</label>
+                <input type="text" [(ngModel)]="openingHours" placeholder="e.g. 9:00 AM - 10:00 PM" [disabled]="isUploading">
+            </div>
+
+            <!-- Phone Number -->
+            <div class="input-group anim-delay-6">
+                <label>Phone Number</label>
+                <input type="tel" [(ngModel)]="phoneNumber" placeholder="e.g. +91 98765 43210" [disabled]="isUploading">
+            </div>
+
+            <!-- Description -->
+            <div class="input-group anim-delay-7">
+                <label>Description</label>
+                <textarea [(ngModel)]="description" placeholder="About the place, special dishes, etc." [disabled]="isUploading"
+                    rows="3"></textarea>
+            </div>
+
+            <!-- Menu Images -->
+            <div class="input-group anim-delay-8">
+                <label>Menu Photos</label>
+                <div class="image-preview-row">
+                    <div class="image-thumb" *ngFor="let preview of menuImagePreviews; let i = index">
+                        <img [src]="preview" alt="Menu {{i+1}}">
+                        <button class="img-remove-btn" (click)="removeMenuImage(i)">×</button>
+                    </div>
+                    <label class="add-image-btn" *ngIf="menuImageFiles.length < 5">
+                        <input type="file" accept="image/*" multiple (change)="onMenuImagesSelected($event)" hidden>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D7D63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </label>
+                </div>
+                <span class="field-hint" *ngIf="menuImageFiles.length === 0">Add photos of the menu board or price list</span>
+            </div>
+
+            <!-- Food Images -->
+            <div class="input-group anim-delay-9">
+                <label>Food Photos</label>
+                <div class="image-preview-row">
+                    <div class="image-thumb" *ngFor="let preview of foodImagePreviews; let i = index">
+                        <img [src]="preview" alt="Food {{i+1}}">
+                        <button class="img-remove-btn" (click)="removeFoodImage(i)">×</button>
+                    </div>
+                    <label class="add-image-btn" *ngIf="foodImageFiles.length < 5">
+                        <input type="file" accept="image/*" multiple (change)="onFoodImagesSelected($event)" hidden>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D7D63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </label>
+                </div>
+                <span class="field-hint" *ngIf="foodImageFiles.length === 0">Add photos of the food items</span>
+            </div>
+
             <!-- Location -->
-            <div class="input-group">
+            <div class="input-group anim-delay-10">
                 <label>Store Location</label>
                 <div class="location-grid">
                     <div class="location-tile" (click)="getCurrentLocation()" [class.disabled]="isUploading">
                         <div class="tile-icon orange">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
                                 <circle cx="12" cy="9" r="2.5" />
                             </svg>
@@ -109,7 +166,7 @@
                     <div class="location-tile" (click)="openLocationPicker()" [class.disabled]="isUploading">
                         <div class="tile-icon blue">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
                                 <line x1="8" y1="2" x2="8" y2="18"></line>
                                 <line x1="16" y1="6" x2="16" y2="22"></line>
@@ -138,19 +195,38 @@
 
         <!-- Status Messages -->
         <div class="status-toast error" *ngIf="uploadError">{{uploadError}}</div>
-        <div class="status-toast success" *ngIf="uploadSuccess">Upload Successful!</div>
+        <div class="status-toast success" *ngIf="uploadSuccess">
+            ✓ Upload Successful!
+        </div>
 
         <!-- Progress -->
-        <div class="progress-area" *ngIf="isUploading || isTranscoding">
+        <div class="progress-area" *ngIf="isUploading || isTranscoding" [class.is-transcoding]="isTranscoding">
             <div class="progress-track">
                 <div class="progress-bar" [style.width.%]="isTranscoding ? transcodeProgress : uploadProgress"></div>
             </div>
-            <span class="progress-label">{{isTranscoding ? 'Optimizing Video...' : 'Uploading...'}}</span>
+            <span class="progress-label">{{isTranscoding ? '✨ Optimizing Video...' : '🚀 Uploading...'}}</span>
         </div>
 
         <button class="primary-btn" (click)="uploadReel()" [disabled]="!isFormValid() || isUploading">
-            {{ isUploading ? 'Processing...' : 'Upload Reel' }}
+            <span *ngIf="!isUploading">Upload Reel</span>
+            <span *ngIf="isUploading">Processing...</span>
         </button>
+
+        <!-- Confetti celebration on success -->
+        <div class="confetti-overlay" *ngIf="uploadSuccess">
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+        </div>
     </div>
 
     <app-location-picker *ngIf="showLocationPicker" (locationSelected)="onLocationSelected($event)"
