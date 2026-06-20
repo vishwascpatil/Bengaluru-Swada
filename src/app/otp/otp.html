@@ -65,11 +65,34 @@
 
   <!-- Success Overlay -->
   <div class="success-screen" *ngIf="isVerified">
-    <div class="success-icon-box">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-        <polyline points="20 6 9 17 4 12"></polyline>
+    <!-- Background glow particles -->
+    <div class="particles">
+      <div class="particle p1"></div>
+      <div class="particle p2"></div>
+      <div class="particle p3"></div>
+      <div class="particle p4"></div>
+      <div class="particle p5"></div>
+      <div class="particle p6"></div>
+      <div class="particle p7"></div>
+      <div class="particle p8"></div>
+    </div>
+
+    <!-- Ripple rings -->
+    <div class="ripple-ring r1"></div>
+    <div class="ripple-ring r2"></div>
+    <div class="ripple-ring r3"></div>
+
+    <!-- Main circle with checkmark -->
+    <div class="success-circle">
+      <div class="circle-glow"></div>
+      <svg class="checkmark" viewBox="0 0 52 52">
+        <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+        <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
       </svg>
     </div>
-    <h2>Verified</h2>
+
+    <!-- Text -->
+    <h2 class="verified-title">Phone Verified!</h2>
+    <p class="verified-sub">Setting up your account...</p>
   </div>
 </div>
