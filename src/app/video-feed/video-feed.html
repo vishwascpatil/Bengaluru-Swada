@@ -81,11 +81,11 @@
     </app-video-card>
   </div>
 
-  <!-- Vendor Info Sheet -->
-  <app-vendor-info
-    [reel]="vendorInfoReel"
-    [visible]="showVendorInfo"
-    (dismissed)="onInfoDismissed()">
-  </app-vendor-info>
-
 </div>
+
+<!-- Vendor Info Sheet (outside .video-feed to prevent event bubbling) -->
+<app-vendor-info
+  [reel]="vendorInfoReel"
+  [visible]="showVendorInfo"
+  (dismissed)="onInfoDismissed()">
+</app-vendor-info>

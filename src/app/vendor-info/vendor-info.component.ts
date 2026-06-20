@@ -65,11 +65,13 @@ export class VendorInfoComponent implements OnChanges {
     // Critical: Don't start drag immediately — wait for enough downward movement
     // to distinguish between scrolling and pull-to-dismiss.
     onTouchStart(event: any): void {
+        event.stopPropagation();
         this.touchStartY = event.touches[0].clientY;
         this.isDragging = false;
     }
 
     onTouchMove(event: any): void {
+        event.stopPropagation();
         const deltaY = event.touches[0].clientY - this.touchStartY;
 
         // If we haven't started dragging yet, check if this is a pull-down gesture
@@ -100,7 +102,8 @@ export class VendorInfoComponent implements OnChanges {
         }
     }
 
-    onTouchEnd(): void {
+    onTouchEnd(event: any): void {
+        event.stopPropagation();
         if (!this.isDragging) return;
         this.isDragging = false;
         this.isDraggingClass = false;

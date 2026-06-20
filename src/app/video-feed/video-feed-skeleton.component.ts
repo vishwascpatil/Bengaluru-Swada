@@ -14,6 +14,10 @@ import { CommonModule } from '@angular/common';
           <div class="skeleton-info-group">
              <div class="skeleton-line title"></div>
              <div class="skeleton-line vendor"></div>
+             <div class="skeleton-pills">
+               <div class="skeleton-pill price-pill"></div>
+               <div class="skeleton-pill distance-pill"></div>
+             </div>
           </div>
           
           <!-- Action Group (Bottom Right) -->
@@ -55,16 +59,17 @@ import { CommonModule } from '@angular/common';
     /* Info Group (Bottom Left) */
     .skeleton-info-group {
         position: absolute;
-        bottom: 20px;
-        left: 20px;
-        width: 80%;
+        bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+        left: 12px;
+        width: 75%;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 4px;
+        padding-top: 32px;
     }
 
     .skeleton-line {
-        height: 14px;
+        height: 12px;
         background: rgba(255, 255, 255, 0.1);
         border-radius: 4px;
         overflow: hidden;
@@ -84,20 +89,55 @@ import { CommonModule } from '@angular/common';
     }
 
     .skeleton-line.title {
-        width: 60%;
+        width: 65%;
         height: 16px;
     }
 
     .skeleton-line.vendor {
-        width: 40%;
-        height: 12px;
+        width: 45%;
+        height: 11px;
+    }
+
+    /* Pills row for price/distance */
+    .skeleton-pills {
+        display: flex;
+        gap: 8px;
+        margin-top: 2px;
+    }
+
+    .skeleton-pill {
+        height: 22px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .skeleton-pill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+        transform: translateX(-100%);
+        animation: shimmer 1.5s infinite;
+    }
+
+    .skeleton-pill.price-pill {
+        width: 55px;
+    }
+
+    .skeleton-pill.distance-pill {
+        width: 80px;
     }
 
     /* Action Group (Bottom Right) */
     .skeleton-action-group {
         position: absolute;
-        bottom: 100px;
-        right: 16px;
+        bottom: 36px;
+        right: 12px;
         display: flex;
         flex-direction: column;
         gap: 20px;

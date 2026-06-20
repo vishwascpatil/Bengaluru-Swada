@@ -7,51 +7,68 @@ import { LEGAL_CONTENT } from './legal-content';
     standalone: true,
     imports: [CommonModule],
     template: `
-        <div class="legal-overlay" [class.visible]="visible">
+        <div class="legal-overlay" [class.visible]="visible" (click)="onOverlayClick($event)">
             <div class="legal-container">
+                <!-- Drag Handle -->
                 <div class="drag-handle"></div>
-                
+
+                <!-- Reading Progress -->
+                <div class="progress-bar" *ngIf="content?.sections?.length > 1">
+                    <div class="progress-fill" [style.width.%]="readingProgress"></div>
+                </div>
+
+                <!-- Header -->
                 <div class="legal-header">
-                    <h2 class="legal-title">{{content?.title}}</h2>
-                    <button class="close-btn" (click)="close.emit()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <div class="header-icon-wrap">
+                        <svg *ngIf="contentType === 'terms'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
                         </svg>
+                        <svg *ngIf="contentType === 'privacy'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <svg *ngIf="contentType === 'help'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <h2 class="legal-title">{{content?.title}}</h2>
+                    <button class="close-btn" (click)="close.emit()" aria-label="Close">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
-                
-                <div class="legal-content">
-                    <p class="last-updated" *ngIf="content?.lastUpdated">Last updated: {{content?.lastUpdated}}</p>
-                    
-                    <div class="cards-wrapper">
-                        <!-- Legal Sections (Terms & Privacy) -->
-                        <ng-container *ngIf="!isHelp">
-                            <div class="legal-card" *ngFor="let section of content?.sections; let i = index">
-                                <div class="card-header-row">
-                                    <span class="section-badge">{{i + 1}}</span>
-                                    <h3 class="section-title">{{section.title}}</h3>
-                                </div>
-                                <p class="section-text">{{section.content}}</p>
-                            </div>
-                        </ng-container>
 
-                        <!-- Help / FAQ Sections -->
-                        <ng-container *ngIf="isHelp">
-                            <div class="faq-card" *ngFor="let section of content?.sections">
-                                <div class="card-header-row">
-                                    <span class="faq-badge">Q</span>
-                                    <h3 class="section-title faq-title">{{section.title}}</h3>
-                                </div>
-                                <div class="faq-content-row">
-                                    <span class="faq-answer-badge">A</span>
-                                    <p class="section-text faq-text">{{section.content}}</p>
-                                </div>
+                <!-- Scrollable Content -->
+                <div class="legal-content" #scrollContainer (scroll)="onScroll($event)">
+                    <p class="last-updated" *ngIf="content?.lastUpdated"><span class="updated-dot"></span>Last updated: {{content?.lastUpdated}}</p>
+
+                    <!-- Terms & Privacy -->
+                    <ng-container *ngIf="!isHelp">
+                        <div class="section-card" *ngFor="let section of content?.sections; let i = index"
+                            [style.animation-delay]="(i * 0.035) + 's'">
+                            <div class="section-num">{{i + 1}}</div>
+                            <div class="section-body">
+                                <h3 class="section-title">{{section.title | slice: (section.title.indexOf('. ') + 2) : section.title.length}}</h3>
+                                <p class="section-desc">{{section.content}}</p>
                             </div>
-                        </ng-container>
-                    </div>
+                        </div>
+                    </ng-container>
+
+                    <!-- Help / FAQ -->
+                    <ng-container *ngIf="isHelp">
+                        <div class="faq-card" *ngFor="let section of content?.sections; let i = index"
+                            [style.animation-delay]="(i * 0.035) + 's'">
+                            <div class="faq-question-row">
+                                <div class="faq-q-mark">Q</div>
+                                <h3 class="faq-question">{{section.title}}</h3>
+                            </div>
+                            <div class="faq-answer-row">
+                                <div class="faq-a-mark">A</div>
+                                <p class="faq-answer">{{section.content}}</p>
+                            </div>
+                        </div>
+                    </ng-container>
                 </div>
-                
+
+                <!-- Footer -->
                 <div class="legal-footer">
                     <button class="done-btn" (click)="close.emit()">Got it</button>
                 </div>
@@ -59,266 +76,327 @@ import { LEGAL_CONTENT } from './legal-content';
         </div>
     `,
     styles: [`
+        :host { --doc-accent: #0D7D63; }
+
         .legal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(12px) saturate(120%);
-            -webkit-backdrop-filter: blur(12px) saturate(120%);
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             z-index: 2000;
             display: flex;
             align-items: flex-end;
             visibility: hidden;
             opacity: 0;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            
+            transition: opacity 0.35s ease, visibility 0s 0.35s;
+
             &.visible {
                 visibility: visible;
                 opacity: 1;
-                
-                .legal-container {
-                    transform: translateY(0);
-                }
+                transition: opacity 0.35s ease, visibility 0s 0s;
+                .legal-container { transform: translateY(0); }
             }
         }
 
         .legal-container {
             width: 100%;
-            height: 88vh;
-            background: #F9FAF9; /* Clean off-white background */
-            border-radius: 32px 32px 0 0;
+            height: 90vh;
+            background: #F5F5F7;
+            border-radius: 24px 24px 0 0;
             display: flex;
             flex-direction: column;
             transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-bottom: none;
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 -8px 40px rgba(0,0,0,0.2);
             overflow: hidden;
+            position: relative;
         }
 
         .drag-handle {
-            width: 38px;
-            height: 5px;
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 2.5px;
-            margin: 12px auto 4px;
+            width: 36px;
+            height: 4px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 2px;
+            margin: 8px auto 0;
             flex-shrink: 0;
         }
 
+        /* Progress Bar */
+        .progress-bar {
+            height: 2px;
+            background: rgba(0,0,0,0.04);
+            margin: 6px 0 0;
+            flex-shrink: 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--doc-accent);
+            transition: width 0.15s ease;
+            border-radius: 0 1px 1px 0;
+        }
+
+        /* Header */
         .legal-header {
-            padding: 16px 24px 20px;
+            padding: 14px 20px 12px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            background: rgba(249, 250, 249, 0.8);
+            gap: 10px;
+            background: rgba(245,245,247,0.9);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            z-index: 10;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            flex-shrink: 0;
+        }
+
+        .header-icon-wrap {
+            width: 32px; height: 32px;
+            border-radius: 10px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            flex-shrink: 0;
+            color: var(--doc-accent);
         }
 
         .legal-title {
-            font-size: 22px;
-            font-weight: 800;
+            flex: 1;
+            font-size: 18px;
+            font-weight: 750;
             margin: 0;
             color: #1c1c1e;
-            letter-spacing: -0.6px;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            letter-spacing: -0.4px;
         }
 
         .close-btn {
-            background: rgba(0, 0, 0, 0.04);
+            background: rgba(0,0,0,0.04);
             border: none;
-            width: 32px;
-            height: 32px;
+            width: 32px; height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #8E8E93;
             cursor: pointer;
-            transition: all 0.2s ease;
-            
-            &:hover {
-                background: rgba(0, 0, 0, 0.08);
-                color: #1c1c1e;
-            }
-            
-            &:active {
-                transform: scale(0.9);
-            }
+            transition: all 0.2s;
+            flex-shrink: 0;
+            &:hover { background: rgba(0,0,0,0.08); color: #1c1c1e; }
+            &:active { transform: scale(0.88); }
         }
 
+        /* Content Area */
         .legal-content {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
+            padding: 20px 16px;
             -webkit-overflow-scrolling: touch;
-            
-            .last-updated {
-                font-size: 11px;
-                color: #8E8E93;
-                margin-bottom: 20px;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.08em;
-            }
         }
 
-        .cards-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            padding-bottom: 24px;
-        }
-
-        .legal-card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(0, 0, 0, 0.04);
-            border-left: 4px solid var(--primary-color);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.015);
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 24px rgba(16, 185, 129, 0.06);
-                border-color: rgba(16, 185, 129, 0.15);
-            }
-        }
-
-        .faq-card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(0, 0, 0, 0.04);
-            border-left: 4px solid #3B82F6; /* Blue left accent for FAQs */
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.015);
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 24px rgba(59, 130, 246, 0.06);
-                border-color: rgba(59, 130, 246, 0.15);
-            }
-        }
-
-        .card-header-row {
+        .last-updated {
+            font-size: 11px;
+            color: #8E8E93;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin: 0 0 16px 4px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 6px;
+
+            .updated-dot {
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: var(--doc-accent);
+                display: inline-block;
+                animation: pulseDot 2s ease-in-out infinite;
+            }
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* ─── Terms & Privacy Cards ─── */
+        .section-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
             margin-bottom: 12px;
+            display: flex;
+            gap: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.04);
+            transition: all 0.25s ease;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) forwards;
+
+            &:hover {
+                border-color: rgba(13,125,99,0.15);
+                box-shadow: 0 4px 16px rgba(13,125,99,0.06);
+                transform: translateY(-2px);
+
+                .section-num {
+                    transform: scale(1.08);
+                    background: var(--doc-accent);
+                    color: white;
+                }
+            }
         }
 
-        .section-badge {
-            width: 24px;
-            height: 24px;
+        .section-num {
+            width: 28px; height: 28px;
+            min-width: 28px;
             border-radius: 50%;
+            background: #EDF7F4;
+            color: var(--doc-accent);
+            font-size: 12px;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--primary-light);
-            color: var(--primary-color);
-            font-size: 11px;
-            font-weight: 800;
-            flex-shrink: 0;
+            margin-top: 1px;
         }
 
-        .faq-badge {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #3B82F6;
-            color: white;
-            font-size: 11px;
-            font-weight: 800;
-            flex-shrink: 0;
-        }
+        .section-body { flex: 1; min-width: 0; }
 
         .section-title {
-            font-size: 16px;
-            font-weight: 750;
+            font-size: 15px;
+            font-weight: 680;
             color: #1c1c1e;
+            margin: 0 0 6px;
+            line-height: 1.35;
+        }
+
+        .section-desc {
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #636366;
             margin: 0;
-            letter-spacing: -0.3px;
-            line-height: 1.3;
+            font-weight: 420;
         }
 
-        .faq-title {
-            color: #1c1c1e;
+        /* ─── FAQ Cards ─── */
+        .faq-card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.04);
+            transition: all 0.25s ease;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) forwards;
+
+            &:hover {
+                border-color: rgba(13,125,99,0.12);
+                box-shadow: 0 4px 16px rgba(13,125,99,0.05);
+            }
         }
 
-        .faq-content-row {
+        .faq-question-row {
             display: flex;
-            align-items: flex-start;
             gap: 12px;
-            margin-top: 8px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(0, 0, 0, 0.03);
+            align-items: flex-start;
         }
 
-        .faq-answer-badge {
-            width: 24px;
-            height: 24px;
+        .faq-q-mark {
+            width: 26px; height: 26px;
+            min-width: 26px;
             border-radius: 50%;
+            background: #EDF7F4;
+            color: var(--doc-accent);
+            font-size: 12px;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #F3F4F6;
-            color: #4B5563;
-            font-size: 11px;
-            font-weight: 800;
-            flex-shrink: 0;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
-        .section-text {
-            font-size: 14px;
-            line-height: 1.55;
-            color: #48484a;
-            margin: 0;
-            font-weight: 450;
-        }
-
-        .faq-text {
+        .faq-question {
             flex: 1;
-            color: #3a3a3c;
+            font-size: 14.5px;
+            font-weight: 650;
+            color: #1c1c1e;
+            margin: 0;
+            line-height: 1.4;
+            padding-top: 2px;
         }
 
+        .faq-answer-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .faq-a-mark {
+            width: 26px; height: 26px;
+            min-width: 26px;
+            border-radius: 50%;
+            background: #F2F2F7;
+            color: #636366;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1px;
+        }
+
+        .faq-answer {
+            flex: 1;
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #636366;
+            margin: 0;
+            font-weight: 420;
+        }
+
+        /* ─── Animations ─── */
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── Footer ─── */
         .legal-footer {
-            padding: 16px 24px calc(16px + env(safe-area-inset-bottom, 0px));
-            background: #ffffff;
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
-            z-index: 10;
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0,0,0,0.04);
+            flex-shrink: 0;
         }
 
         .done-btn {
             width: 100%;
-            height: 50px;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-active));
+            height: 48px;
+            background: var(--doc-accent);
             color: white;
             border: none;
-            border-radius: 16px;
-            font-size: 16px;
-            font-weight: 700;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 650;
             cursor: pointer;
-            box-shadow: 0 8px 20px var(--primary-shadow);
-            transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-            
-            &:hover {
-                box-shadow: 0 10px 24px var(--primary-shadow);
-                transform: translateY(-1px);
-            }
-            
-            &:active {
-                opacity: 0.9;
-                transform: scale(0.97);
-            }
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: -0.2px;
+
+            &:hover { opacity: 0.9; transform: translateY(-1px); }
+            &:active { transform: scale(0.97); }
         }
+
+        /* Scrollbar */
+        .legal-content::-webkit-scrollbar { width: 3px; }
+        .legal-content::-webkit-scrollbar-track { background: transparent; }
+        .legal-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 2px; }
     `]
 })
 export class LegalViewComponent {
@@ -327,12 +405,27 @@ export class LegalViewComponent {
     @Input() set type(value: 'terms' | 'privacy' | 'help' | null) {
         this.contentType = value;
         this.content = value ? LEGAL_CONTENT[value] : null;
+        this.readingProgress = 0;
     }
     @Output() close = new EventEmitter<void>();
 
     content: any = null;
+    readingProgress = 0;
 
     get isHelp(): boolean {
         return this.contentType === 'help';
+    }
+
+    onScroll(event: any): void {
+        const el = event.target;
+        if (!el) return;
+        const st = el.scrollTop, sh = el.scrollHeight - el.clientHeight;
+        if (sh > 0) this.readingProgress = Math.min(100, Math.round((st / sh) * 100));
+    }
+
+    onOverlayClick(event: MouseEvent): void {
+        if ((event.target as HTMLElement).classList.contains('legal-overlay')) {
+            this.close.emit();
+        }
     }
 }

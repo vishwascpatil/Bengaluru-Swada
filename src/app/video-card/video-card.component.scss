@@ -166,26 +166,27 @@
         left: 0;
         width: 100%;
         height: 100%;
-        padding: 20px;
-        padding-bottom: 60px;
+        padding: 12px;
+        padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px));
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
-        gap: 16px;
+        gap: 12px;
         box-sizing: border-box;
     }
 
     // Info Group (Bottom Left)
     .skeleton-info-group {
         flex: 1;
-        padding-bottom: 10px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        max-width: 80%;
+        gap: 4px;
+        max-width: 75%;
+        min-width: 0;
+        padding-top: 32px;
 
         .skeleton-line {
-            height: 14px;
+            height: 12px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
             overflow: hidden;
@@ -204,13 +205,48 @@
             }
 
             &.title {
-                width: 60%;
+                width: 65%;
                 height: 16px;
             }
 
             &.vendor {
-                width: 40%;
-                height: 12px;
+                width: 45%;
+                height: 11px;
+            }
+        }
+
+        // Pills row for price/distance
+        .skeleton-pills {
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .skeleton-pill {
+            height: 22px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+
+            &::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+                transform: translateX(-100%);
+                animation: shimmer 1.5s infinite;
+            }
+
+            &.price-pill {
+                width: 55px;
+            }
+
+            &.distance-pill {
+                width: 80px;
             }
         }
     }
@@ -219,9 +255,9 @@
     .skeleton-action-group {
         display: flex;
         flex-direction: column;
-        gap: 26px; /* aligns centers with action-item center spacing */
+        gap: 20px;
         align-items: center;
-        padding-bottom: 100px;
+        padding-bottom: 36px;
         padding-right: 0px;
 
         .skeleton-circle {
@@ -273,38 +309,40 @@
     left: 0;
     width: 100%;
     height: 100%;
-    padding: 20px;
-    padding-bottom: 60px;
-    /* Room for AdMob Banner */
-    /* Safe area handled by bottom-nav padding */
+    padding: 12px;
+    padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+    /* Account for bottom nav + safe area on mobile */
     background: transparent;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     pointer-events: none !important;
-    gap: 16px;
+    gap: 12px;
 }
 
 /* 1. Bottom Left Info Area */
 .video-info {
     flex: 1;
     color: white;
-    padding-right: 0;
-    padding-bottom: 10px;
+    padding-right: 4px;
+    padding-bottom: 4px;
     /* Clear bottom nav */
     pointer-events: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px;
     z-index: 5;
-    max-width: 80%;
+    max-width: 75%;
+    min-width: 0;
 }
 
 .food-details {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     align-items: flex-start;
+    max-width: 100%;
+    padding-top: 32px;
 }
 
 .title-category-row {
@@ -316,26 +354,34 @@
 }
 
 .dish-name {
-    font-size: 1.21rem;
-    /* Larger, bolder iOS header style */
+    font-size: 1rem;
+    /* Reduced for mobile safety */
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1.2;
     margin: 0;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.3px;
     text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 // 1. Bottom Left Info Area & Details
 .vendor-name {
-    font-size: 0.73rem;
+    font-size: 0.7rem;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.85);
     /* Slightly translucent white */
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     // Removed duplicate icon pseudo-element
 }
@@ -343,25 +389,27 @@
 .price-distance {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 6px;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: wrap;
 }
 
 /* Glass Pills for Metadata */
 .price,
 .distance {
-    font-size: 0.70rem;
+    font-size: 0.65rem;
     font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 20px;
+    padding: 4px 10px;
+    border-radius: 16px;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     border: 0.5px solid rgba(255, 255, 255, 0.2);
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    white-space: nowrap;
 }
 
 .price {
@@ -385,7 +433,7 @@
     flex-direction: column;
     gap: 8px; /* consistent small gap between action items */
     pointer-events: auto;
-    padding-bottom: 100px;
+    padding-bottom: 36px;
     padding-right: 0px;
 
     /* Make it a specific container if desired, but individual buttons look cleaner floating */

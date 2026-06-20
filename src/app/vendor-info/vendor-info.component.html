@@ -1,4 +1,4 @@
-<div class="vendor-info-backdrop" *ngIf="sheetVisible" (click)="onBackdropClick()"></div>
+<div class="vendor-info-backdrop" *ngIf="sheetVisible" (click)="onBackdropClick()" (touchstart)="$event.stopPropagation()"></div>
 
 <div class="vendor-info-sheet" *ngIf="sheetVisible"
   [class.visible]="sheetEntered && !isDraggingClass"
@@ -6,7 +6,8 @@
   [style.transform]="isDraggingClass ? 'translateY(' + sheetOffset + 'px)' : null"
   (touchstart)="onTouchStart($event)"
   (touchmove)="onTouchMove($event)"
-  (touchend)="onTouchEnd($event)">
+  (touchend)="onTouchEnd($event)"
+  (wheel)="$event.stopPropagation()">
 
   <!-- Drag Handle -->
   <div class="drag-handle-container">

@@ -141,6 +141,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
   ngOnDestroy() {
     if (this.viewTrackingTimeout) clearTimeout(this.viewTrackingTimeout);
+    // Release body scroll lock if sheet was open
+    this.document.body.classList.remove('body-scroll-lock');
     // Remove app lifecycle listeners
     if (this.appStateListener) {
       this.appStateListener.remove();
@@ -209,6 +211,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     if (!reel) return;
     this.vendorInfoReel = reel;
     this.showVendorInfo = true;
+    // Lock body scroll while sheet is open
+    this.document.body.classList.add('body-scroll-lock');
     // Pause the video while info sheet is open
     this.pauseActiveCard();
     this.cdr.markForCheck();
@@ -217,6 +221,8 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   onInfoDismissed() {
     this.showVendorInfo = false;
     this.vendorInfoReel = null;
+    // Release body scroll lock
+    this.document.body.classList.remove('body-scroll-lock');
     // Resume the active card
     this.resumeActiveCard();
     this.cdr.markForCheck();
@@ -330,6 +336,9 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   // ─── Touch Handling ─────────────────────────────────────────────────────
 
   onTouchStart(e: any) {
+    // Don't process touches when vendor info sheet is open
+    if (this.showVendorInfo) return;
+
     this.touchStartY = e.touches[0].clientY;
     this.touchStartX = e.touches[0].clientX;
 
@@ -343,6 +352,9 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   }
 
   onTouchMove(e: any) {
+    // Don't process touches when vendor info sheet is open
+    if (this.showVendorInfo) return;
+
     const currentY = e.touches[0].clientY;
     const diffY = currentY - this.touchStartY;
 
@@ -383,6 +395,9 @@ export class VideoFeedComponent implements OnInit, AfterViewInit, OnDestroy, OnC
   }
 
   async onTouchEnd(e: any) {
+    // Don't process touches when vendor info sheet is open
+    if (this.showVendorInfo) return;
+
     const endY = e.changedTouches[0].clientY;
     const endX = e.changedTouches[0].clientX;
     const deltaY = this.touchStartY - endY;
