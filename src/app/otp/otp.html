@@ -1,5 +1,5 @@
 <div class="ios-otp-layout">
-  <div class="otp-content">
+  <div class="otp-content" *ngIf="!isVerified">
 
     <!-- Top Nav / Back Action (Optional visuals) -->
     <div class="top-bar" (click)="change()">
@@ -77,19 +77,10 @@
       <div class="particle p8"></div>
     </div>
 
-    <!-- Ripple rings -->
-    <div class="ripple-ring r1"></div>
-    <div class="ripple-ring r2"></div>
-    <div class="ripple-ring r3"></div>
-
-    <!-- Main circle with checkmark -->
-    <div class="success-circle">
-      <div class="circle-glow"></div>
-      <svg class="checkmark" viewBox="0 0 52 52">
-        <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-        <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-      </svg>
-    </div>
+    <!-- Simple checkmark icon (no circle) -->
+    <svg class="checkmark-icon" width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <path class="checkmark-path" d="M18 33l10 10 18-18" stroke="var(--primary-color)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
 
     <!-- Text -->
     <h2 class="verified-title">Phone Verified!</h2>

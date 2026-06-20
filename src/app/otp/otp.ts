@@ -134,11 +134,10 @@ export class OtpComponent implements OnInit, AfterViewInit {
       // Create or update user record in Firestore
       await this.initializeUserRecord(result.user.uid, result.user.phoneNumber!);
 
-      // Show success state
+      // Show success animation then navigate
       this.isVerified = true;
       this.loading = false;
 
-      // Navigate to location permission after delay
       setTimeout(() => {
         this.router.navigate(['/location-permission'], { replaceUrl: true });
       }, 2000);
