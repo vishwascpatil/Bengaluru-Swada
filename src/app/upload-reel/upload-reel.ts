@@ -57,6 +57,8 @@ export class UploadReelComponent implements OnInit {
     private transcodeResolver: ((value: any) => void) | null = null;
     private transcodeRejecter: ((reason: any) => void) | null = null;
     private isTranscoderReady = false;
+    private messageHandler: ((event: MessageEvent) => void) | null = null;
+    private readonly TRANSCODE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
     // Validation
     readonly maxFileSize = 200 * 1024 * 1024; // 100MB
@@ -282,12 +284,18 @@ export class UploadReelComponent implements OnInit {
     private initTranscodeIframe(): Promise<void> {
         if (this.transcodeIframe) return Promise.resolve();
 
+        // Clean up any orphaned listener from a previous instance
+        if (this.messageHandler) {
+            window.removeEventListener('message', this.messageHandler);
+            this.messageHandler = null;
+        }
+
         return new Promise((resolve) => {
             this.transcodeIframe = document.createElement('iframe');
             this.transcodeIframe.style.display = 'none';
             this.transcodeIframe.src = 'assets/transcoder/index.html';
 
-            window.addEventListener('message', (event: MessageEvent) => {
+            this.messageHandler = (event: MessageEvent) => {
                 const data = event.data;
                 if (!data || typeof data !== 'object') return;
 
@@ -315,14 +323,15 @@ export class UploadReelComponent implements OnInit {
                         }
                         break;
                 }
-            });
+            };
 
+            window.addEventListener('message', this.messageHandler);
             document.body.appendChild(this.transcodeIframe);
         });
     }
 
     /**
-     * Transcode video to HLS via Iframe
+     * Transcode video to HLS via Iframe, with timeout protection
      */
     private async transcodeToHls(file: File): Promise<{ playlist: Blob, segments: { name: string, blob: Blob }[] }> {
         console.log('[Upload] Starting transcoding process...');
@@ -333,12 +342,20 @@ export class UploadReelComponent implements OnInit {
             this.transcodeResolver = resolve;
             this.transcodeRejecter = reject;
 
-            console.log('[Upload] Posting message to iframe:', {
-                type: 'TRANSCODE',
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type
-            });
+            // Timeout protection: reject if transcoding takes too long
+            const timeoutId = setTimeout(() => {
+                if (this.transcodeRejecter) {
+                    this.transcodeRejecter(new Error('Transcoding timed out. The video may be too large or in an unsupported format. Try a shorter video.'));
+                    this.transcodeRejecter = null;
+                }
+            }, this.TRANSCODE_TIMEOUT_MS);
+
+            // Wrap original resolve to clear timeout on success
+            const originalResolver = this.transcodeResolver;
+            this.transcodeResolver = (value) => {
+                clearTimeout(timeoutId);
+                if (originalResolver) originalResolver(value);
+            };
 
             this.transcodeIframe?.contentWindow?.postMessage({
                 type: 'TRANSCODE',
@@ -350,6 +367,7 @@ export class UploadReelComponent implements OnInit {
 
     /**
      * Upload video and create reel via Cloudflare R2
+     * Falls back to raw video upload if HLS transcoding fails
      */
     async uploadReel(): Promise<void> {
         if (!this.isFormValid() || !this.selectedFile) {
@@ -358,9 +376,7 @@ export class UploadReelComponent implements OnInit {
         }
 
         const currentUser = this.auth.currentUser;
-        const uid = currentUser?.uid || 'test-user-id'; // Fallback for testing
-
-        // Removed auth check for testing purposes
+        const uid = currentUser?.uid || 'test-user-id';
 
         this.isUploading = true;
         this.isTranscoding = true;
@@ -370,29 +386,55 @@ export class UploadReelComponent implements OnInit {
         this.uploadSuccess = false;
 
         try {
-            // 1. Transcode to HLS via Isolated Iframe
-            const hlsData = await this.transcodeToHls(this.selectedFile);
-            this.isTranscoding = false;
-
-            // Generate unique directory: videos/uid/timestamp/
             const timestamp = Date.now();
             const prefix = `videos/${uid}/${timestamp}/`;
+            let videoUrl = '';
 
-            // 2. Upload Segments
-            for (let i = 0; i < hlsData.segments.length; i++) {
-                const segment = hlsData.segments[i];
-                const key = `${prefix}${segment.name}`;
-                const uploadResp = await lastValueFrom(this.reelsService.getUploadUrl(key, segment.blob.type));
-                await lastValueFrom(this.reelsService.uploadToR2(uploadResp.uploadUrl, segment.blob as any));
-                this.uploadProgress = Math.round(((i + 1) / (hlsData.segments.length + 1)) * 100);
+            // 1. Attempt HLS Transcoding via Iframe
+            try {
+                const hlsData = await this.transcodeToHls(this.selectedFile);
+                this.isTranscoding = false;
+
+                // 2a. Upload HLS Segments
+                for (let i = 0; i < hlsData.segments.length; i++) {
+                    const segment = hlsData.segments[i];
+                    const key = `${prefix}${segment.name}`;
+                    const uploadResp = await lastValueFrom(this.reelsService.getUploadUrl(key, segment.blob.type));
+                    await lastValueFrom(this.reelsService.uploadToR2(uploadResp.uploadUrl, segment.blob));
+                    this.uploadProgress = Math.round(((i + 1) / (hlsData.segments.length + 1)) * 100);
+                }
+
+                // 2b. Upload Playlist
+                const playlistKey = `${prefix}index.m3u8`;
+                const playlistUploadResp = await lastValueFrom(this.reelsService.getUploadUrl(playlistKey, hlsData.playlist.type));
+                await lastValueFrom(this.reelsService.uploadToR2(playlistUploadResp.uploadUrl, hlsData.playlist));
+
+                videoUrl = `https://r2-video-uploader.bengaluru-swada.workers.dev/${playlistKey}`;
+                console.log('[Upload] HLS upload complete:', videoUrl);
+
+            } catch (transcodeError) {
+                // Transcoding failed — fall back to raw video upload
+                console.warn('[Upload] Transcoding failed, falling back to raw video upload:', transcodeError);
+                this.isTranscoding = false;
+                this.transcodeProgress = 100;
+
+                const ext = this.selectedFile.name.includes('.')
+                    ? this.selectedFile.name.substring(this.selectedFile.name.lastIndexOf('.'))
+                    : '.mp4';
+                const rawKey = `${prefix}video${ext}`;
+                this.uploadProgress = 10;
+
+                const rawUploadResp = await lastValueFrom(
+                    this.reelsService.getUploadUrl(rawKey, this.selectedFile.type || 'video/mp4')
+                );
+                await lastValueFrom(this.reelsService.uploadToR2(rawUploadResp.uploadUrl, this.selectedFile));
+                this.uploadProgress = 60;
+
+                videoUrl = `https://r2-video-uploader.bengaluru-swada.workers.dev/${rawKey}`;
+                console.log('[Upload] Raw video upload complete:', videoUrl);
             }
 
-            // 3. Upload Playlist
-            const playlistKey = `${prefix}index.m3u8`;
-            const playlistUploadResp = await lastValueFrom(this.reelsService.getUploadUrl(playlistKey, hlsData.playlist.type));
-            await lastValueFrom(this.reelsService.uploadToR2(playlistUploadResp.uploadUrl, hlsData.playlist as any));
-
-            // 4. Upload Menu Images to R2 (non-blocking - failures won't crash the upload)
+            // 3. Upload Menu Images to R2
             const menuImageUrls: string[] = [];
             for (let i = 0; i < this.menuImageFiles.length; i++) {
                 try {
@@ -407,7 +449,7 @@ export class UploadReelComponent implements OnInit {
                 }
             }
 
-            // 5. Upload Food Images to R2 (non-blocking)
+            // 4. Upload Food Images to R2
             const foodImageUrls: string[] = [];
             for (let i = 0; i < this.foodImageFiles.length; i++) {
                 try {
@@ -422,12 +464,10 @@ export class UploadReelComponent implements OnInit {
                 }
             }
 
-            // 6. Create Firestore Record (after all uploads complete)
-            const cdnUrl = `https://r2-video-uploader.bengaluru-swada.workers.dev/${playlistKey}`;
-
+            // 5. Create Firestore Record
             await this.reelsService.createReel({
                 cloudflareVideoId: '',
-                videoUrl: cdnUrl,
+                videoUrl: videoUrl,
                 thumbnailUrl: '',
                 duration: 0,
                 title: this.title.trim(),
@@ -481,6 +521,17 @@ export class UploadReelComponent implements OnInit {
      * Cleanup on component destroy
      */
     ngOnDestroy(): void {
+        // Remove iframe message listener to prevent memory leak
+        if (this.messageHandler) {
+            window.removeEventListener('message', this.messageHandler);
+            this.messageHandler = null;
+        }
+        // Remove transcoder iframe from DOM
+        if (this.transcodeIframe && this.transcodeIframe.parentNode) {
+            this.transcodeIframe.parentNode.removeChild(this.transcodeIframe);
+            this.transcodeIframe = null;
+        }
+        // Revoke object URLs
         if (this.videoPreviewUrl) {
             URL.revokeObjectURL(this.videoPreviewUrl);
         }

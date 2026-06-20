@@ -425,7 +425,7 @@ export class ReelsService {
      * @param uploadUrl Pre-signed URL
      * @param file File to upload
      */
-    uploadToR2(uploadUrl: string, file: File): Observable<any> {
+    uploadToR2(uploadUrl: string, file: Blob | File): Observable<any> {
         return this.http.put(uploadUrl, file, {
             headers: { 'Content-Type': file.type },
             reportProgress: true,

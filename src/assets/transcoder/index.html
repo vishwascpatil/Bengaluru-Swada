@@ -12,6 +12,12 @@
         let ffmpeg = null;
         let loadPromise = null;
 
+        // Global error handler for uncaught errors (covers module loading failures too)
+        window.onerror = function (message, source, lineno, colno, error) {
+            window.parent.postMessage({ type: 'ERROR', message: `JS Error: ${message}` }, '*');
+            return true;
+        };
+
         async function loadFFmpeg() {
             if (loadPromise) return loadPromise;
 
@@ -26,7 +32,6 @@
                 });
 
                 // Create a shim worker that imports the library worker from CDN
-                // This bypasses the browser's check for same-origin worker script
                 const workerShim = `
                     import "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/worker.js";
                 `;
@@ -37,7 +42,7 @@
                     coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
                     wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
                     workerURL: workerBlobURL,
-                    classWorkerURL: workerBlobURL // Fallback/Alternative param name for 0.12.x
+                    classWorkerURL: workerBlobURL
                 });
 
                 return ffmpeg;
@@ -45,12 +50,6 @@
 
             return loadPromise;
         }
-
-        // Global error handler for uncaught errors
-        window.onerror = function (message, source, lineno, colno, error) {
-            window.parent.postMessage({ type: 'ERROR', message: `JS Error: ${message}` }, '*');
-            return true;
-        };
 
         window.addEventListener('message', async (event) => {
             const { type, file, name } = event.data;
@@ -60,13 +59,19 @@
                     const inputName = 'input_' + name;
                     await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-                    // HLS Transcoding
+                    // HLS Transcoding with 10-bit HDR → 8-bit SDR conversion
                     await ffmpeg.exec([
                         '-i', inputName,
+                        '-c:v', 'libx264',
+                        '-crf', '23',
+                        '-preset', 'fast',
                         '-profile:v', 'high',
-                        '-pix_fmt', 'yuv420p',
-                        '-level', '3.0',
-                        '-s', '720x1280',
+                        '-level', '4.1',
+                        '-vf', 'scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p',
+                        '-color_range', 'tv',
+                        '-c:a', 'aac',
+                        '-b:a', '128k',
+                        '-ar', '44100',
                         '-start_number', '0',
                         '-hls_time', '2',
                         '-hls_list_size', '0',
@@ -103,7 +108,7 @@
                     }, '*');
 
                 } catch (error) {
-                    window.parent.postMessage({ type: 'ERROR', message: error.message }, '*');
+                    window.parent.postMessage({ type: 'ERROR', message: error.message || 'Transcoding failed' }, '*');
                 }
             }
         });
