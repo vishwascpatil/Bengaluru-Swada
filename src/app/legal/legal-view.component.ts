@@ -423,8 +423,9 @@ export class LegalViewComponent {
         if (sh > 0) this.readingProgress = Math.min(100, Math.round((st / sh) * 100));
     }
 
-    onOverlayClick(event: MouseEvent): void {
-        if ((event.target as HTMLElement).classList.contains('legal-overlay')) {
+    onOverlayClick(event: Event): void {
+        const target = event.target as any;
+        if (target?.classList?.contains('legal-overlay')) {
             this.close.emit();
         }
     }
