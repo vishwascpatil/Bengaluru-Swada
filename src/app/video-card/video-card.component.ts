@@ -192,8 +192,17 @@ export class VideoCardComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.isLoading = (this.priority === 'high');
 
     if (!src.endsWith('.m3u8')) {
-      console.error('[VideoCard] Non-HLS src not supported:', src);
-      this.isLoading = false;
+      // Non-HLS video (e.g. raw MP4 fallback) — play directly
+      console.log('[VideoCard] Playing non-HLS src directly:', src);
+      video.src = src;
+      video.load();
+      video.onerror = () => {
+        console.error('[VideoCard] Non-HLS video failed to load:', src);
+        this.hasError = true;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      };
+      this.setupNativeListeners();
       return;
     }
 
