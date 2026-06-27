@@ -102,7 +102,6 @@
             <!-- Feed Heading -->
             <div class="section-header-row">
                 <h4 class="section-title">Trending Food Videos</h4>
-
             </div>
 
         </ng-container>
@@ -151,38 +150,63 @@
 
         </ng-container>
 
-        <!-- Dynamic Results Grid (loaded with videos) -->
-        <div class="results-grid">
-            <div class="loading-spinner" *ngIf="isLoading">
-                <div class="spinner"></div>
-                <p class="loading-text">Loading delicious updates...</p>
+        <!-- Skeleton Grid Loading State -->
+        <div class="skeleton-grid" *ngIf="isLoading">
+            <div class="skeleton-card" *ngFor="let _ of [].constructor(6); let i = index"
+                 [style.animation-delay]="i * 0.08 + 's'">
+                <div class="skeleton-image">
+                    <div class="shimmer-overlay"></div>
+                </div>
+                <div class="skeleton-details">
+                    <div class="skeleton-title shimmer-line w-70"></div>
+                    <div class="skeleton-vendor shimmer-line w-50"></div>
+                    <div class="skeleton-price shimmer-line w-30"></div>
+                </div>
             </div>
+        </div>
 
-            <div class="food-card video-card" *ngFor="let reel of filteredReels" (click)="openReel(reel)">
+        <!-- Results Grid with Staggered Entrance -->
+        <div class="results-grid" *ngIf="filteredReels.length > 0 && !isLoading">
+            <div class="food-card video-card"
+                #foodCard
+                *ngFor="let reel of filteredReels"
+                (click)="openReel(reel)">
                 <div class="card-image">
-                    <!-- HTML5 video in loop, muted — NO autoplay to prevent all audios playing together -->
                     <video [src]="reel.videoUrl" loop muted playsinline preload="metadata" #videoThumb
-                        [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0" (loadeddata)="onThumbLoad(reel.id!)">
+                        [style.opacity]="loadedThumbs.has(reel.id!) ? 1 : 0"
+                        (loadeddata)="onThumbLoad(reel.id!, $any($event.target))">
                     </video>
 
+                    <!-- Pulse loader while thumbnail loads -->
+                    <div class="thumb-loader" *ngIf="!loadedThumbs.has(reel.id!)">
+                        <div class="loader-pulse"></div>
+                    </div>
+
                     <div class="card-badges">
-                        <div class="distance-badge">{{reel.distanceStr}}</div>
-                        <div class="rating-badge" *ngIf="reel.rating">
-                            {{reel.rating}} <span class="star-mini">★</span>
+                        <div class="badge distance-badge">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="10" r="3"/>
+                                <path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/>
+                            </svg>
+                            {{reel.distanceStr}}
+                        </div>
+                        <div class="badge rating-badge" *ngIf="reel.rating">
+                            <span class="star-icon">★</span>
+                            {{reel.rating}}
                         </div>
                     </div>
                 </div>
 
                 <div class="card-details">
-                    <div class="header-row">
+                    <div class="card-details-inner">
                         <h3 class="dish-name">{{reel.title}}</h3>
-                    </div>
-                    <p class="vendor-name">📍 {{reel.vendor}}</p>
-                    <div class="price-row">
-                        <span class="price">₹{{reel.price}}</span>
-                        <span class="taste-tag" *ngIf="reel.categories && reel.categories.length > 0">
-                            {{reel.categories[0]}}
-                        </span>
+                        <p class="vendor-name">📍 {{reel.vendor}}</p>
+                        <div class="price-row">
+                            <span class="price">₹{{reel.price}}</span>
+                            <span class="taste-tag" *ngIf="reel.categories && reel.categories.length > 0">
+                                {{reel.categories[0]}}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>

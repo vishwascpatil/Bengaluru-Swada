@@ -1,41 +1,78 @@
-<div class="favorites-container">
-    <div class="hero-header" *ngIf="showHeader">
-        <h1>Favorites</h1>
-        <p class="subtitle">Your curated collection of tastes</p>
+<div class="favorites-container" (scroll)="onScroll($event)">
+    <!-- Animated Hero Header with Parallax -->
+    <div class="hero-header" *ngIf="showHeader"
+         [class.hero-collapsed]="heroCollapsed"
+         [style.opacity]="heroOpacity"
+         [style.transform]="'scale(' + heroScale + ')'">
+        <div class="hero-bg-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-icon-wrapper">
+                <svg class="bookmark-icon-hero" width="32" height="32" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"
+                          stroke="currentColor" stroke-width="1.8" fill="none"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1 class="hero-title">Saved Dishes</h1>
+            <p class="hero-subtitle" *ngIf="!isLoading && bookmarkedReels.length > 0">
+                {{bookmarkedReels.length}} {{bookmarkedReels.length === 1 ? 'favorite' : 'favorites'}} saved
+            </p>
+            <div class="hero-shimmer" *ngIf="isLoading">
+                <div class="shimmer-line w-40"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- Loading State -->
-    <div class="loading-state" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Loading favorites...</p>
+    <!-- Shimmer Skeleton Loading State -->
+    <div class="skeleton-grid" *ngIf="isLoading">
+        <div class="skeleton-card" *ngFor="let _ of [].constructor(6); let i = index"
+             [style.animation-delay]="i * 0.08 + 's'">
+            <div class="skeleton-image">
+                <div class="shimmer-overlay"></div>
+            </div>
+            <div class="skeleton-details">
+                <div class="skeleton-title shimmer-line w-70"></div>
+                <div class="skeleton-vendor shimmer-line w-50"></div>
+                <div class="skeleton-price shimmer-line w-30"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- Empty State -->
+    <!-- Animated Empty State -->
     <div class="empty-state" *ngIf="!isLoading && bookmarkedReels.length === 0">
         <div class="empty-icon-wrapper">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="currentColor"
-                    stroke-width="1.5" fill="none" />
+            <svg class="empty-bookmark-icon" width="56" height="56" viewBox="0 0 24 24" fill="none">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"
+                      stroke="currentColor" stroke-width="1.5" fill="none"
+                      stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
+            <div class="float-particle p1"></div>
+            <div class="float-particle p2"></div>
+            <div class="float-particle p3"></div>
         </div>
-        <h2>No Favorites Yet</h2>
-        <p>Tap the bookmark icon on any reel to save it here</p>
+        <h2 class="empty-title">No favorites yet</h2>
+        <p class="empty-desc">Tap the bookmark icon on any reel to save it here</p>
+        <button class="explore-btn" (click)="exploreTrending()">
+            <span>Explore trending dishes</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+        </button>
     </div>
 
-    <!-- Results Grid -->
-    <div class="results-grid" *ngIf="!isLoading && bookmarkedReels.length > 0">
-        <div class="food-card video-card"
+    <!-- Results Grid with Staggered Entrance -->
+    <div class="results-grid" *ngIf="!isLoading && bookmarkedReels.length > 0"
+         [class.has-animated]="hasAnimated">
+        <div class="food-card"
+            #foodCard
             *ngFor="let reel of bookmarkedReels; trackBy: trackByReelId"
             (click)="playReel(reel)">
 
             <div class="card-image">
-                <!--
-                  IMPORTANT: muted is set as both an HTML attribute AND enforced
-                  via (loadeddata) callback at the DOM property level.
-                  autoplay alone is NOT enough on Android WebView — the browser
-                  requires muted=true at the property level before play() is called.
-                  The IntersectionObserver in the TS controls which video actually plays.
-                -->
                 <video
                     #videoThumb
                     [src]="reel.videoUrl"
@@ -48,24 +85,43 @@
                     (loadeddata)="onThumbLoad(reel.id!, $any($event.target))">
                 </video>
 
+                <!-- Loading overlay for thumb -->
+                <div class="thumb-loader" *ngIf="!loadedThumbs.has(reel.id!)">
+                    <div class="loader-pulse"></div>
+                </div>
+
                 <div class="card-badges">
-                    <div class="distance-badge" *ngIf="reel.distanceStr">{{reel.distanceStr}}</div>
-                    <div class="rating-badge" *ngIf="reel.rating">
-                        {{reel.rating}} <span class="star-mini">★</span>
+                    <div class="badge distance-badge" *ngIf="reel.distanceStr">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="10" r="3"/>
+                            <path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/>
+                        </svg>
+                        {{reel.distanceStr}}
                     </div>
+                    <div class="badge rating-badge" *ngIf="reel.rating">
+                        <span class="star-icon">★</span>
+                        {{reel.rating}}
+                    </div>
+                </div>
+
+                <!-- Bookmark indicator overlay on hover -->
+                <div class="bookmarked-ribbon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                    </svg>
                 </div>
             </div>
 
             <div class="card-details">
-                <div class="header-row">
+                <div class="card-details-inner">
                     <h3 class="dish-name">{{reel.title}}</h3>
-                </div>
-                <p class="vendor-name">📍 {{reel.vendor}}</p>
-                <div class="price-row">
-                    <span class="price">₹{{reel.price}}</span>
-                    <span class="taste-tag" *ngIf="reel.categories && reel.categories.length > 0">
-                        {{reel.categories[0]}}
-                    </span>
+                    <p class="vendor-name">📍 {{reel.vendor}}</p>
+                    <div class="price-row">
+                        <span class="price">₹{{reel.price}}</span>
+                        <span class="taste-tag" *ngIf="reel.categories && reel.categories.length > 0">
+                            {{reel.categories[0]}}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

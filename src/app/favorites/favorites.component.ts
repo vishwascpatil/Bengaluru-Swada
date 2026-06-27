@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, Input, OnDestroy, QueryList, ViewChildren, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Input, OnDestroy, QueryList, ViewChildren, ElementRef, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReelsService } from '../services/reels.service';
@@ -22,11 +22,23 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
     isLoading = true;
     loadedThumbs: Set<string> = new Set();
 
+    // Scroll-based parallax for hero
+    scrollY = 0;
+    heroOpacity = 1;
+    heroScale = 1;
+    prevScrollY = 0;
+    private scrollRAF: any;
+
+    // Stagger entrance tracking
+    hasAnimated = false;
+    heroCollapsed = false;
+
     // Only play the video that the user is actively hovering/viewing
     activeVideoIndex: number | null = null;
     private intersectionObserver?: any;
 
     @ViewChildren('videoThumb') videoEls!: QueryList<ElementRef<any>>;
+    @ViewChildren('foodCard', { read: ElementRef }) foodCards!: QueryList<ElementRef>;
 
     constructor(
         private reelsService: ReelsService,
@@ -43,7 +55,6 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngAfterViewInit() {
         this.setupIntersectionObserver();
-        // Re-observe when the list changes
         this.videoEls.changes.subscribe(() => {
             this.setupIntersectionObserver();
         });
@@ -51,7 +62,6 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnDestroy() {
         this.disconnectObserver();
-        // Pause & mute all videos on destroy to prevent background audio
         this.videoEls?.forEach(el => {
             const v = el.nativeElement;
             v.pause();
@@ -61,9 +71,44 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     /**
+     * Staggered entrance animation for cards
+     */
+    private animateCardsIn() {
+        if (this.hasAnimated || !this.foodCards?.length) return;
+        this.hasAnimated = true;
+
+        this.foodCards.forEach((cardRef, index) => {
+            const el = cardRef.nativeElement;
+            // Set CSS custom property for stagger delay
+            el.style.setProperty('--card-delay', `${index * 0.06}s`);
+            el.classList.add('card-enter');
+        });
+    }
+
+    /**
+     * Track scroll position for hero parallax (throttled via rAF)
+     */
+    onScroll(event: any) {
+        if (this.scrollRAF) cancelAnimationFrame(this.scrollRAF);
+        this.scrollRAF = requestAnimationFrame(() => {
+            const scrollTop = event.target.scrollTop;
+            this.scrollY = scrollTop;
+            this.prevScrollY = scrollTop;
+
+            // Parallax fade and scale on hero
+            if (scrollTop < 150) {
+                this.heroOpacity = Math.max(0, 1 - scrollTop / 150);
+                this.heroScale = 1 - scrollTop * 0.0015;
+                this.heroCollapsed = false;
+            } else {
+                this.heroCollapsed = true;
+            }
+            this.cdr.detectChanges();
+        });
+    }
+
+    /**
      * Intersection Observer: only play the video card that is most visible
-     * on screen. Everything else is paused. This prevents all N videos from
-     * playing simultaneously on Android.
      */
     private setupIntersectionObserver() {
         this.disconnectObserver();
@@ -75,16 +120,13 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
             (entries: any[], _observer: any) => {
                 entries.forEach((entry: any) => {
                     const videoEl = entry.target as any;
-                    // Force muted always — never allow audio on thumbnail grid
                     videoEl.muted = true;
 
                     if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-                        // More than 50% visible → play
                         if (videoEl.paused) {
-                            videoEl.play().catch(() => {});
+                            videoEl.play().catch(() => { });
                         }
                     } else {
-                        // Out of view → pause immediately
                         if (!videoEl.paused) {
                             videoEl.pause();
                         }
@@ -99,7 +141,6 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
 
         videos.forEach(ref => {
             const v = ref.nativeElement;
-            // Enforce muted at the DOM property level (not just attribute)
             v.muted = true;
             this.intersectionObserver!.observe(v);
         });
@@ -114,6 +155,7 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     async loadBookmarkedReels() {
         this.isLoading = true;
+        this.hasAnimated = false;
         this.cdr.detectChanges();
 
         try {
@@ -152,8 +194,9 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
         } finally {
             this.isLoading = false;
             this.cdr.detectChanges();
-            // Re-setup observer after data loads
             setTimeout(() => this.setupIntersectionObserver(), 100);
+            // Animate cards in after data renders
+            setTimeout(() => this.animateCardsIn(), 300);
         }
     }
 
@@ -163,10 +206,13 @@ export class FavoritesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     onThumbLoad(reelId: string, videoEl: any) {
-        // Enforce muted programmatically when video loads — critical for Android WebView
         videoEl.muted = true;
         this.loadedThumbs.add(reelId);
         this.cdr.detectChanges();
+    }
+
+    exploreTrending() {
+        this.router.navigate(['/main-app']);
     }
 
     trackByReelId(_index: number, reel: Reel): string {

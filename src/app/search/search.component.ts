@@ -22,12 +22,14 @@ declare const window: any;
 export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('searchInput') searchInput!: ElementRef;
     @ViewChildren('videoThumb') videoEls!: QueryList<ElementRef<any>>;
+    @ViewChildren('foodCard', { read: ElementRef }) foodCards!: QueryList<ElementRef>;
     isExiting = false;
     searchQuery = '';
     reels: any[] = [];
     filteredReels: any[] = [];
     isLoading = false;
     loadedThumbs: Set<string> = new Set();
+    hasAnimated = false;
 
     // IntersectionObserver for thumbnail videos
     private intersectionObserver?: any;
@@ -230,12 +232,13 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
             result.sort((a, b) => Number(a.price) - Number(b.price));
         } else if (this.selectedSort === 'Price: High to Low') {
             result.sort((a, b) => Number(b.price) - Number(a.price));
-        }
-
-        this.filteredReels = result;
+        }                this.filteredReels = result;
 
         // Re-observe videos after filter change
         setTimeout(() => this.setupIntersectionObserver(), 100);
+
+        // Animate cards in after filter changes
+        setTimeout(() => this.animateCardsIn(), 200);
     }
 
     selectCategory(cat: string) {
@@ -412,7 +415,19 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
         }, 350);
     }
 
-    onThumbLoad(reelId: string) {
+    private animateCardsIn() {
+        if (this.hasAnimated || !this.foodCards?.length) return;
+        this.hasAnimated = true;
+
+        this.foodCards.forEach((cardRef, index) => {
+            const el = cardRef.nativeElement;
+            el.style.setProperty('--card-delay', `${index * 0.06}s`);
+            el.classList.add('card-enter');
+        });
+    }
+
+    onThumbLoad(reelId: string, videoEl?: any) {
+        if (videoEl) videoEl.muted = true;
         this.loadedThumbs.add(reelId);
     }
 
