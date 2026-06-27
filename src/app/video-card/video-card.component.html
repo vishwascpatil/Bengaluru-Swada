@@ -95,48 +95,50 @@
         <span class="like-count" *ngIf="displayLikes > 0" (click)="toggleLike()">{{ displayLikes }}</span>
       </div>
 
-      <div class="action-item">
-        <button class="action-btn bookmark-btn" [class.bookmarked]="displayIsBookmarked" (click)="bookmark()">
-          <svg class="action-icon" width="22" height="22" viewBox="0 0 24 24"
-            [attr.fill]="displayIsBookmarked ? 'currentColor' : 'none'">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </button>
-      </div>
+      <div class="compact-actions">
+        <div class="action-item">
+          <button class="action-btn bookmark-btn" [class.bookmarked]="displayIsBookmarked" (click)="bookmark()">
+            <svg class="action-icon" width="22" height="22" viewBox="0 0 24 24"
+              [attr.fill]="displayIsBookmarked ? 'currentColor' : 'none'">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
 
-      <div class="action-item">
-        <button class="action-btn share-btn" (click)="shareApp()">
-          <svg class="action-icon share-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="18" cy="5" r="3"></circle>
-            <circle cx="6" cy="12" r="3"></circle>
-            <circle cx="18" cy="19" r="3"></circle>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-          </svg>
-        </button>
-      </div>
+        <div class="action-item">
+          <button class="action-btn share-btn" (click)="shareApp()">
+            <svg class="action-icon share-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </button>
+        </div>
 
-      <div class="action-item" *ngIf="displayViewCount > 0">
-        <button class="action-btn view-btn" style="cursor: default;" (click)="$event.stopPropagation()">
-          <svg class="action-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-        </button>
-        <span class="view-count" style="cursor: default;" (click)="$event.stopPropagation()">{{ formatViewCount(displayViewCount) }}</span>
+        <div class="action-item view-item" *ngIf="displayViewCount > 0">
+          <button class="action-btn view-btn" style="cursor: default;" (click)="$event.stopPropagation()">
+            <svg class="action-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+          <span class="view-count" style="cursor: default;" (click)="$event.stopPropagation()">{{ formatViewCount(displayViewCount) }}</span>
+        </div>
       </div>
 
       <!-- Info Button -->
       <div class="action-item">
         <button class="action-btn info-btn" (click)="infoRequested.emit()">
           <svg class="action-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2">
+            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            <path d="M12 16v-4"></path>
+            <circle cx="12" cy="8.5" r="0.75" fill="currentColor" stroke="none"></circle>
           </svg>
         </button>
       </div>

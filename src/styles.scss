@@ -68,6 +68,48 @@ body.body-scroll-lock {
     overflow: hidden !important;
 }
 
+/* ─── iOS 27 Glass Animations (Shared across components) ─────────── */
+
+@keyframes glassShine {
+    0%, 100% {
+        opacity: 0.6;
+        transform: rotate(0deg);
+    }
+    25% {
+        opacity: 1;
+        transform: rotate(5deg);
+    }
+    50% {
+        opacity: 0.4;
+        transform: rotate(0deg);
+    }
+    75% {
+        opacity: 0.8;
+        transform: rotate(-3deg);
+    }
+}
+
+@keyframes glassShimmer {
+    0% {
+        background-position: 200% 0;
+        opacity: 0.3;
+    }
+    30% {
+        opacity: 0.6;
+    }
+    50% {
+        background-position: -50% 100%;
+        opacity: 0.8;
+    }
+    70% {
+        opacity: 0.3;
+    }
+    100% {
+        background-position: 200% 0;
+        opacity: 0.3;
+    }
+}
+
 /* Hide reCAPTCHA badge */
 .grecaptcha-badge {
     visibility: hidden;
