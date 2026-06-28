@@ -228,6 +228,7 @@ export class LocationService {
      */
     clearLocation() {
         this.userLocation = null;
+        this.locationPromise = null; // Also reset in-flight promise so next call makes a fresh request
     }
 
     /**

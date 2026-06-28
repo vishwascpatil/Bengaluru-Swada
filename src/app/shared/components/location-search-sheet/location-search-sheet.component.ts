@@ -206,6 +206,10 @@ export class LocationSearchSheetComponent implements OnInit, OnDestroy {
   }
 
   useCurrentLocation(): void {
+    // Clear the cached location so we force a fresh GPS reading
+    // (getUserLocation() caches the result after the first call)
+    this.locationService.clearLocation();
+
     this.locationService.getUserLocation().then(coords => {
       this.locationService.getAreaName(coords.latitude, coords.longitude).then(name => {
         this.locationService.updateLocation(name, coords.latitude, coords.longitude);

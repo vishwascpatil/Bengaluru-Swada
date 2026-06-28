@@ -1,27 +1,86 @@
+:host {
+    display: block;
+    height: 100vh;
+    overflow: hidden;
+}
+
 .splash-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background-color: #fff;
+    width: 100vw;
+    background: #ffffff;
 }
 
 .splash-logo {
-    max-width: 80%;
-    max-height: 50vh;
+    max-width: 80vw;
+    max-height: 65vh;
     object-fit: contain;
-    animation: fadeIn 1.5s ease-out;
+    animation: logoZoomIn 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes fadeIn {
+@keyframes logoZoomIn {
     from {
         opacity: 0;
-        transform: scale(0.9);
+        transform: scale(0.1);
     }
-
     to {
         opacity: 1;
         transform: scale(1);
+    }
+}
+
+/* ─── Pure Veg Badge ─── */
+
+.veg-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 16px;
+    padding: 5px 14px;
+    background: rgba(13, 125, 99, 0.06);
+    border: 1px solid rgba(13, 125, 99, 0.15);
+    border-radius: 20px;
+    opacity: 0;
+    animation: badgeFadeIn 0.6s ease-out 0.9s forwards;
+}
+
+.veg-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.veg-label {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0D7D63;
+    letter-spacing: 0.4px;
+}
+
+@keyframes badgeFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .splash-logo {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+    .veg-badge {
+        animation: none;
+        opacity: 1;
+        transform: none;
     }
 }

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ViewChildren, ElementRef, Afte
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Auth } from '@angular/fire/auth';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { ReelsService } from '../services/reels.service';
@@ -30,6 +31,9 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     isLoading = false;
     loadedThumbs: Set<string> = new Set();
     hasAnimated = false;
+
+    // Subscriptions (for cleanup)
+    private subscriptions: Subscription[] = [];
 
     // IntersectionObserver for thumbnail videos
     private intersectionObserver?: any;
@@ -98,14 +102,16 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
 
     async ngOnInit() {
         // Subscribe to global location changes
-        this.locationService.currentLocation$.subscribe(loc => {
-            if (loc) {
-                this.locationName = `${loc.name}, Bangalore`;
-                if (this.reels.length > 0) {
-                    this.loadReels().then(() => this.applyFilters());
+        this.subscriptions.push(
+            this.locationService.currentLocation$.subscribe(loc => {
+                if (loc) {
+                    this.locationName = `${loc.name}, Bangalore`;
+                    if (this.reels.length > 0) {
+                        this.loadReels().then(() => this.applyFilters());
+                    }
                 }
-            }
-        });
+            })
+        );
 
         // Initialize location name if not already set globally
         let currentLocValue: any = null;
@@ -342,13 +348,17 @@ export class SearchComponent implements OnInit, AfterViewInit, OnDestroy {
     ngAfterViewInit() {
         // Setup IntersectionObserver for video thumbnails
         this.setupIntersectionObserver();
-        this.videoEls?.changes?.subscribe(() => {
+        const changesSub = this.videoEls?.changes?.subscribe(() => {
             this.setupIntersectionObserver();
         });
+        if (changesSub) this.subscriptions.push(changesSub);
     }
 
     ngOnDestroy() {
         this.disconnectObserver();
+        // Unsubscribe from all subscriptions to prevent memory leaks
+        this.subscriptions.forEach(s => s.unsubscribe());
+        this.subscriptions = [];
         // Pause & mute all videos on destroy to prevent background audio
         this.videoEls?.forEach(el => {
             const v = el.nativeElement;

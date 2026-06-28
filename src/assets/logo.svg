@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <!-- Background subtle ring -->
+  <circle cx="200" cy="200" r="185" fill="#FAFDFB"/>
+  <circle cx="200" cy="200" r="185" fill="none" stroke="#E8F5F0" stroke-width="1"/>
+
+  <!-- Brand placeholder icon - elegant B/S monogram for Bengaluru Swada -->
+  <g transform="translate(200, 155)">
+    <!-- Outer decorative ring -->
+    <circle cx="0" cy="0" r="75" fill="#F0FAF5" stroke="#D0F0EA" stroke-width="0.5"/>
+    
+    <!-- Stylized leaf/veg icon representing pure veg -->
+    <path d="M0 -40 
+             C25 -20, 35 5, 35 25
+             C35 40, 25 50, 0 55
+             C-25 50, -35 40, -35 25
+             C-35 5, -25 -20, 0 -40Z" 
+          fill="#0D7D63" opacity="0.12"/>
+    
+    <!-- Veg symbol -->
+    <rect x="-12" y="-12" width="24" height="24" rx="5" fill="#4CAF50"/>
+    <circle cx="0" cy="0" r="8" fill="white"/>
+  </g>
+
+  <!-- PURE VEG BADGE -->
+  <g transform="translate(200, 360)">
+    <rect x="-28" y="-12" width="56" height="24" rx="12" fill="#F0FAF5" stroke="#0D7D63" stroke-width="1"/>
+    <circle cx="-10" cy="0" r="5.5" fill="#4CAF50"/>
+    <circle cx="-10" cy="0" r="2.5" fill="white"/>
+    <text x="4" y="5" font-family="-apple-system, 'SF Pro Display', 'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#0D7D63" letter-spacing="0.8">PURE VEG</text>
+  </g>
+
+  <!-- BRAND NAME -->
+  <text x="200" y="405" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="32" font-weight="700" fill="#1C1C1E" letter-spacing="4">Bengaluru</text>
+  <text x="200" y="435" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="400" fill="#0D7D63" letter-spacing="8">Swada</text>
+</svg>
