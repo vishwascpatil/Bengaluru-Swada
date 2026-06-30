@@ -144,7 +144,7 @@ input {
 /* --- Bottom Actions --- */
 
 .bottom-actions {
-    padding-top: 32px;
+    //padding-top: 32px;
     padding-bottom: 0;
     width: 100%;
 }
@@ -191,7 +191,7 @@ input {
         background: var(--primary-color);
         color: white;
         cursor: pointer;
-        box-shadow: 0 8px 24px var(--primary-shadow);
+        //box-shadow: 0 8px 24px var(--primary-shadow);
 
         &:active {
             transform: scale(0.96);
@@ -316,12 +316,12 @@ input {
 
 .email-input-group {
     background: #ffffff;
-    border-radius: 12px;
-    padding: 0 14px;
+    border-radius: 16px;
+    padding: 0 16px;
     display: flex;
     align-items: center;
-    height: 50px;
-    margin-bottom: 10px;
+    height: 56px;
+    margin-bottom: 12px;
     border: 1.5px solid #E5E5EA;
     transition: border-color 0.2s, box-shadow 0.2s;
 
@@ -329,7 +329,7 @@ input {
         flex: 1;
         border: none;
         background: transparent;
-        font-size: 16px;
+        font-size: 17px;
         font-weight: 500;
         color: #1c1c1e;
         outline: none;

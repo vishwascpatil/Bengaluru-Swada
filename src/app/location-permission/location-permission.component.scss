@@ -1,4 +1,4 @@
-/* ─── Location Permission — Premium Redesign ─── */
+/* ─── Location Permission — Minimal & Clean ─── */
 
 :host {
     display: block;
@@ -16,12 +16,12 @@
     justify-content: center;
     height: 100%;
     width: 100%;
-    padding: 48px 24px 32px;
+    padding: 48px 28px 32px;
     overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, #f4fbf9 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #f6fcf9 100%);
 }
 
-/* ─── Background Elements ─── */
+/* ─── Background Dot Pattern ─── */
 
 .map-pattern {
     position: absolute;
@@ -29,27 +29,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    opacity: 0.04;
+    opacity: 0.035;
     background-image:
-        radial-gradient(var(--primary-color) 1.5px, transparent 1.5px),
-        radial-gradient(var(--primary-color) 1.5px, transparent 1.5px);
-    background-size: 28px 28px;
-    background-position: 0 0, 14px 14px;
+        radial-gradient(var(--primary-color) 1.2px, transparent 1.2px),
+        radial-gradient(var(--primary-color) 1.2px, transparent 1.2px);
+    background-size: 32px 32px;
+    background-position: 0 0, 16px 16px;
     pointer-events: none;
-    z-index: 1;
-}
-
-.bg-blob {
-    position: absolute;
-    top: -120px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(13, 125, 99, 0.06) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 1;
 }
 
 /* ─── Hero Section ─── */
@@ -62,135 +48,41 @@
     justify-content: center;
     z-index: 2;
     padding: 0;
-    gap: 0;
 }
 
-/* ─── Pin Illustration ─── */
+/* ─── Icon Circle ─── */
 
-.pin-wrapper {
-    position: relative;
-    width: 180px;
-    height: 180px;
+.icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(13, 125, 99, 0.08);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 28px;
 }
 
-.pin-ring-bg {
-    position: absolute;
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(13, 125, 99, 0.08) 0%, transparent 70%);
-    z-index: 1;
-    animation: pulse-bg 3s ease-in-out infinite;
-}
-
-.location-pin-img {
-    width: 110px;
-    height: 110px;
-    object-fit: contain;
-    mix-blend-mode: multiply;
-    z-index: 5;
-    filter: drop-shadow(0 12px 28px rgba(13, 125, 99, 0.3));
-    animation: float 3.5s ease-in-out infinite;
-}
-
-/* Pulse Rings */
-.pulse-ring {
-    position: absolute;
-    border: 2px solid var(--primary-color);
-    border-radius: 50%;
-    opacity: 0;
-    width: 100px;
-    height: 100px;
-    z-index: 2;
-    pointer-events: none;
-
-    &.ring-1 {
-        animation: pulse-ring-anim 4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        animation-delay: 0s;
-    }
-
-    &.ring-2 {
-        animation: pulse-ring-anim 4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        animation-delay: 1.33s;
-    }
-
-    &.ring-3 {
-        animation: pulse-ring-anim 4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        animation-delay: 2.66s;
-    }
-}
-
-@keyframes pulse-ring-anim {
-    0% {
-        transform: scale(0.8);
-        opacity: 0.5;
-    }
-    50% {
-        opacity: 0.2;
-    }
-    100% {
-        transform: scale(2.6);
-        opacity: 0;
-    }
-}
-
-@keyframes pulse-bg {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.15);
-        opacity: 0.6;
-    }
-}
-
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
 /* ─── Text Content ─── */
 
 .text-content {
     text-align: center;
-    padding: 0 20px;
+    padding: 0 16px;
     max-width: 360px;
-
-    .badge {
-        display: inline-block;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--primary-color);
-        background: rgba(13, 125, 99, 0.1);
-        padding: 4px 14px;
-        border-radius: 20px;
-        letter-spacing: 0.3px;
-        margin-bottom: 16px;
-        text-transform: uppercase;
-    }
 
     h1 {
         font-size: 30px;
         font-weight: 800;
         color: #1c1c1e;
-        margin-bottom: 14px;
+        margin: 0 0 14px;
         letter-spacing: -0.5px;
-        line-height: 1.2;
+        line-height: 1.25;
     }
 
     p {
         font-size: 16px;
         color: #636366;
-        line-height: 1.6;
+        line-height: 1.65;
         font-weight: 400;
         margin: 0;
     }
@@ -201,7 +93,7 @@
 .action-area {
     width: 100%;
     max-width: 400px;
-    margin: 36px auto 0;
+    margin: 40px auto 0;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -211,32 +103,19 @@
 /* ─── Primary Button ─── */
 
 .primary-btn {
-    position: relative;
     width: 100%;
-    height: 60px;
-    border-radius: 18px;
+    height: 58px;
+    border-radius: 16px;
     border: none;
     background: var(--primary-color);
     color: white;
     font-size: 17px;
     font-weight: 700;
     cursor: pointer;
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.2s, transform 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    .btn-glow {
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
-        pointer-events: none;
-        transition: opacity 0.3s;
-    }
 
     &:hover:not(:disabled) {
         background: var(--primary-active);
@@ -244,11 +123,11 @@
     }
 
     &:active:not(:disabled) {
-        transform: translateY(0) scale(0.98);
+        transform: scale(0.97);
     }
 
     &:disabled {
-        opacity: 0.7;
+        opacity: 0.6;
         cursor: not-allowed;
     }
 }
@@ -259,10 +138,8 @@
     justify-content: center;
     gap: 10px;
     width: 100%;
-    position: relative;
-    z-index: 1;
 
-    .btn-icon {
+    svg {
         flex-shrink: 0;
     }
 }
@@ -286,32 +163,32 @@
 
 .secondary-btn {
     width: 100%;
-    height: 56px;
+    height: 54px;
     border-radius: 16px;
     background: #ffffff;
-    color: var(--primary-color);
+    color: #636366;
     font-size: 16px;
     font-weight: 600;
-    border: 1.5px solid rgba(13, 125, 99, 0.2);
+    border: 1.5px solid #e5e5ea;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
 
-    .btn-icon {
+    svg {
         flex-shrink: 0;
     }
 
     &:hover:not(:disabled) {
-        background: rgba(13, 125, 99, 0.04);
-        border-color: rgba(13, 125, 99, 0.35);
+        background: #f8f8fa;
+        border-color: #d1d1d6;
     }
 
     &:active:not(:disabled) {
-        transform: scale(0.98);
-        background: rgba(13, 125, 99, 0.08);
+        transform: scale(0.97);
+        background: #f0f0f5;
     }
 
     &:disabled {
@@ -319,5 +196,3 @@
         cursor: not-allowed;
     }
 }
-
-
